@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kairós — El momento justo para tu negocio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -22,38 +23,29 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Outfit'
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bor2);border-radius:99px}
 
-/* AUTH */
-#auth-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%),var(--bg);
-}
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%),var(--bg)}
 .auth-card{width:100%;max-width:420px;padding:48px 40px;background:var(--sur);border:1px solid var(--bor);border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,0.6)}
-.auth-logo{text-align:center;margin-bottom:36px}
-.auth-k{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;color:var(--gold);line-height:1;letter-spacing:-2px}
-.auth-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--txt2);letter-spacing:6px;text-transform:uppercase;margin-top:4px}
-.auth-sub{font-size:12px;color:var(--txt3);margin-top:8px;letter-spacing:.8px}
+.auth-k{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:700;color:var(--gold);line-height:1;letter-spacing:-2px;text-align:center}
+.auth-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:var(--txt2);letter-spacing:6px;text-transform:uppercase;margin-top:4px;text-align:center}
+.auth-sub{font-size:12px;color:var(--txt3);margin-top:8px;letter-spacing:.8px;text-align:center;margin-bottom:36px}
 .auth-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:10px;padding:4px;margin-bottom:28px}
 .auth-tab{flex:1;padding:9px;border:none;border-radius:7px;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
 .auth-tab.active{background:var(--sur2);color:var(--txt);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-.auth-err{background:var(--rdim);border:1px solid rgba(248,113,113,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:16px;display:none}
-.auth-ok{background:var(--gdim2);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:16px;display:none}
+.auth-msg{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none}
+.auth-err{background:var(--rdim);border:1px solid rgba(248,113,113,0.25);color:var(--red)}
+.auth-ok{background:var(--gdim2);border:1px solid rgba(74,222,128,0.25);color:var(--green)}
 
-/* FORM */
 .field{margin-bottom:16px}
 .field label{display:block;font-size:12px;color:var(--txt2);margin-bottom:6px;font-weight:500}
-input,textarea,select{
-  width:100%;background:var(--bg2);border:1px solid var(--bor);border-radius:10px;
-  padding:11px 14px;color:var(--txt);font-family:'Outfit',sans-serif;font-size:14px;
-  outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;
-}
+input,textarea,select{width:100%;background:var(--bg2);border:1px solid var(--bor);border-radius:10px;padding:11px 14px;color:var(--txt);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
 input:focus,textarea:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1)}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
 select option{background:var(--sur2)}
 
-/* BTN */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap}
 .btn-gold{background:linear-gradient(135deg,#c9a84c,#e8c87a);color:#0c0c0e;box-shadow:0 4px 16px rgba(201,168,76,0.3)}
 .btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(201,168,76,0.4)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-ghost{background:var(--sur2);color:var(--txt2);border:1px solid var(--bor)}
 .btn-ghost:hover{color:var(--txt);border-color:var(--bor2)}
 .btn-del{background:var(--rdim);color:var(--red);border:1px solid rgba(248,113,113,0.2);padding:5px 10px;font-size:12px;border-radius:7px}
@@ -61,10 +53,9 @@ select option{background:var(--sur2)}
 .btn-full{width:100%;justify-content:center;padding:13px}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:7px}
 
-/* APP */
 #app{display:none;height:100vh;flex-direction:column}
 #app.on{display:flex}
-.topbar{height:54px;background:var(--sur);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.topbar{height:54px;background:var(--sur);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:50}
 .topbar-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:-0.5px}
 .topbar-biz{font-size:13px;color:var(--txt2);border-left:1px solid var(--bor);padding-left:16px}
 .topbar-biz strong{color:var(--txt);font-weight:500}
@@ -72,7 +63,6 @@ select option{background:var(--sur2)}
 .topbar-user{font-size:12px;color:var(--txt3)}
 .app-body{display:flex;flex:1;overflow:hidden}
 
-/* SIDEBAR */
 .sidebar{width:208px;background:var(--sur);border-right:1px solid var(--bor);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:14px 0 24px}
 .ns-title{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:1.5px;text-transform:uppercase;padding:12px 20px 6px}
 .ni{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--txt2);transition:all .15s;margin:1px 8px;border:1px solid transparent}
@@ -83,7 +73,6 @@ select option{background:var(--sur2)}
 .ai-nav-btn{margin:8px 12px 0;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:11px 14px;color:var(--gold2);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;width:calc(100% - 24px)}
 .ai-nav-btn:hover{background:linear-gradient(135deg,rgba(201,168,76,0.22),rgba(201,168,76,0.1))}
 
-/* CONTENT */
 .content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg)}
 .page{display:none;animation:fu .2s ease}
 .page.on{display:block}
@@ -92,27 +81,23 @@ select option{background:var(--sur2)}
 .pt{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;letter-spacing:-0.5px}
 .ps{font-size:13px;color:var(--txt2);margin-top:3px}
 
-/* CONCEPT */
 .concept{background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(201,168,76,0.02));border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;gap:12px}
 .ci{font-size:18px;flex-shrink:0;margin-top:1px}
 .clbl{font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
 .ctxt{font-size:13px;color:var(--txt2);line-height:1.65}
 .ctxt strong{color:var(--txt)}
 
-/* GRID/CARD */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .card{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:20px}
-.card-t{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-t{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px}
 
-/* STAT */
 .stat{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:18px 20px}
 .sl{font-size:11px;color:var(--txt3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
 .sv{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1}
 .sn{font-size:12px;color:var(--txt3);margin-top:5px}
 
-/* TABLE */
 .tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th{text-align:left;font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;border-bottom:1px solid var(--bor)}
@@ -120,7 +105,6 @@ td{padding:11px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.0
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,0.015)}
 
-/* BADGE */
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .bg{background:var(--gdim2);color:var(--green)}
 .br{background:var(--rdim);color:var(--red)}
@@ -128,12 +112,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .bb{background:var(--bdim);color:var(--blue)}
 .bgold{background:var(--gdim);color:var(--gold)}
 
-/* DIVIDER */
 .div{display:flex;align-items:center;gap:12px;margin:24px 0 18px}
 .div span{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
 .div::before,.div::after{content:'';flex:1;height:1px;background:var(--bor)}
 
-/* KANBAN */
 .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .kol{background:var(--sur2);border:1px solid var(--bor);border-radius:12px;padding:14px}
 .kol-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt3);margin-bottom:12px}
@@ -143,7 +125,6 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .kcard-i{font-size:11px;color:var(--txt3)}
 .kcard-a{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
 
-/* AI PANEL */
 .ai-ov{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:none;backdrop-filter:blur(2px)}
 .ai-ov.on{display:block}
 .ai-panel{position:fixed;right:0;top:0;bottom:0;width:380px;background:var(--sur);border-left:1px solid var(--bor);display:flex;flex-direction:column;z-index:101;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
@@ -158,7 +139,6 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .ai-in{padding:14px;border-top:1px solid var(--bor);display:flex;gap:10px;flex-shrink:0}
 .ai-in input{font-size:13px}
 
-/* WIZARD */
 #wizard{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #wizard.on{display:flex}
 .wcard{background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:40px;width:100%;max-width:500px;box-shadow:0 40px 80px rgba(0,0,0,0.6)}
@@ -170,101 +150,91 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .wdot{height:3px;flex:1;border-radius:99px;background:var(--bor);transition:background .3s}
 .wdot.on{background:var(--gold)}
 
-/* MROW */
 .mrow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
 .mrow:last-child{border-bottom:none}
 .mlbl{font-size:13px;color:var(--txt2)}
 .mval{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600}
 
-/* PBAR */
 .pbar{height:5px;background:var(--sur2);border-radius:99px;overflow:hidden;margin-top:7px}
 .pbar-f{height:100%;border-radius:99px;transition:width .4s ease}
 
-/* EMPTY */
 .empty{text-align:center;padding:40px 24px;color:var(--txt3);font-size:13px}
 .empty-i{font-size:32px;margin-bottom:10px;opacity:.35}
 
-/* TOAST */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--txt);z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:transform .2s}
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:300}
+.loading-screen.hide{display:none}
+.loading-k{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;color:var(--gold);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--txt);z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
 #toast.on{display:block;transform:translateX(-50%) translateY(0)}
 
-/* RESPONSIVE */
 @media(max-width:900px){
-  .g4{grid-template-columns:1fr 1fr}
-  .g3{grid-template-columns:1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}
   .kanban{grid-template-columns:1fr 1fr}
-  .sidebar{width:54px}
-  .ni span:not(.ni-ico){display:none}
-  .ns-title{display:none}
-  .ai-nav-btn span:last-child{display:none}
-  .ai-nav-btn{justify-content:center}
+  .sidebar{width:54px}.ni span:not(.ni-ico){display:none}.ns-title{display:none}
+  .ai-nav-btn span:last-child{display:none}.ai-nav-btn{justify-content:center}
   .content{padding:20px 16px}
 }
 @media(max-width:600px){
-  .g2,.g3,.g4{grid-template-columns:1fr}
-  .kanban{grid-template-columns:1fr}
-  .ai-panel{width:100%}
-  .auth-card{padding:32px 24px}
+  .g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}
+  .ai-panel{width:100%}.auth-card{padding:32px 24px}
 }
 </style>
 </head>
 <body>
 
-<!-- ══ AUTH ══════════════════════════════════════ -->
-<div id="auth-screen">
+<div class="loading-screen" id="loading">
+  <div class="loading-k">K</div>
+  <div style="font-size:13px;color:var(--txt3)">Cargando Kairós...</div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen" style="display:none">
   <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-k">K</div>
-      <div class="auth-name">Kairós</div>
-      <div class="auth-sub">El momento justo para tu negocio</div>
-    </div>
+    <div class="auth-k">K</div>
+    <div class="auth-name">Kairós</div>
+    <div class="auth-sub">El momento justo para tu negocio</div>
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="swTab('login')">Ingresar</button>
       <button class="auth-tab" onclick="swTab('reg')">Crear cuenta</button>
     </div>
-    <div id="auth-err" class="auth-err"></div>
-    <div id="auth-ok" class="auth-ok"></div>
-
+    <div id="auth-err" class="auth-msg auth-err"></div>
+    <div id="auth-ok" class="auth-msg auth-ok"></div>
     <div id="tab-login">
       <div class="field"><label>Correo electrónico</label><input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email"></div>
       <div class="field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn btn-gold btn-full" onclick="doLogin()">Ingresar a Kairós</button>
+      <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()">Ingresar a Kairós</button>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:16px">¿No tenés cuenta? <span style="color:var(--gold);cursor:pointer" onclick="swTab('reg')">Creá una gratis</span></p>
     </div>
-
     <div id="tab-reg" style="display:none">
       <div class="field"><label>Tu nombre</label><input type="text" id="r-name" placeholder="Juan García"></div>
       <div class="field"><label>Correo electrónico</label><input type="email" id="r-email" placeholder="tu@email.com" autocomplete="email"></div>
       <div class="field"><label>Contraseña <span style="color:var(--txt3)">(mín. 6 caracteres)</span></label><input type="password" id="r-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReg()"></div>
-      <button class="btn btn-gold btn-full" onclick="doReg()">Crear cuenta gratis</button>
+      <button class="btn btn-gold btn-full" id="reg-btn" onclick="doReg()">Crear cuenta gratis</button>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:16px">¿Ya tenés cuenta? <span style="color:var(--gold);cursor:pointer" onclick="swTab('login')">Ingresá</span></p>
     </div>
     <p style="text-align:center;font-size:11px;color:var(--txt3);margin-top:24px;line-height:1.6">Tus datos son privados. Solo vos los ves.<br>Nunca compartimos tu información.</p>
   </div>
 </div>
 
-<!-- ══ WIZARD ════════════════════════════════════ -->
+<!-- WIZARD -->
 <div id="wizard">
   <div class="wcard">
-    <div class="wprog" id="wprog">
-      <div class="wdot on"></div><div class="wdot"></div><div class="wdot"></div>
-    </div>
+    <div class="wprog"><div class="wdot on"></div><div class="wdot"></div><div class="wdot"></div></div>
     <div class="wstep on" id="ws1">
       <div class="wtitle">¡Bienvenido/a a Kairós! 👋</div>
-      <div class="wsub">Configuremos tu negocio en 2 minutos. Podés cambiar todo esto después.</div>
-      <div class="field"><label>¿Cómo se llama tu negocio?</label><input type="text" id="w-nom" placeholder="Ej: La Tienda de Ana, Studio Creativo..."></div>
-      <div class="field"><label>¿A qué se dedica? (en tus palabras)</label><input type="text" id="w-rub" placeholder="Ej: Vendo ropa, tengo una panadería, hago asesorías..."></div>
+      <div class="wsub">Configuremos tu negocio en 2 minutos.</div>
+      <div class="field"><label>¿Cómo se llama tu negocio?</label><input type="text" id="w-nom" placeholder="Ej: La Tienda de Ana..."></div>
+      <div class="field"><label>¿A qué se dedica?</label><input type="text" id="w-rub" placeholder="Ej: Vendo ropa, panadería, asesorías..."></div>
       <button class="btn btn-gold btn-full" onclick="wNext(1)">Continuar →</button>
     </div>
     <div class="wstep" id="ws2">
       <div class="wtitle">¿A quién le vendés?</div>
-      <div class="wsub">Cuanto más específico, mejor funciona todo lo demás. No hay respuesta incorrecta.</div>
-      <div class="field"><label>Describí a tu cliente ideal</label><textarea id="w-cli" placeholder="Ej: Mujeres de 25-40 años que buscan ropa moderna a buen precio..."></textarea></div>
+      <div class="wsub">Cuanto más específico, mejor funciona todo.</div>
+      <div class="field"><label>Describí a tu cliente ideal</label><textarea id="w-cli" placeholder="Ej: Mujeres de 25-40 que buscan ropa moderna..."></textarea></div>
       <div class="field"><label>Precio promedio de venta ($) — opcional</label><input type="number" id="w-precio" placeholder="0"></div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" onclick="wBack(2)" style="flex:1">← Atrás</button>
-        <button class="btn btn-gold" onclick="wNext(2)" style="flex:2">Continuar →</button>
-      </div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="wBack(2)" style="flex:1">← Atrás</button><button class="btn btn-gold" onclick="wNext(2)" style="flex:2">Continuar →</button></div>
     </div>
     <div class="wstep" id="ws3">
       <div class="wtitle">¿Dónde vendés hoy?</div>
@@ -277,15 +247,12 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Shopify" style="width:auto;accent-color:var(--gold)"> Shopify</label>
         <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Local físico" style="width:auto;accent-color:var(--gold)"> Local físico</label>
       </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" onclick="wBack(3)" style="flex:1">← Atrás</button>
-        <button class="btn btn-gold" onclick="wFinish()" style="flex:2">Entrar a Kairós ✦</button>
-      </div>
+      <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="wBack(3)" style="flex:1">← Atrás</button><button class="btn btn-gold" id="w-finish-btn" onclick="wFinish()" style="flex:2">Entrar a Kairós ✦</button></div>
     </div>
   </div>
 </div>
 
-<!-- ══ APP ═══════════════════════════════════════ -->
+<!-- APP -->
 <div id="app">
   <div class="topbar">
     <div class="topbar-logo">Kairós</div>
@@ -295,7 +262,6 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
     </div>
   </div>
-
   <div class="app-body">
     <nav class="sidebar">
       <div class="ns-title">General</div>
@@ -312,7 +278,6 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <div class="nspc"></div>
       <button class="ai-nav-btn" onclick="openAI()"><span>✦</span><span>Asesor IA</span></button>
     </nav>
-
     <div class="content">
 
       <!-- DASHBOARD -->
@@ -333,44 +298,41 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- MI NEGOCIO -->
       <div class="page" id="page-neg">
         <div class="ph"><div class="pt">Mi Negocio</div><div class="ps">Las bases. Todo lo demás se construye sobre esto.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Bases del negocio</div><div class="ctxt">Definen <strong>qué hacés</strong>, <strong>para quién</strong> y <strong>por qué sos diferente</strong>. Sin esto claro, el marketing y las ventas quedan al azar. Completá esto honestamente.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Bases del negocio</div><div class="ctxt">Definen <strong>qué hacés</strong>, <strong>para quién</strong> y <strong>por qué sos diferente</strong>. Sin esto claro, el marketing y las ventas quedan al azar.</div></div></div>
         <div class="g2">
           <div class="card">
             <div class="card-t">🏷 Identidad</div>
             <div class="field"><label>Nombre del negocio</label><input type="text" id="b-nom" oninput="saveBiz()"></div>
             <div class="field"><label>Rubro / qué hacés</label><input type="text" id="b-rub" oninput="saveBiz()"></div>
-            <div class="field"><label>¿Tiene local físico?</label><select id="b-loc" onchange="saveBiz()"><option value="">Seleccioná...</option><option value="si">Sí, tiene local</option><option value="no">No, es online</option><option value="mixto">Mixto (ambos)</option></select></div>
-            <div class="field"><label>Canales de venta</label><input type="text" id="b-can" placeholder="Ej: Instagram, WhatsApp, MercadoLibre" oninput="saveBiz()"></div>
+            <div class="field"><label>¿Tiene local físico?</label><select id="b-loc" onchange="saveBiz()"><option value="">Seleccioná...</option><option value="si">Sí, tiene local</option><option value="no">No, es online</option><option value="mixto">Mixto</option></select></div>
+            <div class="field"><label>Canales de venta</label><input type="text" id="b-can" placeholder="Instagram, WhatsApp, MercadoLibre..." oninput="saveBiz()"></div>
           </div>
           <div class="card">
             <div class="card-t">🎯 Propuesta de Valor</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:14px">✦</div><div><div class="clbl" style="font-size:9px">¿Qué es?</div><div class="ctxt" style="font-size:12px">La razón por la que alguien te elige a VOS. No es "somos los mejores" — es algo concreto y específico.</div></div></div>
             <div class="field"><label>¿Qué problema resolvés?</label><textarea id="b-prob" oninput="saveBiz()"></textarea></div>
             <div class="field"><label>¿Por qué sos diferente?</label><input type="text" id="b-dif" placeholder="Algo concreto y verificable" oninput="saveBiz()"></div>
           </div>
           <div class="card">
             <div class="card-t">👤 Público Objetivo</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:14px">✦</div><div><div class="clbl" style="font-size:9px">¿Por qué importa?</div><div class="ctxt" style="font-size:12px">Si intentás venderle a todos, no le vendés a nadie. Cuanto más específico, más efectivo todo.</div></div></div>
-            <div class="field"><label>¿A quién le vendés? (sé específico/a)</label><textarea id="b-cli" oninput="saveBiz()"></textarea></div>
-            <div class="field"><label>¿Dónde encontrás a tu cliente?</label><input type="text" id="b-don" placeholder="Ej: Instagram, Google, referidos, ferias..." oninput="saveBiz()"></div>
+            <div class="field"><label>¿A quién le vendés?</label><textarea id="b-cli" oninput="saveBiz()"></textarea></div>
+            <div class="field"><label>¿Dónde encontrás a tu cliente?</label><input type="text" id="b-don" placeholder="Instagram, Google, referidos..." oninput="saveBiz()"></div>
           </div>
           <div class="card">
             <div class="card-t">💲 Modelo de Negocio</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:14px">✦</div><div><div class="clbl" style="font-size:9px">¿Cómo ganás?</div><div class="ctxt" style="font-size:12px">Hay que tener claro exactamente de dónde viene el dinero. Muchos negocios fracasan por no definir esto.</div></div></div>
-            <div class="field"><label>Productos / Servicios que ofrecés</label><textarea id="b-prod" placeholder="Uno por línea con precio si podés" oninput="saveBiz()"></textarea></div>
+            <div class="field"><label>Productos / Servicios</label><textarea id="b-prod" placeholder="Uno por línea con precio si podés" oninput="saveBiz()"></textarea></div>
             <div class="field"><label>Precio promedio de venta ($)</label><input type="number" id="b-prec" placeholder="0" oninput="saveBiz()"></div>
           </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
           <button class="btn btn-ghost" onclick="openAI()">✦ Ayudame a definir esto</button>
-          <button class="btn btn-gold" onclick="saveBiz();toast('Negocio guardado ✓')">Guardar</button>
+          <button class="btn btn-gold" onclick="saveBiz(true)">Guardar</button>
         </div>
       </div>
 
       <!-- FINANZAS -->
       <div class="page" id="page-fin">
         <div class="ph"><div class="pt">Finanzas</div><div class="ps">El pulso real de tu negocio.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Los 3 números que siempre tenés que saber</div><div class="ctxt"><strong>Ingresos</strong> = todo lo que entra. <strong>Egresos</strong> = todo lo que sale. <strong>Ganancia neta</strong> = lo que realmente te queda. Si es negativa, estás perdiendo plata aunque estés muy ocupado/a.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Los 3 números clave</div><div class="ctxt"><strong>Ingresos</strong> = todo lo que entra. <strong>Egresos</strong> = todo lo que sale. <strong>Ganancia neta</strong> = lo que realmente te queda.</div></div></div>
         <div class="g4" style="margin-bottom:20px">
           <div class="stat"><div class="sl">Ingresos del mes</div><div class="sv" id="f-ing" style="color:var(--green)">$0</div><div class="sn" id="f-ing-n">0 registros</div></div>
           <div class="stat"><div class="sl">Egresos del mes</div><div class="sv" id="f-egr" style="color:var(--red)">$0</div><div class="sn" id="f-egr-n">0 registros</div></div>
@@ -380,10 +342,9 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="g2">
           <div class="card">
             <div class="card-t">➕ Registrar movimiento</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">Ingreso vs Egreso</div><div class="ctxt" style="font-size:12px"><strong>Ingreso</strong> = plata que entra (venta, cobro). <strong>Egreso</strong> = plata que sale (alquiler, sueldo, impuesto).</div></div></div>
             <div class="field"><label>Tipo</label><select id="tx-t"><option value="ingreso">✅ Ingreso</option><option value="egreso">🔻 Egreso</option></select></div>
             <div class="field"><label>Descripción</label><input type="text" id="tx-d" placeholder="Ej: Venta, Alquiler, Sueldos..."></div>
-            <div class="field"><label>Categoría</label><select id="tx-c"><option value="ventas">Ventas / Cobros</option><option value="publicidad">Publicidad</option><option value="operativo">Gastos operativos</option><option value="fijo">Gastos fijos</option><option value="impuestos">Impuestos / Monotributo</option><option value="personal">Sueldos / Personal</option><option value="inversion">Inversión</option><option value="otros">Otros</option></select></div>
+            <div class="field"><label>Categoría</label><select id="tx-c"><option value="ventas">Ventas / Cobros</option><option value="publicidad">Publicidad</option><option value="operativo">Gastos operativos</option><option value="fijo">Gastos fijos</option><option value="impuestos">Impuestos</option><option value="personal">Sueldos</option><option value="inversion">Inversión</option><option value="otros">Otros</option></select></div>
             <div class="field"><label>Monto ($)</label><input type="number" id="tx-m" placeholder="0" min="0"></div>
             <div class="field"><label>Fecha</label><input type="date" id="tx-f"></div>
             <button class="btn btn-gold btn-full" onclick="addTx()">Registrar</button>
@@ -397,11 +358,11 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
         </div>
         <div class="div"><span>Gastos Fijos Mensuales</span></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">¿Qué son los gastos fijos?</div><div class="ctxt">Los que pagás <strong>sí o sí cada mes</strong>, vendas o no vendas. Su suma total es el mínimo que necesitás vender para no perder plata.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Gastos fijos</div><div class="ctxt">Los que pagás <strong>sí o sí cada mes</strong>. Su suma es el mínimo que necesitás vender para no perder plata.</div></div></div>
         <div class="g2">
           <div class="card">
             <div class="card-t">🔒 Agregar gasto fijo</div>
-            <div class="field"><label>Nombre</label><input type="text" id="gf-n" placeholder="Ej: Alquiler, Internet, Sueldo..."></div>
+            <div class="field"><label>Nombre</label><input type="text" id="gf-n" placeholder="Alquiler, Internet, Sueldo..."></div>
             <div class="field"><label>Monto mensual ($)</label><input type="number" id="gf-m" placeholder="0" min="0"></div>
             <button class="btn btn-gold btn-full" onclick="addGF()">Agregar</button>
           </div>
@@ -416,20 +377,20 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- PRODUCTOS -->
       <div class="page" id="page-prod">
         <div class="ph"><div class="pt">Productos & Servicios</div><div class="ps">Tu catálogo centralizado.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Catálogo centralizado</div><div class="ctxt">Cargás el producto <strong>una sola vez</strong> y desde acá lo publicás a todas tus plataformas. La IA te ayuda a generar la descripción optimizada.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Catálogo centralizado</div><div class="ctxt">Cargás el producto <strong>una sola vez</strong>. La IA te ayuda a generar descripciones optimizadas.</div></div></div>
         <div class="card" style="margin-bottom:20px">
           <div class="card-t">➕ Agregar producto o servicio</div>
           <div class="g2">
             <div>
-              <div class="field"><label>Nombre del producto / servicio *</label><input type="text" id="p-n" placeholder="Ej: Remera básica, Asesoría 1h..."></div>
-              <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ej: Ropa, Servicios, Alimentos..."></div>
-              <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Describí el producto o servicio..."></textarea></div>
+              <div class="field"><label>Nombre *</label><input type="text" id="p-n" placeholder="Remera básica, Asesoría 1h..."></div>
+              <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ropa, Servicios, Alimentos..."></div>
+              <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Describí el producto..."></textarea></div>
             </div>
             <div>
-              <div class="field"><label>Precio de costo ($) <span style="color:var(--txt3)">— lo que te cuesta a vos</span></label><input type="number" id="p-co" placeholder="0" min="0"></div>
-              <div class="field"><label>Precio de venta ($) <span style="color:var(--txt3)">— lo que cobra el cliente</span></label><input type="number" id="p-pr" placeholder="0" min="0" oninput="prevMargen()"></div>
+              <div class="field"><label>Precio de costo ($)</label><input type="number" id="p-co" placeholder="0" min="0"></div>
+              <div class="field"><label>Precio de venta ($)</label><input type="number" id="p-pr" placeholder="0" min="0" oninput="prevMargen()"></div>
               <div id="p-mprev" style="font-size:12px;color:var(--txt3);margin-bottom:12px"></div>
-              <div class="field"><label>Stock <span style="color:var(--txt3)">(0 si es servicio)</span></label><input type="number" id="p-st" placeholder="0" min="0"></div>
+              <div class="field"><label>Stock (0 si es servicio)</label><input type="number" id="p-st" placeholder="0" min="0"></div>
               <div class="field"><label>Estado</label><select id="p-es"><option value="activo">✅ Activo</option><option value="pausado">⏸ Pausado</option><option value="sin_stock">📭 Sin stock</option></select></div>
             </div>
           </div>
@@ -440,22 +401,22 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
         <div class="card">
           <div class="card-t">📦 Catálogo</div>
-          <div class="tw"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos aún</div></td></tr></tbody></table></div>
+          <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos</div></td></tr></tbody></table></div>
         </div>
       </div>
 
-      <!-- LEADS/CRM -->
+      <!-- LEADS -->
       <div class="page" id="page-leads">
-        <div class="ph"><div class="pt">Clientes & Leads</div><div class="ps">Organizá quién te compró, quién puede comprarte y a quién seguir.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Pipeline de ventas</div><div class="ctxt"><strong>Lead</strong> = interesado. <strong>Contactado</strong> = ya hablaste. <strong>Con propuesta</strong> = le enviaste precio. <strong>Cliente</strong> = ya compró. Ver dónde se pierden te dice dónde mejorar.</div></div></div>
+        <div class="ph"><div class="pt">Clientes & Leads</div><div class="ps">Pipeline de ventas completo.</div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Pipeline de ventas</div><div class="ctxt"><strong>Lead</strong> = interesado. <strong>Contactado</strong> = ya hablaste. <strong>Propuesta</strong> = le enviaste precio. <strong>Cliente</strong> = compró.</div></div></div>
         <div class="card" style="margin-bottom:20px">
-          <div class="card-t">➕ Agregar lead o cliente</div>
+          <div class="card-t">➕ Agregar lead</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
             <div style="flex:1;min-width:150px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Nombre *</label><input type="text" id="le-n" placeholder="Nombre o empresa"></div>
-            <div style="flex:1;min-width:150px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Contacto (WhatsApp/email)</label><input type="text" id="le-c" placeholder="+54 9 11..."></div>
-            <div style="flex:1;min-width:110px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Valor estimado ($)</label><input type="number" id="le-v" placeholder="0"></div>
-            <div style="flex:2;min-width:180px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Nota (origen, interés...)</label><input type="text" id="le-no" placeholder="Cómo llegó, qué le interesa..."></div>
+            <div style="flex:1;min-width:150px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Contacto</label><input type="text" id="le-c" placeholder="+54 9 11..."></div>
+            <div style="flex:1;min-width:100px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Valor ($)</label><input type="number" id="le-v" placeholder="0"></div>
+            <div style="flex:2;min-width:180px"><label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:6px">Nota</label><input type="text" id="le-no" placeholder="Cómo llegó, qué le interesa..."></div>
             <button class="btn btn-gold" onclick="addLead()">+ Agregar</button>
           </div>
         </div>
@@ -469,19 +430,19 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 
       <!-- PUBLICIDAD -->
       <div class="page" id="page-pub">
-        <div class="ph"><div class="pt">Publicidad</div><div class="ps">Cuánto invertís y cuánto te rinde cada peso.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">CAC y ROAS — los dos números clave</div><div class="ctxt"><strong>CAC</strong> = cuánto gastás para conseguir 1 cliente. Si es mayor a lo que ganás por cliente, perdés plata.<br><strong>ROAS</strong> = por cada $1 invertido, ¿cuánto volvió? Mínimo viable: 2x. Bueno: 4x+.</div></div></div>
+        <div class="ph"><div class="pt">Publicidad</div><div class="ps">Cuánto invertís y cuánto rinde cada peso.</div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">CAC y ROAS</div><div class="ctxt"><strong>CAC</strong> = costo de conseguir 1 cliente. <strong>ROAS</strong> = retorno por cada $1 invertido. Mínimo viable: 2x. Bueno: 4x+.</div></div></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Inversión total</div><div class="sv" id="pu-inv" style="color:var(--red)">$0</div><div class="sn">Campañas registradas</div></div>
+          <div class="stat"><div class="sl">Inversión total</div><div class="sv" id="pu-inv" style="color:var(--red)">$0</div><div class="sn">Total campañas</div></div>
           <div class="stat"><div class="sl">Clientes generados</div><div class="sv" id="pu-cli" style="color:var(--green)">0</div><div class="sn">Por publicidad</div></div>
           <div class="stat"><div class="sl">CAC promedio</div><div class="sv" id="pu-cac" style="color:var(--yel)">—</div><div class="sn">Costo por cliente</div></div>
-          <div class="stat"><div class="sl">ROAS promedio</div><div class="sv" id="pu-roas" style="color:var(--gold)">—</div><div class="sn">Retorno sobre inversión</div></div>
+          <div class="stat"><div class="sl">ROAS promedio</div><div class="sv" id="pu-roas" style="color:var(--gold)">—</div><div class="sn">Retorno</div></div>
         </div>
         <div class="g2">
           <div class="card">
             <div class="card-t">➕ Registrar campaña</div>
             <div class="field"><label>Plataforma</label><select id="ca-pl"><option>Instagram Ads</option><option>Facebook Ads</option><option>Google Ads</option><option>TikTok Ads</option><option>Influencer</option><option>Otro</option></select></div>
-            <div class="field"><label>Nombre / descripción</label><input type="text" id="ca-n" placeholder="Ej: Promo lanzamiento, Campaña verano..."></div>
+            <div class="field"><label>Nombre</label><input type="text" id="ca-n" placeholder="Promo lanzamiento..."></div>
             <div class="field"><label>Inversión ($)</label><input type="number" id="ca-inv" placeholder="0" min="0"></div>
             <div class="field"><label>Clientes conseguidos</label><input type="number" id="ca-cli" placeholder="0" min="0"></div>
             <div class="field"><label>Ingresos generados ($)</label><input type="number" id="ca-ing" placeholder="0" min="0"></div>
@@ -500,37 +461,35 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- CONTENIDO -->
       <div class="page" id="page-cont">
         <div class="ph"><div class="pt">Contenido</div><div class="ps">Planificá tu presencia y tus ángulos.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Los 3 tipos de contenido</div><div class="ctxt"><strong style="color:var(--green)">Educativo</strong> — enseñás algo (genera confianza). <strong style="color:var(--gold)">Venta</strong> — mostrás tu producto con llamada a la acción. <strong style="color:var(--blue)">Conexión</strong> — mostrás quién sos (genera humanidad). Mezclarlos es la clave.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">3 tipos de contenido</div><div class="ctxt"><strong style="color:var(--green)">Educativo</strong> — genera confianza. <strong style="color:var(--gold)">Venta</strong> — genera conversiones. <strong style="color:var(--blue)">Conexión</strong> — genera humanidad.</div></div></div>
         <div class="g2" style="margin-bottom:20px">
           <div class="card">
-            <div class="card-t">➕ Nueva idea de contenido</div>
-            <div class="field"><label>Título / Idea principal</label><input type="text" id="ct-t" placeholder="Ej: 3 errores que cometen los emprendedores..."></div>
-            <div class="field"><label>Tipo</label><select id="ct-tp"><option value="educativo">📚 Educativo</option><option value="venta">💰 Venta</option><option value="conexion">❤️ Conexión / Personal</option></select></div>
-            <div class="field"><label>Plataforma</label><select id="ct-pl"><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>LinkedIn</option><option>Facebook</option><option>Blog / Web</option><option>WhatsApp Status</option></select></div>
-            <div class="field"><label>Fecha de publicación</label><input type="date" id="ct-f"></div>
-            <div class="field"><label>Estado</label><select id="ct-es"><option value="idea">💡 Idea</option><option value="produccion">🎬 En producción</option><option value="publicado">✅ Publicado</option></select></div>
+            <div class="card-t">➕ Nueva idea</div>
+            <div class="field"><label>Título / Idea</label><input type="text" id="ct-t" placeholder="3 errores que cometen los emprendedores..."></div>
+            <div class="field"><label>Tipo</label><select id="ct-tp"><option value="educativo">📚 Educativo</option><option value="venta">💰 Venta</option><option value="conexion">❤️ Conexión</option></select></div>
+            <div class="field"><label>Plataforma</label><select id="ct-pl"><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>LinkedIn</option><option>Facebook</option><option>WhatsApp</option></select></div>
+            <div class="field"><label>Fecha</label><input type="date" id="ct-f"></div>
+            <div class="field"><label>Estado</label><select id="ct-es"><option value="idea">💡 Idea</option><option value="produccion">🎬 Producción</option><option value="publicado">✅ Publicado</option></select></div>
             <div style="display:flex;gap:10px">
               <button class="btn btn-ghost" style="flex:1" onclick="aiIdeas()">✦ Ideas con IA</button>
               <button class="btn btn-gold" style="flex:1" onclick="addCont()">Agregar</button>
             </div>
           </div>
-          <div class="card"><div class="card-t">🗓 Calendario</div><div id="ct-lista" style="max-height:380px;overflow-y:auto"><div class="empty"><div class="empty-i">📅</div>Sin contenido aún</div></div></div>
+          <div class="card"><div class="card-t">🗓 Calendario</div><div id="ct-lista" style="max-height:380px;overflow-y:auto"><div class="empty"><div class="empty-i">📅</div>Sin contenido</div></div></div>
         </div>
         <div class="g2">
           <div class="card">
             <div class="card-t">🎯 Ángulos de Comunicación</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">¿Qué es un ángulo?</div><div class="ctxt" style="font-size:12px">El punto de vista desde el que comunicás. Tenerlo claro hace tu contenido reconocible.</div></div></div>
-            <div class="field"><label>Mi ángulo principal</label><input type="text" id="an-p" placeholder="Ej: El que habla directo sin rodeos" oninput="saveAng()"></div>
-            <div class="field"><label>Tono de comunicación</label><select id="an-t" onchange="saveAng()"><option value="">Seleccioná...</option><option>Educativo y cercano</option><option>Directo y sin vueltas</option><option>Inspiracional</option><option>Técnico y detallado</option><option>Entretenido con humor</option><option>Aspiracional / Premium</option></select></div>
-            <div class="field"><label>Palabras que SÍ uso</label><input type="text" id="an-s" placeholder="Ej: resultados, concreto, real..." oninput="saveAng()"></div>
-            <div class="field"><label>Palabras que NO uso</label><input type="text" id="an-n" placeholder="Ej: quizás, podría, tal vez..." oninput="saveAng()"></div>
+            <div class="field"><label>Mi ángulo principal</label><input type="text" id="an-p" placeholder="El que habla directo sin rodeos" oninput="saveAng()"></div>
+            <div class="field"><label>Tono</label><select id="an-t" onchange="saveAng()"><option value="">Seleccioná...</option><option>Educativo y cercano</option><option>Directo y sin vueltas</option><option>Inspiracional</option><option>Técnico</option><option>Con humor</option><option>Premium</option></select></div>
+            <div class="field"><label>Palabras que SÍ uso</label><input type="text" id="an-s" placeholder="resultados, concreto..." oninput="saveAng()"></div>
+            <div class="field"><label>Palabras que NO uso</label><input type="text" id="an-n" placeholder="quizás, podría..." oninput="saveAng()"></div>
           </div>
           <div class="card">
-            <div class="card-t">🏆 Referentes del mercado</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">¿Para qué?</div><div class="ctxt" style="font-size:12px">No para copiar, sino para inspirarte. Analizá qué hacen bien y adaptalo a tu voz.</div></div></div>
+            <div class="card-t">🏆 Referentes</div>
             <div id="ref-lista"><div class="empty" style="padding:20px"><div class="empty-i">🏆</div>Sin referentes</div></div>
             <div style="display:flex;gap:8px;margin-top:12px">
-              <input type="text" id="re-n" placeholder="Nombre / @usuario" style="flex:1">
+              <input type="text" id="re-n" placeholder="@usuario" style="flex:1">
               <input type="text" id="re-w" placeholder="¿Por qué lo seguís?" style="flex:1.5">
               <button class="btn btn-ghost btn-sm" onclick="addRef()">+</button>
             </div>
@@ -541,7 +500,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- MÉTRICAS -->
       <div class="page" id="page-met">
         <div class="ph"><div class="pt">Métricas</div><div class="ps">Lo que no se mide, no se puede mejorar.</div></div>
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Métricas reales vs métricas de vanidad</div><div class="ctxt"><strong style="color:var(--red)">Vanidad</strong>: seguidores, likes — no pagan cuentas. <strong style="color:var(--green)">Reales</strong>: clientes nuevos, tasa de cierre, margen, ROAS. Acá medimos las que importan.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Métricas reales vs vanidad</div><div class="ctxt"><strong style="color:var(--red)">Vanidad</strong>: seguidores, likes. <strong style="color:var(--green)">Reales</strong>: clientes, margen, ROAS, tasa de cierre.</div></div></div>
         <div class="g3" style="margin-bottom:24px">
           <div class="card"><div class="card-t">💼 Ventas</div>
             <div class="mrow"><div class="mlbl">Clientes este mes</div><div class="mval" id="m-cli">0</div></div>
@@ -550,7 +509,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
           <div class="card"><div class="card-t">💰 Rentabilidad</div>
             <div class="mrow"><div class="mlbl">Margen de ganancia</div><div class="mval" id="m-mar">0%</div></div>
-            <div class="mrow"><div class="mlbl">Ratio ingresos/egresos</div><div class="mval" id="m-rat">—</div></div>
+            <div class="mrow"><div class="mlbl">Ratio ing/egr</div><div class="mval" id="m-rat">—</div></div>
             <div class="mrow"><div class="mlbl">Estado</div><div id="m-est"><span class="badge by">Sin datos</span></div></div>
           </div>
           <div class="card"><div class="card-t">📣 Publicidad</div>
@@ -561,38 +520,37 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
         <div class="g2">
           <div class="card">
-            <div class="card-t">📲 Engagement en redes</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">Tasa de engagement</div><div class="ctxt" style="font-size:12px">= (likes + comentarios + guardados) ÷ seguidores × 100. Menos 1%: bajo. 3-5%: bueno. +6%: excelente.</div></div></div>
-            <div class="field"><label>Plataforma</label><input type="text" id="en-pl" placeholder="Instagram, TikTok..."></div>
-            <div class="field"><label>Seguidores</label><input type="number" id="en-se" placeholder="0" min="0"></div>
-            <div class="field"><label>Interacciones promedio por post</label><input type="number" id="en-in" placeholder="0" min="0"></div>
+            <div class="card-t">📲 Engagement</div>
+            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">Fórmula</div><div class="ctxt" style="font-size:12px">(likes + comentarios + guardados) ÷ seguidores × 100. Menos 1%: bajo. 3-5%: bueno. +6%: excelente.</div></div></div>
+            <div class="field"><label>Seguidores</label><input type="number" id="en-se" placeholder="0"></div>
+            <div class="field"><label>Interacciones promedio por post</label><input type="number" id="en-in" placeholder="0"></div>
             <button class="btn btn-gold btn-full" onclick="calcEng()">Calcular</button>
             <div id="en-res" style="margin-top:12px"></div>
           </div>
           <div class="card">
-            <div class="card-t">🎯 Tasa de cierre de ventas</div>
-            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">¿Qué es?</div><div class="ctxt" style="font-size:12px">De cada 10 consultas, ¿cuántas terminan en venta? Mejorar esto es el trabajo de ventas.</div></div></div>
-            <div class="field"><label>Consultas / leads recibidos</label><input type="number" id="ci-le" placeholder="0" min="0"></div>
-            <div class="field"><label>Ventas cerradas</label><input type="number" id="ci-ve" placeholder="0" min="0"></div>
+            <div class="card-t">🎯 Tasa de cierre</div>
+            <div class="concept" style="margin-bottom:14px"><div class="ci" style="font-size:13px">✦</div><div><div class="clbl" style="font-size:9px">¿Qué es?</div><div class="ctxt" style="font-size:12px">De cada 10 consultas, ¿cuántas terminan en venta?</div></div></div>
+            <div class="field"><label>Leads / consultas</label><input type="number" id="ci-le" placeholder="0"></div>
+            <div class="field"><label>Ventas cerradas</label><input type="number" id="ci-ve" placeholder="0"></div>
             <button class="btn btn-gold btn-full" onclick="calcCierre()">Calcular</button>
             <div id="ci-res" style="margin-top:12px"></div>
           </div>
         </div>
       </div>
 
-    </div><!-- /content -->
-  </div><!-- /app-body -->
-</div><!-- /app -->
+    </div>
+  </div>
+</div>
 
 <!-- AI PANEL -->
 <div class="ai-ov" id="ai-ov" onclick="closeAI()"></div>
 <div class="ai-panel" id="ai-panel">
   <div class="ai-hdr">
-    <div><div class="ai-title">✦ Asesor IA</div><div style="font-size:12px;color:var(--txt3)">Conoce tu negocio. Preguntale lo que sea.</div></div>
+    <div><div class="ai-title">✦ Asesor IA</div><div style="font-size:12px;color:var(--txt3)">Conoce tu negocio.</div></div>
     <button class="btn btn-ghost btn-sm" onclick="closeAI()">✕</button>
   </div>
   <div class="ai-msgs" id="ai-msgs">
-    <div class="ai-msg ai-bot">¡Hola! Soy tu asesor de negocio. Leí tu información y estoy listo para ayudarte con estrategia, finanzas, ventas, marketing o lo que necesites. ¿Por dónde empezamos?</div>
+    <div class="ai-msg ai-bot">¡Hola! Soy tu asesor de negocio. Leí tu información y estoy listo para ayudarte. ¿Por dónde empezamos?</div>
   </div>
   <div class="ai-in">
     <input type="text" id="ai-inp" placeholder="Preguntame lo que sea..." onkeydown="if(event.key==='Enter')sendAI()">
@@ -600,574 +558,603 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
-// ════════════════════════════════════════
-// STORAGE (aislado por usuario)
-// ════════════════════════════════════════
+// ══════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════
+const SUPA_URL = 'https://kjnhddhuaydschuqtpad.supabase.co'
+const SUPA_KEY = 'sb_publishable_HxIuPmu3GUr5NTlWOlQG0w_pr61ITsM'
+const { createClient } = supabase
+const sb = createClient(SUPA_URL, SUPA_KEY)
+
 let CU = null // current user
 
-function uk(k){ return `k_${CU?.id||'x'}_${k}` }
-function gd(k,def=null){ try{ const v=localStorage.getItem(uk(k)); return v?JSON.parse(v):def }catch{ return def } }
-function sd(k,v){ try{ localStorage.setItem(uk(k),JSON.stringify(v)) }catch{} }
-
-// ════════════════════════════════════════
-// AUTH
-// ════════════════════════════════════════
-function gUsers(){ return JSON.parse(localStorage.getItem('k_users')||'{}') }
-function sUsers(u){ localStorage.setItem('k_users',JSON.stringify(u)) }
-
-function swTab(t){
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'))
-  document.querySelectorAll('.auth-tab')[t==='login'?0:1].classList.add('active')
-  document.getElementById('tab-login').style.display=t==='login'?'block':'none'
-  document.getElementById('tab-reg').style.display=t==='reg'?'block':'none'
-  clearMsg()
-}
-function showErr(m){ const e=document.getElementById('auth-err'); e.textContent=m; e.style.display='block'; document.getElementById('auth-ok').style.display='none' }
-function showOk(m){ const s=document.getElementById('auth-ok'); s.textContent=m; s.style.display='block'; document.getElementById('auth-err').style.display='none' }
-function clearMsg(){ document.getElementById('auth-err').style.display='none'; document.getElementById('auth-ok').style.display='none' }
-
-function doLogin(){
-  const email=V('l-email').trim().toLowerCase()
-  const pass=V('l-pass')
-  if(!email||!pass){ showErr('Completá todos los campos'); return }
-  const users=gUsers()
-  const user=users[email]
-  if(!user){ showErr('No existe una cuenta con ese email'); return }
-  if(user.pass!==btoa(pass)){ showErr('Contraseña incorrecta'); return }
-  enterApp(user)
-}
-
-function doReg(){
-  const name=V('r-name').trim()
-  const email=V('r-email').trim().toLowerCase()
-  const pass=V('r-pass')
-  if(!name||!email||!pass){ showErr('Completá todos los campos'); return }
-  if(pass.length<6){ showErr('La contraseña debe tener al menos 6 caracteres'); return }
-  if(!/\S+@\S+\.\S+/.test(email)){ showErr('El email no es válido'); return }
-  const users=gUsers()
-  if(users[email]){ showErr('Ya existe una cuenta con ese email. Ingresá.'); return }
-  const user={ id:'u'+Date.now(), email, name, pass:btoa(pass), created:new Date().toISOString() }
-  users[email]=user; sUsers(users)
-  enterApp(user, true)
-}
-
-function enterApp(user, isNew=false){
-  CU=user
-  localStorage.setItem('k_session',JSON.stringify(user))
-  document.getElementById('auth-screen').style.display='none'
-  document.getElementById('app').classList.add('on')
-  document.getElementById('tb-user').textContent=user.email
-  setTbBiz(); setDashTitle(); renderAll()
-  document.getElementById('tx-f').value=today()
-  if(isNew||!gd('biz')) openWiz()
-}
-
-function doLogout(){
-  if(!confirm('¿Salir de Kairós?')) return
-  localStorage.removeItem('k_session')
-  CU=null
-  document.getElementById('app').classList.remove('on')
-  document.getElementById('auth-screen').style.display='flex'
-  document.getElementById('l-email').value=''
-  document.getElementById('l-pass').value=''
-  clearMsg()
-}
-
-function checkSession(){
-  const s=localStorage.getItem('k_session')
-  if(s){ try{ enterApp(JSON.parse(s)) }catch{ localStorage.removeItem('k_session') } }
-}
-
-// ════════════════════════════════════════
-// WIZARD
-// ════════════════════════════════════════
-function openWiz(){ document.getElementById('wizard').classList.add('on') }
-function closeWiz(){ document.getElementById('wizard').classList.remove('on') }
-function setWDot(n){ document.querySelectorAll('.wdot').forEach((d,i)=>d.classList.toggle('on',i<n)) }
-
-function wNext(s){
-  if(s===1){
-    if(!V('w-nom').trim()){ alert('Ingresá el nombre de tu negocio'); return }
-    document.getElementById('ws1').classList.remove('on')
-    document.getElementById('ws2').classList.add('on')
-    setWDot(2)
+// ══════════════════════════════════════
+// INIT — verificar sesión al cargar
+// ══════════════════════════════════════
+async function init() {
+  const { data: { session } } = await sb.auth.getSession()
+  if (session?.user) {
+    CU = session.user
+    await enterApp()
   } else {
-    document.getElementById('ws2').classList.remove('on')
-    document.getElementById('ws3').classList.add('on')
-    setWDot(3)
+    document.getElementById('loading').classList.add('hide')
+    document.getElementById('auth-screen').style.display = 'flex'
   }
-}
-function wBack(s){
-  if(s===2){ document.getElementById('ws2').classList.remove('on'); document.getElementById('ws1').classList.add('on'); setWDot(1) }
-  if(s===3){ document.getElementById('ws3').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
-}
-function wFinish(){
-  const can=[...document.querySelectorAll('#w-canales input:checked')].map(c=>c.value).join(', ')
-  sd('biz',{ nom:V('w-nom').trim(), rub:V('w-rub').trim(), cli:V('w-cli').trim(), prec:V('w-precio'), can, loc:'', prob:'', dif:'', don:'', prod:'' })
-  setTbBiz(); loadBizForm()
-  closeWiz()
-  toast('¡Bienvenido/a a Kairós! Tu negocio está listo ✦')
-}
 
-// ════════════════════════════════════════
-// NAVIGATION
-// ════════════════════════════════════════
-function go(page, el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'))
-  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'))
-  document.getElementById('page-'+page).classList.add('on')
-  el.classList.add('on')
-  renderAll()
-}
-function goPage(p){ const el=document.querySelector(`[data-p="${p}"]`); if(el) go(p,el) }
-
-// ════════════════════════════════════════
-// NEGOCIO
-// ════════════════════════════════════════
-function saveBiz(){
-  sd('biz',{ nom:V('b-nom'), rub:V('b-rub'), loc:V('b-loc'), can:V('b-can'), prob:V('b-prob'), dif:V('b-dif'), cli:V('b-cli'), don:V('b-don'), prod:V('b-prod'), prec:V('b-prec') })
-  setTbBiz()
-}
-function loadBizForm(){
-  const b=gd('biz',{})
-  ;[['b-nom','nom'],['b-rub','rub'],['b-loc','loc'],['b-can','can'],['b-prob','prob'],['b-dif','dif'],['b-cli','cli'],['b-don','don'],['b-prod','prod'],['b-prec','prec']].forEach(([id,k])=>{ const e=document.getElementById(id); if(e) e.value=b[k]||'' })
-}
-function setTbBiz(){
-  const b=gd('biz',{})
-  document.getElementById('tb-biz').innerHTML=b.nom?`<strong>${b.nom}</strong>${b.rub?' · '+b.rub:''}`:'<span style="color:var(--txt3)">Sin negocio configurado</span>'
-}
-function setDashTitle(){
-  const h=new Date().getHours()
-  const g=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'
-  const n=CU?.name?.split(' ')[0]||''
-  document.getElementById('dash-title').textContent=g+(n?' '+n:'')
-}
-
-// ════════════════════════════════════════
-// FINANZAS
-// ════════════════════════════════════════
-function today(){ return new Date().toISOString().slice(0,10) }
-function getMesTxs(){
-  const n=new Date(), m=n.getMonth(), y=n.getFullYear()
-  return gd('txs',[]).filter(t=>{ const d=new Date(t.fecha); return d.getMonth()===m&&d.getFullYear()===y })
-}
-
-function addTx(){
-  const d=V('tx-d').trim(), mo=parseFloat(V('tx-m'))||0
-  if(!d||mo<=0){ toast('Completá descripción y monto'); return }
-  const txs=gd('txs',[])
-  txs.unshift({id:Date.now(), tipo:V('tx-t'), desc:d, cat:V('tx-c'), monto:mo, fecha:V('tx-f')||today()})
-  sd('txs',txs)
-  document.getElementById('tx-d').value=''; document.getElementById('tx-m').value=''
-  renderFin(); renderDash(); toast('Movimiento registrado ✓')
-}
-function delTx(id){
-  if(!confirm('¿Eliminar este movimiento?')) return
-  sd('txs',gd('txs',[]).filter(t=>t.id!==id)); renderFin(); renderDash()
-}
-function addGF(){
-  const n=V('gf-n').trim(), m=parseFloat(V('gf-m'))||0
-  if(!n||m<=0){ toast('Completá nombre y monto'); return }
-  const gfs=gd('gfs',[]); gfs.push({id:Date.now(),nom:n,mon:m})
-  sd('gfs',gfs); document.getElementById('gf-n').value=''; document.getElementById('gf-m').value=''
-  renderFin(); renderDash(); toast('Gasto fijo agregado ✓')
-}
-function delGF(id){
-  if(!confirm('¿Eliminar este gasto fijo?')) return
-  sd('gfs',gd('gfs',[]).filter(g=>g.id!==id)); renderFin(); renderDash()
-}
-
-function renderFin(){
-  const txs=getMesTxs()
-  const ing=txs.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
-  const egr=txs.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
-  const gan=ing-egr, mar=ing>0?Math.round((gan/ing)*100):0
-  const gfs=gd('gfs',[]), tf=gfs.reduce((a,b)=>a+b.mon,0)
-
-  S('f-ing','$'+fmt(ing)); S('f-ing-n',txs.filter(t=>t.tipo==='ingreso').length+' registros')
-  S('f-egr','$'+fmt(egr)); S('f-egr-n',txs.filter(t=>t.tipo==='egreso').length+' registros')
-  S('f-gan','$'+fmt(gan)); document.getElementById('f-gan').style.color=gan>=0?'var(--green)':'var(--red)'
-  S('f-mar','Margen: '+mar+'%')
-  S('f-eq','$'+fmt(tf))
-  const pct=tf>0?Math.min(100,Math.round((ing/tf)*100)):0
-  const bar=document.getElementById('f-eq-b')
-  bar.style.width=pct+'%'; bar.style.background=pct>=100?'var(--green)':pct>=60?'var(--yel)':'var(--red)'
-
-  // tabla
-  const all=gd('txs',[]).slice(0,40)
-  document.getElementById('tx-tb').innerHTML=!all.length
-    ?'<tr><td colspan="5"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></td></tr>'
-    :all.map(t=>`<tr>
-      <td>${t.desc}</td>
-      <td><span class="badge ${t.tipo==='ingreso'?'bg':'br'}">${t.cat}</span></td>
-      <td style="font-weight:600;color:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}">$${fmt(t.monto)}</td>
-      <td style="color:var(--txt3)">${t.fecha}</td>
-      <td><button class="btn btn-del" onclick="delTx(${t.id})">✕</button></td>
-    </tr>`).join('')
-
-  // gastos fijos
-  document.getElementById('gf-lista').innerHTML=!gfs.length
-    ?'<div class="empty" style="padding:20px"><div class="empty-i">📌</div>Sin gastos fijos</div>'
-    :gfs.map(g=>`<div class="mrow"><div class="mlbl">${g.nom}</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="mval" style="color:var(--red)">$${fmt(g.mon)}</div>
-        <button class="btn btn-del" onclick="delGF(${g.id})">✕</button>
-      </div></div>`).join('')
-  S('gf-tot','$'+fmt(tf))
-}
-
-// ════════════════════════════════════════
-// PRODUCTOS
-// ════════════════════════════════════════
-function prevMargen(){
-  const co=parseFloat(V('p-co'))||0, pr=parseFloat(V('p-pr'))||0
-  const el=document.getElementById('p-mprev')
-  if(pr>0&&co>0){
-    const m=Math.round(((pr-co)/pr)*100), g=pr-co
-    el.innerHTML=`Ganancia por unidad: <strong style="color:${m>20?'var(--green)':m>0?'var(--yel)':'var(--red)'}">$${fmt(g)} (${m}% margen)</strong>`
-  } else el.innerHTML=''
-}
-function addProd(){
-  const n=V('p-n').trim(); if(!n){ toast('Ingresá el nombre del producto'); return }
-  const co=parseFloat(V('p-co'))||0, pr=parseFloat(V('p-pr'))||0
-  if(pr>0&&co>pr){ toast('⚠️ El precio de costo no puede superar el de venta'); return }
-  const ps=gd('prods',[])
-  ps.unshift({id:Date.now(), nom:n, cat:V('p-c'), desc:V('p-d'), costo:co, precio:pr, stock:parseInt(V('p-st'))||0, estado:V('p-es')})
-  sd('prods',ps)
-  ;['p-n','p-c','p-d','p-co','p-pr','p-st'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value='' })
-  document.getElementById('p-mprev').innerHTML=''
-  renderProds(); toast('Producto agregado ✓')
-}
-function delProd(id){
-  if(!confirm('¿Eliminar este producto?')) return
-  sd('prods',gd('prods',[]).filter(p=>p.id!==id)); renderProds()
-}
-function renderProds(){
-  const ps=gd('prods',[])
-  const eBadge={activo:'bg',pausado:'by',sin_stock:'br'}
-  const eLabel={activo:'Activo',pausado:'Pausado',sin_stock:'Sin stock'}
-  document.getElementById('p-tb').innerHTML=!ps.length
-    ?'<tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos aún</div></td></tr>'
-    :ps.map(p=>{
-      const m=p.precio>0&&p.costo>0?Math.round(((p.precio-p.costo)/p.precio)*100):null
-      return `<tr>
-        <td><strong>${p.nom}</strong>${p.desc?`<div style="font-size:11px;color:var(--txt3)">${p.desc.slice(0,55)}${p.desc.length>55?'...':''}</div>`:''}</td>
-        <td style="color:var(--txt3)">${p.cat||'—'}</td>
-        <td>${p.costo>0?'$'+fmt(p.costo):'—'}</td>
-        <td style="font-weight:600">${p.precio>0?'$'+fmt(p.precio):'—'}</td>
-        <td>${m!==null?`<span style="color:${m>20?'var(--green)':m>0?'var(--yel)':'var(--red)'}">${m}%</span>`:'—'}</td>
-        <td>${p.stock}</td>
-        <td><span class="badge ${eBadge[p.estado]||'bb'}">${eLabel[p.estado]||p.estado}</span></td>
-        <td><button class="btn btn-del" onclick="delProd(${p.id})">✕</button></td>
-      </tr>`}).join('')
-}
-function aiDescProd(){
-  const n=V('p-n').trim(); if(!n){ toast('Primero ingresá el nombre del producto'); return }
-  openAI()
-  const b=gd('biz',{})
-  document.getElementById('ai-inp').value=`Generá una descripción atractiva y concisa (máximo 3 oraciones) para este producto: "${n}"${V('p-c')?' categoría '+V('p-c'):''}${V('p-pr')?' precio $'+V('p-pr'):''}. Negocio: ${b.rub||'general'}. Cliente: ${b.cli||'general'}. Solo la descripción, sin título.`
-  sendAI()
-}
-
-// ════════════════════════════════════════
-// LEADS
-// ════════════════════════════════════════
-function addLead(){
-  const n=V('le-n').trim(); if(!n){ toast('Ingresá el nombre'); return }
-  const ls=gd('leads',[]); ls.push({id:Date.now(), nom:n, con:V('le-c'), val:parseFloat(V('le-v'))||0, nota:V('le-no'), est:'lead'})
-  sd('leads',ls)
-  ;['le-n','le-c','le-v','le-no'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value='' })
-  renderLeads(); renderDash(); toast('Lead agregado ✓')
-}
-function moveLead(id, est){ const ls=gd('leads',[]); const l=ls.find(x=>x.id===id); if(l) l.est=est; sd('leads',ls); renderLeads(); renderDash() }
-function delLead(id){ if(!confirm('¿Eliminar este lead?')) return; sd('leads',gd('leads',[]).filter(l=>l.id!==id)); renderLeads(); renderDash() }
-
-function renderLeads(){
-  const ls=gd('leads',[])
-  const next={lead:'contactado',contactado:'propuesta',propuesta:'cliente',cliente:null}
-  const nextL={lead:'Contactar →',contactado:'Enviar propuesta →',propuesta:'Cerrar venta →',cliente:null}
-  ;['lead','contactado','propuesta','cliente'].forEach(est=>{
-    const col=document.getElementById('col-'+est)
-    const items=ls.filter(l=>l.est===est)
-    if(!items.length){ col.innerHTML='<div style="color:var(--txt3);font-size:12px;text-align:center;padding:16px 0">—</div>'; return }
-    col.innerHTML=items.map(l=>`
-      <div class="kcard">
-        <div class="kcard-n">${l.nom}</div>
-        <div class="kcard-i">${l.con||'Sin contacto'}</div>
-        ${l.val>0?`<div style="font-size:12px;color:var(--gold);margin-top:3px">$${fmt(l.val)}</div>`:''}
-        ${l.nota?`<div class="kcard-i" style="margin-top:4px;font-style:italic">${l.nota}</div>`:''}
-        <div class="kcard-a">
-          ${next[est]?`<button class="btn btn-ghost btn-sm" onclick="moveLead(${l.id},'${next[est]}')">${nextL[est]}</button>`:''}
-          ${(l.con&&(l.con.startsWith('+') || /^[0-9]/.test(l.con)))?`<a href="https://wa.me/${l.con.replace(/\D/g,'')}" target="_blank" class="btn btn-ghost btn-sm">💬 WA</a>`:''}
-          <button class="btn btn-del" onclick="delLead(${l.id})">✕</button>
-        </div>
-      </div>`).join('')
+  // Escuchar cambios de auth
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      CU = session.user
+      await enterApp()
+    } else if (event === 'SIGNED_OUT') {
+      CU = null
+      document.getElementById('app').classList.remove('on')
+      document.getElementById('auth-screen').style.display = 'flex'
+    }
   })
 }
 
-// ════════════════════════════════════════
-// PUBLICIDAD
-// ════════════════════════════════════════
-function addCamp(){
-  const n=V('ca-n').trim(); if(!n){ toast('Ingresá el nombre de la campaña'); return }
-  const inv=parseFloat(V('ca-inv'))||0; if(inv<=0){ toast('Ingresá la inversión'); return }
-  const cli=parseInt(V('ca-cli'))||0, ing=parseFloat(V('ca-ing'))||0
-  const camps=gd('camps',[])
-  camps.unshift({id:Date.now(), plat:V('ca-pl'), nom:n, inv, cli, ing,
-    roas:inv>0&&ing>0?(ing/inv).toFixed(2):null, cac:cli>0?(inv/cli).toFixed(0):null})
-  sd('camps',camps)
-  ;['ca-n','ca-inv','ca-cli','ca-ing'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value='' })
-  renderPub(); renderMet(); toast('Campaña registrada ✓')
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+function swTab(t) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('.auth-tab')[t==='login'?0:1].classList.add('active')
+  document.getElementById('tab-login').style.display = t==='login'?'block':'none'
+  document.getElementById('tab-reg').style.display = t==='reg'?'block':'none'
+  clearMsg()
 }
-function delCamp(id){ if(!confirm('¿Eliminar esta campaña?')) return; sd('camps',gd('camps',[]).filter(c=>c.id!==id)); renderPub(); renderMet() }
+function showErr(m) { const e=document.getElementById('auth-err'); e.textContent=m; e.style.display='block'; document.getElementById('auth-ok').style.display='none' }
+function showOk(m) { const s=document.getElementById('auth-ok'); s.textContent=m; s.style.display='block'; document.getElementById('auth-err').style.display='none' }
+function clearMsg() { document.getElementById('auth-err').style.display='none'; document.getElementById('auth-ok').style.display='none' }
 
-function renderPub(){
-  const camps=gd('camps',[])
-  const ti=camps.reduce((a,b)=>a+b.inv,0)
-  const tc=camps.reduce((a,b)=>a+b.cli,0)
-  const tig=camps.reduce((a,b)=>a+b.ing,0)
-  S('pu-inv','$'+fmt(ti)); S('pu-cli',tc)
-  S('pu-cac',tc>0?'$'+fmt(ti/tc):'—')
-  S('pu-roas',ti>0&&tig>0?(tig/ti).toFixed(2)+'x':'—')
-  document.getElementById('ca-tb').innerHTML=!camps.length
-    ?'<tr><td colspan="5"><div class="empty"><div class="empty-i">📣</div>Sin campañas</div></td></tr>'
-    :camps.map(c=>{
-      const r=parseFloat(c.roas), rc=r>=4?'var(--green)':r>=2?'var(--yel)':'var(--red)'
-      return `<tr>
-        <td><strong>${c.plat}</strong><div style="font-size:11px;color:var(--txt3)">${c.nom}</div></td>
-        <td>$${fmt(c.inv)}</td><td>${c.cli}</td>
-        <td style="font-weight:600;color:${c.roas?rc:'var(--txt3)'}">${c.roas?c.roas+'x':'—'}</td>
-        <td><button class="btn btn-del" onclick="delCamp(${c.id})">✕</button></td>
-      </tr>`}).join('')
+async function doLogin() {
+  const email = V('l-email').trim().toLowerCase()
+  const pass = V('l-pass')
+  if (!email || !pass) { showErr('Completá todos los campos'); return }
+  const btn = document.getElementById('login-btn')
+  btn.disabled = true; btn.textContent = 'Ingresando...'
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass })
+  btn.disabled = false; btn.textContent = 'Ingresar a Kairós'
+  if (error) { showErr(error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : error.message) }
 }
 
-// ════════════════════════════════════════
-// CONTENIDO
-// ════════════════════════════════════════
-function addCont(){
-  const t=V('ct-t').trim(); if(!t){ toast('Ingresá el título'); return }
-  const cts=gd('cont',[])
-  cts.unshift({id:Date.now(), tit:t, tipo:V('ct-tp'), plat:V('ct-pl'), fecha:V('ct-f'), est:V('ct-es')})
-  sd('cont',cts); document.getElementById('ct-t').value=''; renderCont(); toast('Contenido agregado ✓')
+async function doReg() {
+  const name = V('r-name').trim()
+  const email = V('r-email').trim().toLowerCase()
+  const pass = V('r-pass')
+  if (!name || !email || !pass) { showErr('Completá todos los campos'); return }
+  if (pass.length < 6) { showErr('La contraseña debe tener al menos 6 caracteres'); return }
+  const btn = document.getElementById('reg-btn')
+  btn.disabled = true; btn.textContent = 'Creando cuenta...'
+  const { error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { name } }
+  })
+  btn.disabled = false; btn.textContent = 'Crear cuenta gratis'
+  if (error) { showErr(error.message) }
+  else { showOk('¡Cuenta creada! Revisá tu email para confirmar (o ingresá directamente).') }
 }
-function delCont(id){ sd('cont',gd('cont',[]).filter(c=>c.id!==id)); renderCont() }
-function addRef(){
-  const n=V('re-n').trim(), w=V('re-w').trim(); if(!n) return
-  const rs=gd('refs',[]); rs.push({id:Date.now(),nom:n,why:w}); sd('refs',rs)
-  document.getElementById('re-n').value=''; document.getElementById('re-w').value=''; renderRefs()
-}
-function delRef(id){ sd('refs',gd('refs',[]).filter(r=>r.id!==id)); renderRefs() }
-function saveAng(){ sd('ang',{p:V('an-p'),t:V('an-t'),s:V('an-s'),n:V('an-n')}) }
-function loadAng(){ const a=gd('ang',{}); ;[['an-p','p'],['an-t','t'],['an-s','s'],['an-n','n']].forEach(([id,k])=>{ const e=document.getElementById(id); if(e) e.value=a[k]||'' }) }
 
-function renderCont(){
-  const cts=gd('cont',[])
-  const el=document.getElementById('ct-lista')
-  if(!cts.length){ el.innerHTML='<div class="empty"><div class="empty-i">📅</div>Sin contenido aún</div>'; return }
-  const ti={educativo:'📚',venta:'💰',conexion:'❤️'}
-  const eb={idea:'by',produccion:'bb',publicado:'bg'}
-  const el2={idea:'Idea',produccion:'Producción',publicado:'Publicado'}
-  el.innerHTML=cts.map(c=>`
-    <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div><div style="font-size:13px;font-weight:500">${ti[c.tipo]||'📄'} ${c.tit}</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${c.plat}${c.fecha?' · '+c.fecha:''}</div></div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-          <span class="badge ${eb[c.est]}">${el2[c.est]}</span>
-          <button class="btn btn-del" onclick="delCont(${c.id})">✕</button>
-        </div>
-      </div>
-    </div>`).join('')
+async function doLogout() {
+  if (!confirm('¿Salir de Kairós?')) return
+  await sb.auth.signOut()
 }
-function renderRefs(){
-  const rs=gd('refs',[])
-  document.getElementById('ref-lista').innerHTML=!rs.length
-    ?'<div class="empty" style="padding:20px"><div class="empty-i">🏆</div>Sin referentes</div>'
-    :rs.map(r=>`<div class="mrow"><div><div style="font-size:13px;font-weight:500">${r.nom}</div><div style="font-size:11px;color:var(--txt3)">${r.why}</div></div><button class="btn btn-del" onclick="delRef(${r.id})">✕</button></div>`).join('')
+
+// ══════════════════════════════════════
+// ENTRAR A LA APP
+// ══════════════════════════════════════
+async function enterApp() {
+  document.getElementById('loading').classList.add('hide')
+  document.getElementById('auth-screen').style.display = 'none'
+  document.getElementById('app').classList.add('on')
+  document.getElementById('tb-user').textContent = CU.email
+  document.getElementById('tx-f').value = today()
+  setDashTitle()
+  await setupTables()
+  await renderAll()
+  const biz = await getBiz()
+  setTbBiz(biz)
+  if (!biz || !biz.nom) openWiz()
 }
-function aiIdeas(){
-  const b=gd('biz',{})
+
+// ══════════════════════════════════════
+// SUPABASE — TABLAS (crear si no existen via RPC no disponible en free)
+// Usamos upsert con user_id para RLS
+// ══════════════════════════════════════
+async function setupTables() {
+  // Las tablas se crean manualmente en Supabase
+  // Esta función verifica que todo esté ok
+}
+
+// ══════════════════════════════════════
+// NEGOCIO (tabla: negocios, 1 fila por usuario)
+// ══════════════════════════════════════
+async function getBiz() {
+  const { data } = await sb.from('negocios').select('*').eq('user_id', CU.id).single()
+  return data
+}
+
+let bizSaveTimer = null
+async function saveBiz(force = false) {
+  const biz = { user_id: CU.id, nom: V('b-nom'), rub: V('b-rub'), loc: V('b-loc'), can: V('b-can'), prob: V('b-prob'), dif: V('b-dif'), cli: V('b-cli'), don: V('b-don'), prod: V('b-prod'), prec: V('b-prec') || 0 }
+  setTbBiz(biz)
+  if (force) {
+    await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
+    toast('Negocio guardado ✓')
+  } else {
+    clearTimeout(bizSaveTimer)
+    bizSaveTimer = setTimeout(async () => {
+      await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
+    }, 1500)
+  }
+}
+
+async function loadBizForm() {
+  const b = await getBiz()
+  if (!b) return
+  ;[['b-nom','nom'],['b-rub','rub'],['b-loc','loc'],['b-can','can'],['b-prob','prob'],['b-dif','dif'],['b-cli','cli'],['b-don','don'],['b-prod','prod'],['b-prec','prec']].forEach(([id,k]) => { const e = document.getElementById(id); if (e) e.value = b[k] || '' })
+  setTbBiz(b)
+}
+
+function setTbBiz(b) {
+  document.getElementById('tb-biz').innerHTML = b?.nom ? `<strong>${b.nom}</strong>${b.rub ? ' · ' + b.rub : ''}` : '<span style="color:var(--txt3)">Sin negocio configurado</span>'
+}
+
+// ══════════════════════════════════════
+// WIZARD
+// ══════════════════════════════════════
+function openWiz() { document.getElementById('wizard').classList.add('on') }
+function closeWiz() { document.getElementById('wizard').classList.remove('on') }
+function setWDot(n) { document.querySelectorAll('.wdot').forEach((d,i) => d.classList.toggle('on', i < n)) }
+function wNext(s) {
+  if (s === 1) { if (!V('w-nom').trim()) { alert('Ingresá el nombre'); return }; document.getElementById('ws1').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
+  else { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws3').classList.add('on'); setWDot(3) }
+}
+function wBack(s) {
+  if (s === 2) { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws1').classList.add('on'); setWDot(1) }
+  if (s === 3) { document.getElementById('ws3').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
+}
+async function wFinish() {
+  const btn = document.getElementById('w-finish-btn')
+  btn.disabled = true; btn.textContent = 'Guardando...'
+  const can = [...document.querySelectorAll('#w-canales input:checked')].map(c => c.value).join(', ')
+  const biz = { user_id: CU.id, nom: V('w-nom').trim(), rub: V('w-rub').trim(), cli: V('w-cli').trim(), prec: parseFloat(V('w-precio')) || 0, can, loc: '', prob: '', dif: '', don: '', prod: '' }
+  await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
+  setTbBiz(biz)
+  ;['b-nom','b-rub','b-cli','b-can'].forEach(id => { const e = document.getElementById(id); if (e) e.value = biz[id.replace('b-','').replace('nom','nom').replace('rub','rub').replace('cli','cli').replace('can','can')] || '' })
+  document.getElementById('b-nom').value = biz.nom
+  document.getElementById('b-rub').value = biz.rub
+  document.getElementById('b-cli').value = biz.cli
+  document.getElementById('b-can').value = biz.can
+  btn.disabled = false
+  closeWiz()
+  toast('¡Bienvenido/a a Kairós! ✦')
+}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function go(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'))
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'))
+  document.getElementById('page-' + page).classList.add('on')
+  el.classList.add('on')
+}
+function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
+
+// ══════════════════════════════════════
+// FINANZAS
+// ══════════════════════════════════════
+function today() { return new Date().toISOString().slice(0, 10) }
+
+async function addTx() {
+  const d = V('tx-d').trim(), mo = parseFloat(V('tx-m')) || 0
+  if (!d || mo <= 0) { toast('Completá descripción y monto'); return }
+  const { error } = await sb.from('transacciones').insert({ user_id: CU.id, tipo: V('tx-t'), descripcion: d, cat: V('tx-c'), monto: mo, fecha: V('tx-f') || today() })
+  if (error) { toast('Error al guardar'); return }
+  document.getElementById('tx-d').value = ''; document.getElementById('tx-m').value = ''
+  await renderFin(); await renderDash()
+  toast('Movimiento registrado ✓')
+}
+
+async function delTx(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return
+  await sb.from('transacciones').delete().eq('id', id).eq('user_id', CU.id)
+  await renderFin(); await renderDash()
+}
+
+async function addGF() {
+  const n = V('gf-n').trim(), m = parseFloat(V('gf-m')) || 0
+  if (!n || m <= 0) { toast('Completá nombre y monto'); return }
+  await sb.from('gastos_fijos').insert({ user_id: CU.id, nom: n, mon: m })
+  document.getElementById('gf-n').value = ''; document.getElementById('gf-m').value = ''
+  await renderFin(); await renderDash()
+  toast('Gasto fijo agregado ✓')
+}
+
+async function delGF(id) {
+  if (!confirm('¿Eliminar?')) return
+  await sb.from('gastos_fijos').delete().eq('id', id).eq('user_id', CU.id)
+  await renderFin(); await renderDash()
+}
+
+function getMes() {
+  const n = new Date(); return { m: n.getMonth() + 1, y: n.getFullYear() }
+}
+
+async function renderFin() {
+  const { m, y } = getMes()
+  const { data: txs } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', `${y}-${String(m).padStart(2,'0')}-01`).lt('fecha', m===12?`${y+1}-01-01`:`${y}-${String(m+1).padStart(2,'0')}-01`).order('fecha', { ascending: false })
+  const { data: gfs } = await sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
+  const all = txs || [], allGF = gfs || []
+  const ing = all.filter(t => t.tipo==='ingreso').reduce((a,b) => a+b.monto, 0)
+  const egr = all.filter(t => t.tipo==='egreso').reduce((a,b) => a+b.monto, 0)
+  const gan = ing - egr, mar = ing > 0 ? Math.round((gan/ing)*100) : 0
+  const tf = allGF.reduce((a,b) => a+b.mon, 0)
+
+  S('f-ing','$'+fmt(ing)); S('f-ing-n', all.filter(t=>t.tipo==='ingreso').length+' registros')
+  S('f-egr','$'+fmt(egr)); S('f-egr-n', all.filter(t=>t.tipo==='egreso').length+' registros')
+  S('f-gan','$'+fmt(gan)); document.getElementById('f-gan').style.color = gan>=0?'var(--green)':'var(--red)'
+  S('f-mar','Margen: '+mar+'%'); S('f-eq','$'+fmt(tf))
+  const pct = tf > 0 ? Math.min(100, Math.round((ing/tf)*100)) : 0
+  const bar = document.getElementById('f-eq-b')
+  bar.style.width = pct+'%'; bar.style.background = pct>=100?'var(--green)':pct>=60?'var(--yel)':'var(--red)'
+
+  // Tabla all txs
+  const { data: allTx } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('fecha', { ascending: false }).limit(40)
+  document.getElementById('tx-tb').innerHTML = !(allTx?.length)
+    ? '<tr><td colspan="5"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr>'
+    : (allTx||[]).map(t => `<tr><td>${t.descripcion}</td><td><span class="badge ${t.tipo==='ingreso'?'bg':'br'}">${t.cat}</span></td><td style="font-weight:600;color:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}">$${fmt(t.monto)}</td><td style="color:var(--txt3)">${t.fecha}</td><td><button class="btn btn-del" onclick="delTx('${t.id}')">✕</button></td></tr>`).join('')
+
+  document.getElementById('gf-lista').innerHTML = !allGF.length
+    ? '<div class="empty" style="padding:20px"><div class="empty-i">📌</div>Sin gastos fijos</div>'
+    : allGF.map(g => `<div class="mrow"><div class="mlbl">${g.nom}</div><div style="display:flex;align-items:center;gap:10px"><div class="mval" style="color:var(--red)">$${fmt(g.mon)}</div><button class="btn btn-del" onclick="delGF('${g.id}')">✕</button></div></div>`).join('')
+  S('gf-tot','$'+fmt(tf))
+}
+
+// ══════════════════════════════════════
+// PRODUCTOS
+// ══════════════════════════════════════
+function prevMargen() {
+  const co = parseFloat(V('p-co'))||0, pr = parseFloat(V('p-pr'))||0
+  const el = document.getElementById('p-mprev')
+  if (pr>0&&co>0) { const m=Math.round(((pr-co)/pr)*100); el.innerHTML=`Ganancia por unidad: <strong style="color:${m>20?'var(--green)':m>0?'var(--yel)':'var(--red)'}">${m}% ($${fmt(pr-co)})</strong>` }
+  else el.innerHTML=''
+}
+
+async function addProd() {
+  const n = V('p-n').trim(); if (!n) { toast('Ingresá el nombre'); return }
+  const co = parseFloat(V('p-co'))||0, pr = parseFloat(V('p-pr'))||0
+  if (pr>0&&co>pr) { toast('El costo no puede superar el precio de venta'); return }
+  await sb.from('productos').insert({ user_id: CU.id, nom: n, cat: V('p-c'), desc: V('p-d'), costo: co, precio: pr, stock: parseInt(V('p-st'))||0, estado: V('p-es') })
+  ;['p-n','p-c','p-d','p-co','p-pr','p-st'].forEach(id => { const e=document.getElementById(id); if(e) e.value='' })
+  document.getElementById('p-mprev').innerHTML=''
+  await renderProds(); toast('Producto agregado ✓')
+}
+
+async function delProd(id) {
+  if (!confirm('¿Eliminar?')) return
+  await sb.from('productos').delete().eq('id', id).eq('user_id', CU.id)
+  await renderProds()
+}
+
+async function renderProds() {
+  const { data: ps } = await sb.from('productos').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  const eBadge = {activo:'bg',pausado:'by',sin_stock:'br'}
+  const eLabel = {activo:'Activo',pausado:'Pausado',sin_stock:'Sin stock'}
+  document.getElementById('p-tb').innerHTML = !(ps?.length)
+    ? '<tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos</div></td></tr>'
+    : ps.map(p => { const m=p.precio>0&&p.costo>0?Math.round(((p.precio-p.costo)/p.precio)*100):null; return `<tr><td><strong>${p.nom}</strong>${p.descripcion?`<div style="font-size:11px;color:var(--txt3)">${p.descripcion.slice(0,55)}...</div>`:''}</td><td style="color:var(--txt3)">${p.cat||'—'}</td><td>${p.costo>0?'$'+fmt(p.costo):'—'}</td><td style="font-weight:600">${p.precio>0?'$'+fmt(p.precio):'—'}</td><td>${m!==null?`<span style="color:${m>20?'var(--green)':m>0?'var(--yel)':'var(--red)'}">${m}%</span>`:'—'}</td><td>${p.stock}</td><td><span class="badge ${eBadge[p.estado]||'bb'}">${eLabel[p.estado]||p.estado}</span></td><td><button class="btn btn-del" onclick="delProd('${p.id}')">✕</button></td></tr>` }).join('')
+}
+
+async function aiDescProd() {
+  const n = V('p-n').trim(); if (!n) { toast('Ingresá el nombre primero'); return }
+  const b = await getBiz()
   openAI()
-  document.getElementById('ai-inp').value=`Dame 5 ideas concretas de contenido para ${b.rub||'mi negocio'} (cliente: ${b.cli||'general'}). Para cada idea: tipo (educativo/venta/conexión), plataforma recomendada y el ángulo del post en una línea.`
+  document.getElementById('ai-inp').value = `Generá una descripción atractiva (máximo 3 oraciones) para: "${n}"${V('p-c')?' categoría '+V('p-c'):''}. Negocio: ${b?.rub||'general'}. Solo la descripción, sin título.`
   sendAI()
 }
 
-// ════════════════════════════════════════
+// ══════════════════════════════════════
+// LEADS
+// ══════════════════════════════════════
+async function addLead() {
+  const n = V('le-n').trim(); if (!n) { toast('Ingresá el nombre'); return }
+  await sb.from('leads').insert({ user_id: CU.id, nom: n, contacto: V('le-c'), valor: parseFloat(V('le-v'))||0, nota: V('le-no'), estado: 'lead' })
+  ;['le-n','le-c','le-v','le-no'].forEach(id => { const e=document.getElementById(id); if(e) e.value='' })
+  await renderLeads(); await renderDash()
+  toast('Lead agregado ✓')
+}
+
+async function moveLead(id, estado) {
+  await sb.from('leads').update({ estado }).eq('id', id).eq('user_id', CU.id)
+  await renderLeads(); await renderDash()
+}
+
+async function delLead(id) {
+  if (!confirm('¿Eliminar?')) return
+  await sb.from('leads').delete().eq('id', id).eq('user_id', CU.id)
+  await renderLeads(); await renderDash()
+}
+
+async function renderLeads() {
+  const { data: ls } = await sb.from('leads').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  const next = {lead:'contactado',contactado:'propuesta',propuesta:'cliente',cliente:null}
+  const nextL = {lead:'Contactar →',contactado:'Propuesta →',propuesta:'Cerrar →',cliente:null}
+  ;['lead','contactado','propuesta','cliente'].forEach(est => {
+    const col = document.getElementById('col-'+est)
+    const items = (ls||[]).filter(l => l.estado===est)
+    if (!items.length) { col.innerHTML='<div style="color:var(--txt3);font-size:12px;text-align:center;padding:16px 0">—</div>'; return }
+    col.innerHTML = items.map(l => `<div class="kcard"><div class="kcard-n">${l.nom}</div><div class="kcard-i">${l.contacto||'Sin contacto'}</div>${l.valor>0?`<div style="font-size:12px;color:var(--gold);margin-top:3px">$${fmt(l.valor)}</div>`:''}<div class="kcard-a">${next[est]?`<button class="btn btn-ghost btn-sm" onclick="moveLead('${l.id}','${next[est]}')">${nextL[est]}</button>`:''}${(l.contacto&&/^[\d+]/.test(l.contacto))?`<a href="https://wa.me/${l.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-ghost btn-sm">💬 WA</a>`:''}<button class="btn btn-del" onclick="delLead('${l.id}')">✕</button></div></div>`).join('')
+  })
+}
+
+// ══════════════════════════════════════
+// PUBLICIDAD
+// ══════════════════════════════════════
+async function addCamp() {
+  const n = V('ca-n').trim(); if (!n) { toast('Ingresá el nombre'); return }
+  const inv = parseFloat(V('ca-inv'))||0; if (inv<=0) { toast('Ingresá la inversión'); return }
+  const cli = parseInt(V('ca-cli'))||0, ing = parseFloat(V('ca-ing'))||0
+  await sb.from('campanas').insert({ user_id: CU.id, plat: V('ca-pl'), nom: n, inv, cli, ing, roas: inv>0&&ing>0?(ing/inv).toFixed(2):null, cac: cli>0?(inv/cli).toFixed(0):null })
+  ;['ca-n','ca-inv','ca-cli','ca-ing'].forEach(id => { const e=document.getElementById(id); if(e) e.value='' })
+  await renderPub(); await renderMet()
+  toast('Campaña registrada ✓')
+}
+
+async function delCamp(id) {
+  if (!confirm('¿Eliminar?')) return
+  await sb.from('campanas').delete().eq('id', id).eq('user_id', CU.id)
+  await renderPub(); await renderMet()
+}
+
+async function renderPub() {
+  const { data: camps } = await sb.from('campanas').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  const cs = camps||[]
+  const ti=cs.reduce((a,b)=>a+b.inv,0), tc=cs.reduce((a,b)=>a+b.cli,0), tig=cs.reduce((a,b)=>a+b.ing,0)
+  S('pu-inv','$'+fmt(ti)); S('pu-cli',tc)
+  S('pu-cac',tc>0?'$'+fmt(ti/tc):'—')
+  S('pu-roas',ti>0&&tig>0?(tig/ti).toFixed(2)+'x':'—')
+  document.getElementById('ca-tb').innerHTML = !cs.length
+    ? '<tr><td colspan="5"><div class="empty"><div class="empty-i">📣</div>Sin campañas</div></td></tr>'
+    : cs.map(c => { const r=parseFloat(c.roas),rc=r>=4?'var(--green)':r>=2?'var(--yel)':'var(--red)'; return `<tr><td><strong>${c.plat}</strong><div style="font-size:11px;color:var(--txt3)">${c.nom}</div></td><td>$${fmt(c.inv)}</td><td>${c.cli}</td><td style="font-weight:600;color:${c.roas?rc:'var(--txt3)'}">${c.roas?c.roas+'x':'—'}</td><td><button class="btn btn-del" onclick="delCamp('${c.id}')">✕</button></td></tr>` }).join('')
+}
+
+// ══════════════════════════════════════
+// CONTENIDO
+// ══════════════════════════════════════
+async function addCont() {
+  const t = V('ct-t').trim(); if (!t) { toast('Ingresá el título'); return }
+  await sb.from('contenido').insert({ user_id: CU.id, tit: t, tipo: V('ct-tp'), plat: V('ct-pl'), fecha: V('ct-f')||null, estado: V('ct-es') })
+  document.getElementById('ct-t').value = ''
+  await renderCont(); toast('Contenido agregado ✓')
+}
+async function delCont(id) {
+  await sb.from('contenido').delete().eq('id', id).eq('user_id', CU.id)
+  await renderCont()
+}
+async function addRef() {
+  const n = V('re-n').trim(), w = V('re-w').trim(); if (!n) return
+  await sb.from('referentes').insert({ user_id: CU.id, nom: n, why: w })
+  document.getElementById('re-n').value=''; document.getElementById('re-w').value=''
+  await renderRefs()
+}
+async function delRef(id) {
+  await sb.from('referentes').delete().eq('id', id).eq('user_id', CU.id)
+  await renderRefs()
+}
+
+let angTimer = null
+async function saveAng() {
+  clearTimeout(angTimer)
+  angTimer = setTimeout(async () => {
+    await sb.from('angulos').upsert({ user_id: CU.id, p: V('an-p'), t: V('an-t'), s: V('an-s'), n: V('an-n') }, { onConflict: 'user_id' })
+  }, 1500)
+}
+
+async function loadAng() {
+  const { data: a } = await sb.from('angulos').select('*').eq('user_id', CU.id).single()
+  if (!a) return
+  ;[['an-p','p'],['an-t','t'],['an-s','s'],['an-n','n']].forEach(([id,k]) => { const e=document.getElementById(id); if(e) e.value=a[k]||'' })
+}
+
+async function renderCont() {
+  const { data: cts } = await sb.from('contenido').select('*').eq('user_id', CU.id).order('fecha', { ascending: true, nullsFirst: false })
+  const el = document.getElementById('ct-lista')
+  if (!(cts?.length)) { el.innerHTML='<div class="empty"><div class="empty-i">📅</div>Sin contenido</div>'; return }
+  const ti={educativo:'📚',venta:'💰',conexion:'❤️'}
+  const eb={idea:'by',produccion:'bb',publicado:'bg'}
+  const el2={idea:'Idea',produccion:'Producción',publicado:'Publicado'}
+  el.innerHTML = cts.map(c => `<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div style="font-size:13px;font-weight:500">${ti[c.tipo]||'📄'} ${c.tit}</div><div style="font-size:11px;color:var(--txt3);margin-top:3px">${c.plat}${c.fecha?' · '+c.fecha:''}</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><span class="badge ${eb[c.estado]}">${el2[c.estado]}</span><button class="btn btn-del" onclick="delCont('${c.id}')">✕</button></div></div></div>`).join('')
+}
+
+async function renderRefs() {
+  const { data: rs } = await sb.from('referentes').select('*').eq('user_id', CU.id)
+  document.getElementById('ref-lista').innerHTML = !(rs?.length)
+    ? '<div class="empty" style="padding:20px"><div class="empty-i">🏆</div>Sin referentes</div>'
+    : rs.map(r => `<div class="mrow"><div><div style="font-size:13px;font-weight:500">${r.nom}</div><div style="font-size:11px;color:var(--txt3)">${r.why}</div></div><button class="btn btn-del" onclick="delRef('${r.id}')">✕</button></div>`).join('')
+}
+
+async function aiIdeas() {
+  const b = await getBiz(); openAI()
+  document.getElementById('ai-inp').value = `Dame 5 ideas de contenido para ${b?.rub||'mi negocio'} (cliente: ${b?.cli||'general'}). Para cada una: tipo (educativo/venta/conexión), plataforma y ángulo en una línea.`
+  sendAI()
+}
+
+// ══════════════════════════════════════
 // MÉTRICAS
-// ════════════════════════════════════════
-function calcEng(){
+// ══════════════════════════════════════
+function calcEng() {
   const se=parseFloat(V('en-se'))||0, inte=parseFloat(V('en-in'))||0
-  if(!se){ toast('Ingresá los seguidores'); return }
+  if (!se) { toast('Ingresá seguidores'); return }
   const e=((inte/se)*100).toFixed(2)
   let ev,cl
-  if(e<1){ev='⚠️ Bajo — revisá el tipo de contenido que publicás';cl='var(--red)'}
+  if(e<1){ev='⚠️ Bajo — revisá el tipo de contenido';cl='var(--red)'}
   else if(e<3){ev='🟡 Normal — hay espacio para crecer';cl='var(--yel)'}
   else if(e<6){ev='✅ Bueno — tu contenido engancha';cl='var(--green)'}
   else{ev='🚀 Excelente — seguí así';cl='var(--green)'}
   document.getElementById('en-res').innerHTML=`<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:14px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${cl}">${e}%</div><div style="font-size:12px;color:var(--txt2);margin-top:4px">${ev}</div></div>`
 }
-function calcCierre(){
+
+function calcCierre() {
   const le=parseFloat(V('ci-le'))||0, ve=parseFloat(V('ci-ve'))||0
-  if(!le){ toast('Ingresá los leads'); return }
-  if(ve>le){ toast('Las ventas no pueden superar los leads'); return }
+  if (!le) { toast('Ingresá los leads'); return }
+  if (ve>le) { toast('Las ventas no pueden superar los leads'); return }
   const t=((ve/le)*100).toFixed(1)
   let ev,cl
-  if(t<10){ev='⚠️ Bajo — revisá tu proceso de ventas y propuesta';cl='var(--red)'}
-  else if(t<25){ev='🟡 Normal — hay margen para mejorar';cl='var(--yel)'}
+  if(t<10){ev='⚠️ Bajo — revisá tu proceso de ventas';cl='var(--red)'}
+  else if(t<25){ev='🟡 Normal — margen para mejorar';cl='var(--yel)'}
   else if(t<50){ev='✅ Bueno — cerrás bien';cl='var(--green)'}
-  else{ev='🚀 Excelente — sos un/a vendedor/a top';cl='var(--green)'}
+  else{ev='🚀 Excelente';cl='var(--green)'}
   document.getElementById('ci-res').innerHTML=`<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:14px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${cl}">${t}%</div><div style="font-size:12px;color:var(--txt2);margin-top:4px">${ev}</div></div>`
 }
-function renderMet(){
-  const txs=getMesTxs()
-  const ing=txs.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
-  const egr=txs.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
+
+async function renderMet() {
+  const { m, y } = getMes()
+  const { data: txs } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', `${y}-${String(m).padStart(2,'0')}-01`).lt('fecha', m===12?`${y+1}-01-01`:`${y}-${String(m+1).padStart(2,'0')}-01`)
+  const { data: camps } = await sb.from('campanas').select('*').eq('user_id', CU.id)
+  const all = txs||[], cs = camps||[]
+  const ing=all.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
+  const egr=all.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
   const gan=ing-egr, mar=ing>0?Math.round((gan/ing)*100):0
-  const iT=txs.filter(t=>t.tipo==='ingreso')
-  S('m-cli',iT.length)
-  S('m-tick',iT.length>0?'$'+fmt(Math.round(ing/iT.length)):'$0')
+  const iT=all.filter(t=>t.tipo==='ingreso')
+  S('m-cli',iT.length); S('m-tick',iT.length>0?'$'+fmt(Math.round(ing/iT.length)):'$0')
   const cats={}; iT.forEach(t=>{ cats[t.cat]=(cats[t.cat]||0)+t.monto })
   const bc=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0]
   S('m-bcat',bc?bc[0]:'—')
-  const mEl=document.getElementById('m-mar')
-  mEl.textContent=mar+'%'; mEl.style.color=mar>20?'var(--green)':mar>0?'var(--yel)':'var(--red)'
+  const mEl=document.getElementById('m-mar'); mEl.textContent=mar+'%'; mEl.style.color=mar>20?'var(--green)':mar>0?'var(--yel)':'var(--red)'
   S('m-rat',egr>0?(ing/egr).toFixed(2)+'x':'—')
   let est,badge
-  if(!ing&&!egr){est='Sin datos';badge='by'}
-  else if(gan>0&&mar>20){est='🟢 Rentable';badge='bg'}
-  else if(gan>0){est='🟡 Positivo';badge='by'}
-  else{est='🔴 En pérdida';badge='br'}
+  if(!ing&&!egr){est='Sin datos';badge='by'} else if(gan>0&&mar>20){est='🟢 Rentable';badge='bg'} else if(gan>0){est='🟡 Positivo';badge='by'} else{est='🔴 En pérdida';badge='br'}
   document.getElementById('m-est').innerHTML=`<span class="badge ${badge}">${est}</span>`
-  const camps=gd('camps',[])
-  const ti=camps.reduce((a,b)=>a+b.inv,0), tc=camps.reduce((a,b)=>a+b.cli,0), tig=camps.reduce((a,b)=>a+b.ing,0)
-  S('m-roas',ti>0&&tig>0?(tig/ti).toFixed(2)+'x':'—')
-  S('m-cac',tc>0?'$'+fmt(ti/tc):'—')
-  const can={}; camps.forEach(c=>{ can[c.plat]=(can[c.plat]||0)+c.ing })
+  const ti=cs.reduce((a,b)=>a+b.inv,0),tc=cs.reduce((a,b)=>a+b.cli,0),tig=cs.reduce((a,b)=>a+b.ing,0)
+  S('m-roas',ti>0&&tig>0?(tig/ti).toFixed(2)+'x':'—'); S('m-cac',tc>0?'$'+fmt(ti/tc):'—')
+  const can={}; cs.forEach(c=>{ can[c.plat]=(can[c.plat]||0)+c.ing })
   const mc=Object.entries(can).sort((a,b)=>b[1]-a[1])[0]
   S('m-can',mc?mc[0]:'—')
 }
 
-// ════════════════════════════════════════
+// ══════════════════════════════════════
 // DASHBOARD
-// ════════════════════════════════════════
-function renderDash(){
-  const txs=getMesTxs()
-  const ing=txs.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
-  const egr=txs.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
+// ══════════════════════════════════════
+function setDashTitle() {
+  const h=new Date().getHours()
+  const g=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'
+  document.getElementById('dash-title').textContent=g
+}
+
+async function renderDash() {
+  const { m, y } = getMes()
+  const { data: txs } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', `${y}-${String(m).padStart(2,'0')}-01`).lt('fecha', m===12?`${y+1}-01-01`:`${y}-${String(m+1).padStart(2,'0')}-01`)
+  const { data: leads } = await sb.from('leads').select('*').eq('user_id', CU.id)
+  const { data: prods } = await sb.from('productos').select('id').eq('user_id', CU.id)
+  const b = await getBiz()
+  const all=txs||[], ls=leads||[]
+  const ing=all.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
+  const egr=all.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
   const gan=ing-egr, mar=ing>0?Math.round((gan/ing)*100):0
-  const ls=gd('leads',[])
-  S('d-ing','$'+fmt(ing)); S('d-ing-n',txs.filter(t=>t.tipo==='ingreso').length+' registros este mes')
-  S('d-egr','$'+fmt(egr)); S('d-egr-n',txs.filter(t=>t.tipo==='egreso').length+' registros este mes')
-  const gEl=document.getElementById('d-gan')
-  gEl.textContent='$'+fmt(gan); gEl.style.color=gan>=0?'var(--gold)':'var(--red)'
+  S('d-ing','$'+fmt(ing)); S('d-ing-n',all.filter(t=>t.tipo==='ingreso').length+' registros este mes')
+  S('d-egr','$'+fmt(egr)); S('d-egr-n',all.filter(t=>t.tipo==='egreso').length+' registros este mes')
+  const gEl=document.getElementById('d-gan'); gEl.textContent='$'+fmt(gan); gEl.style.color=gan>=0?'var(--gold)':'var(--red)'
   S('d-mar','Margen: '+mar+'%')
-  S('d-leads',ls.filter(l=>l.est!=='cliente').length)
-  S('d-cli',ls.filter(l=>l.est==='cliente').length+' clientes en pipeline')
+  S('d-leads',ls.filter(l=>l.estado!=='cliente').length)
+  S('d-cli',ls.filter(l=>l.estado==='cliente').length+' clientes en pipeline')
 
-  const allT=gd('txs',[]).slice(0,5)
-  document.getElementById('d-tx').innerHTML=!allT.length
-    ?'<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Finanzas.</div>'
-    :allT.map(t=>`<div class="mrow"><div><div style="font-size:13px">${t.desc}</div><div style="font-size:11px;color:var(--txt3)">${t.cat} · ${t.fecha}</div></div><div style="font-weight:600;color:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}">${t.tipo==='ingreso'?'+':'-'}$${fmt(t.monto)}</div></div>`).join('')
+  const { data: lastTx } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5)
+  document.getElementById('d-tx').innerHTML = !(lastTx?.length)
+    ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Finanzas.</div>'
+    : lastTx.map(t=>`<div class="mrow"><div><div style="font-size:13px">${t.descripcion}</div><div style="font-size:11px;color:var(--txt3)">${t.cat} · ${t.fecha}</div></div><div style="font-weight:600;color:${t.tipo==='ingreso'?'var(--green)':'var(--red)'}">${t.tipo==='ingreso'?'+':'-'}$${fmt(t.monto)}</div></div>`).join('')
 
-  const b=gd('biz',{})
   const items=[
-    {ok:!!b.nom, ico:b.nom?'✅':'🏗', txt:b.nom?`Negocio: ${b.nom}`:'Completá los datos de tu negocio', p:'neg'},
-    {ok:!!ing||!!egr, ico:ing||egr?'✅':'💰', txt:ing||egr?`Finanzas: $${fmt(ing)} este mes`:'Registrá tu primer movimiento financiero', p:'fin'},
-    {ok:ls.length>0, ico:ls.length?'✅':'👥', txt:ls.length?`${ls.length} contacto(s) en pipeline`:'Agregá tu primer lead o cliente', p:'leads'},
-    {ok:gd('prods',[]).length>0, ico:gd('prods',[]).length?'✅':'📦', txt:gd('prods',[]).length?`${gd('prods',[]).length} producto(s) en catálogo`:'Cargá tus productos o servicios', p:'prod'},
+    {ok:!!b?.nom,ico:b?.nom?'✅':'🏗',txt:b?.nom?`Negocio: ${b.nom}`:'Completá los datos de tu negocio',p:'neg'},
+    {ok:!!ing||!!egr,ico:ing||egr?'✅':'💰',txt:ing||egr?`Finanzas: $${fmt(ing)} este mes`:'Registrá tu primer movimiento',p:'fin'},
+    {ok:ls.length>0,ico:ls.length?'✅':'👥',txt:ls.length?`${ls.length} contacto(s) en pipeline`:'Agregá tu primer lead',p:'leads'},
+    {ok:(prods?.length||0)>0,ico:(prods?.length||0)?'✅':'📦',txt:(prods?.length||0)?`${prods.length} producto(s) en catálogo`:'Cargá tus productos',p:'prod'},
   ]
-  document.getElementById('d-est').innerHTML=items.map(i=>`
-    <div class="mrow" style="${!i.ok?'cursor:pointer':''}" ${!i.ok?`onclick="goPage('${i.p}')"`:''}">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:16px">${i.ico}</span>
-        <span style="font-size:13px;color:${i.ok?'var(--txt2)':'var(--txt)'}">${i.txt}</span>
-      </div>
-      ${!i.ok?'<span style="color:var(--gold);font-size:12px">→</span>':''}
-    </div>`).join('')
+  document.getElementById('d-est').innerHTML=items.map(i=>`<div class="mrow" style="${!i.ok?'cursor:pointer':''}" ${!i.ok?`onclick="goPage('${i.p}')"`:''}"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok?'var(--txt2)':'var(--txt)'}">${i.txt}</span></div>${!i.ok?'<span style="color:var(--gold);font-size:12px">→</span>':''}</div>`).join('')
 }
 
-// ════════════════════════════════════════
-// AI PANEL
-// ════════════════════════════════════════
-let aiH=[]
+// ══════════════════════════════════════
+// AI
+// ══════════════════════════════════════
+let aiH = []
+function openAI() { document.getElementById('ai-panel').classList.add('on'); document.getElementById('ai-ov').classList.add('on'); setTimeout(()=>document.getElementById('ai-inp').focus(),300) }
+function closeAI() { document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
 
-function openAI(){ document.getElementById('ai-panel').classList.add('on'); document.getElementById('ai-ov').classList.add('on'); setTimeout(()=>document.getElementById('ai-inp').focus(),300) }
-function closeAI(){ document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
-
-function getCtx(){
-  const b=gd('biz',{})
-  const txs=getMesTxs()
-  const ing=txs.filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
-  const egr=txs.filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
-  const gfs=gd('gfs',[]).reduce((a,b)=>a+b.mon,0)
-  const ls=gd('leads',[]), ps=gd('prods',[]), camps=gd('camps',[])
-  return `NEGOCIO: ${b.nom||'Sin nombre'} | Rubro: ${b.rub||'No definido'} | Cliente objetivo: ${b.cli||'No definido'} | Diferenciador: ${b.dif||'No definido'} | Canales: ${b.can||'No definido'} | Precio promedio: $${b.prec||0}
-FINANZAS este mes: Ingresos $${ing} | Egresos $${egr} | Ganancia $${ing-egr} | Gastos fijos $${gfs}
-PIPELINE: ${ls.length} leads (${ls.filter(l=>l.est==='cliente').length} clientes) | PRODUCTOS: ${ps.length} | CAMPAÑAS: ${camps.length}`
+async function getCtx() {
+  const b = await getBiz()
+  const { m, y } = getMes()
+  const { data: txs } = await sb.from('transacciones').select('monto,tipo').eq('user_id', CU.id).gte('fecha', `${y}-${String(m).padStart(2,'0')}-01`)
+  const { data: gfs } = await sb.from('gastos_fijos').select('mon').eq('user_id', CU.id)
+  const { data: ls } = await sb.from('leads').select('estado').eq('user_id', CU.id)
+  const { data: ps } = await sb.from('productos').select('id').eq('user_id', CU.id)
+  const { data: cs } = await sb.from('campanas').select('inv,cli,ing').eq('user_id', CU.id)
+  const ing=(txs||[]).filter(t=>t.tipo==='ingreso').reduce((a,b)=>a+b.monto,0)
+  const egr=(txs||[]).filter(t=>t.tipo==='egreso').reduce((a,b)=>a+b.monto,0)
+  const tf=(gfs||[]).reduce((a,b)=>a+b.mon,0)
+  return `Negocio: ${b?.nom||'Sin nombre'} | Rubro: ${b?.rub||'?'} | Cliente: ${b?.cli||'?'} | Diferenciador: ${b?.dif||'?'} | Canales: ${b?.can||'?'} | Precio prom: $${b?.prec||0}
+Finanzas este mes: Ing $${ing} | Egr $${egr} | Ganancia $${ing-egr} | Gastos fijos $${tf}
+Pipeline: ${(ls||[]).length} leads (${(ls||[]).filter(l=>l.estado==='cliente').length} clientes) | Productos: ${(ps||[]).length} | Campañas: ${(cs||[]).length}`
 }
 
-async function sendAI(){
-  const inp=document.getElementById('ai-inp')
-  const msg=inp.value.trim(); if(!msg) return
-  inp.value=''
-  const box=document.getElementById('ai-msgs')
-  box.innerHTML+=`<div class="ai-msg ai-usr">${msg}</div>`
-  const lid='l'+Date.now()
-  box.innerHTML+=`<div class="ai-msg ai-thnk" id="${lid}">✦ Pensando...</div>`
-  box.scrollTop=box.scrollHeight
-  aiH.push({role:'user',content:msg})
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:`Sos un asesor de negocios experto, directo y práctico. Hablás en español argentino informal (vos, tenés, hacés). Sos conciso y das consejos concretos y accionables, nunca genéricos. Nunca inventás datos sobre el negocio del usuario — si no hay datos, lo decís y explicás cómo cargarlos en la app. El usuario usa Kairós, una app de gestión de negocios.\n\nContexto actual del negocio:\n${getCtx()}`,
-        messages:aiH
+async function sendAI() {
+  const inp = document.getElementById('ai-inp')
+  const msg = inp.value.trim(); if (!msg) return
+  inp.value = ''
+  const box = document.getElementById('ai-msgs')
+  box.innerHTML += `<div class="ai-msg ai-usr">${msg}</div>`
+  const lid = 'l' + Date.now()
+  box.innerHTML += `<div class="ai-msg ai-thnk" id="${lid}">✦ Pensando...</div>`
+  box.scrollTop = box.scrollHeight
+  aiH.push({ role: 'user', content: msg })
+  try {
+    const ctx = await getCtx()
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Sos un asesor de negocios experto, directo y práctico. Hablás en español argentino (vos, tenés). Nunca inventás datos — si no hay datos cargados, lo decís y explicás cómo cargarlos en Kairós.\n\nContexto del negocio:\n${ctx}`,
+        messages: aiH
       })
     })
-    const d=await res.json()
-    const reply=d.content?.[0]?.text||'No pude procesar tu consulta. Intentá de nuevo.'
-    aiH.push({role:'assistant',content:reply})
+    const d = await res.json()
+    const reply = d.content?.[0]?.text || 'No pude procesar la consulta.'
+    aiH.push({ role: 'assistant', content: reply })
     document.getElementById(lid).remove()
-    box.innerHTML+=`<div class="ai-msg ai-bot">${reply.replace(/\n/g,'<br>')}</div>`
-    box.scrollTop=box.scrollHeight
-    if(aiH.length>20) aiH=aiH.slice(-20)
-  }catch(e){
-    document.getElementById(lid).textContent='⚠️ Error al conectar. Revisá tu conexión e intentá de nuevo.'
+    box.innerHTML += `<div class="ai-msg ai-bot">${reply.replace(/\n/g,'<br>')}</div>`
+    box.scrollTop = box.scrollHeight
+    if (aiH.length > 20) aiH = aiH.slice(-20)
+  } catch(e) {
+    document.getElementById(lid).textContent = '⚠️ Error al conectar. Intentá de nuevo.'
   }
 }
 
-// ════════════════════════════════════════
+// ══════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════
+async function renderAll() {
+  await Promise.all([
+    loadBizForm(), loadAng(),
+    renderFin(), renderProds(), renderLeads(),
+    renderPub(), renderCont(), renderRefs(),
+    renderMet(), renderDash()
+  ])
+}
+
 // UTILS
-// ════════════════════════════════════════
-function V(id){ const e=document.getElementById(id); return e?e.value:'' }
-function S(id,v){ const e=document.getElementById(id); if(e) e.textContent=v }
-function fmt(n){ return Math.round(n).toLocaleString('es-AR') }
-
+function V(id) { const e=document.getElementById(id); return e?e.value:'' }
+function S(id,v) { const e=document.getElementById(id); if(e) e.textContent=v }
+function fmt(n) { return Math.round(n).toLocaleString('es-AR') }
 let toastT
-function toast(msg){
-  const t=document.getElementById('toast'); t.textContent=msg
-  t.classList.add('on'); clearTimeout(toastT)
-  toastT=setTimeout(()=>t.classList.remove('on'),3000)
-}
+function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),3000) }
 
-function renderAll(){
-  loadBizForm(); loadAng()
-  renderFin(); renderProds(); renderLeads()
-  renderPub(); renderCont(); renderRefs()
-  renderMet(); renderDash()
-}
-
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', checkSession)
+document.addEventListener('DOMContentLoaded', init)
 </script>
 </body>
 </html>
