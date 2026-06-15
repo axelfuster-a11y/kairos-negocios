@@ -1332,7 +1332,7 @@ async function sendAI() {
 
     const botDiv = document.createElement('div')
     botDiv.className = 'ai-msg ai-bot'
-    botDiv.textContent = reply
+    botDiv.innerHTML = mdToHtml(reply)
     box.appendChild(botDiv)
     box.scrollTop = box.scrollHeight
 
@@ -1344,6 +1344,16 @@ async function sendAI() {
     box.appendChild(errDiv)
     console.error('[Kairós] AI catch:', e)
   }
+}
+
+// ── MARKDOWN SIMPLE PARA CHAT IA ──────
+function mdToHtml(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>')
 }
 
 // ══════════════════════════════════════
