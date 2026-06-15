@@ -157,6 +157,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--txt);z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
 #toast.on{display:block;transform:translateX(-50%) translateY(0)}
 #toast.err{border-color:rgba(248,113,113,0.4);color:var(--red)}
+/* RESET PASSWORD */
+#reset-screen{min-height:100vh;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%),var(--bg)}
 @media(max-width:900px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:1fr 1fr}.sidebar{width:54px}.ni span:not(.ni-ico){display:none}.ns-title{display:none}.ai-nav-btn span:last-child{display:none}.ai-nav-btn{justify-content:center}.content{padding:20px 16px}}
 @media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}}
 </style>
@@ -166,6 +168,20 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 <div class="loading-screen" id="loading">
   <div class="loading-k">K</div>
   <div style="font-size:13px;color:var(--txt3)">Cargando Kairós...</div>
+</div>
+
+<!-- RESET PASSWORD SCREEN -->
+<div id="reset-screen">
+  <div class="auth-card">
+    <div class="auth-k">K</div>
+    <div class="auth-name">Kairós</div>
+    <div class="auth-sub">Creá tu nueva contraseña</div>
+    <div id="reset-err" class="auth-msg auth-err"></div>
+    <div id="reset-ok" class="auth-msg auth-ok"></div>
+    <div class="field"><label>Nueva contraseña <span style="color:var(--txt3)">(mín. 6 caracteres)</span></label><input type="password" id="reset-pass" placeholder="••••••••"></div>
+    <div class="field"><label>Repetí la contraseña</label><input type="password" id="reset-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReset()"></div>
+    <button class="btn btn-gold btn-full" id="reset-btn" onclick="doReset()">Guardar nueva contraseña</button>
+  </div>
 </div>
 
 <div id="auth-screen" style="display:none">
@@ -1339,6 +1355,55 @@ async function renderAll() {
   await Promise.all([loadAng(), renderFin(), renderProds(), renderLeads(), renderPub(), renderCont(), renderRefs(), renderMet(), renderDash()])
 }
 
+// ══════════════════════════════════════
+// RESET PASSWORD
+// ══════════════════════════════════════
+async function checkRecovery() {
+  // Supabase manda el token en el hash de la URL
+  const hash = window.location.hash
+  if (hash.includes('type=recovery') || hash.includes('type=signup')) {
+    // Supabase JS detecta el token del hash automáticamente
+    const { data: { session } } = await sb.auth.getSession()
+    if (session) {
+      // Hay sesión activa por token de recovery — mostrar pantalla de reset
+      document.getElementById('loading').classList.add('hide')
+      document.getElementById('reset-screen').style.display = 'flex'
+      return true
+    }
+  }
+  return false
+}
+
+async function doReset() {
+  const pass  = document.getElementById('reset-pass').value
+  const pass2 = document.getElementById('reset-pass2').value
+  const err   = document.getElementById('reset-err')
+  const ok    = document.getElementById('reset-ok')
+  err.style.display = 'none'; ok.style.display = 'none'
+
+  if (!pass || pass.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres'; err.style.display = 'block'; return }
+  if (pass !== pass2) { err.textContent = 'Las contraseñas no coinciden'; err.style.display = 'block'; return }
+
+  const btn = document.getElementById('reset-btn'); btn.disabled = true; btn.textContent = 'Guardando...'
+  const { error } = await sb.auth.updateUser({ password: pass })
+  btn.disabled = false; btn.textContent = 'Guardar nueva contraseña'
+
+  if (error) { err.textContent = error.message; err.style.display = 'block'; return }
+
+  ok.textContent = '✓ Contraseña actualizada. Redirigiendo...'
+  ok.style.display = 'block'
+  // Limpiar el hash de la URL
+  window.history.replaceState(null, '', window.location.pathname)
+  setTimeout(async () => {
+    document.getElementById('reset-screen').style.display = 'none'
+    await sb.auth.signOut()
+    document.getElementById('auth-screen').style.display = 'flex'
+  }, 2000)
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init)
 </script>
 </body>
