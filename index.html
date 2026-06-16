@@ -471,6 +471,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="card">
             <div class="card-t">📄 Subir archivo</div>
             <div class="field"><label>Archivo Excel o CSV</label><input type="file" id="im-file" accept=".xlsx,.xls,.csv"></div>
+            <div class="field"><label>Tipo de dato</label><select id="im-file-kind"><option value="auto">detectar automáticamente</option><option value="inventario">productos/stock</option><option value="movimientos">movimientos financieros</option></select></div>
             <button class="btn btn-gold btn-full" onclick="handleImportFile()">Analizar archivo</button>
           </div>
 
@@ -1458,7 +1459,7 @@ function detectMedio(v) {
 
 function detectRowTarget(raw, forced = 'auto') {
   if (forced === 'inventario') return 'inventario_items'
-  if (forced === 'ingreso' || forced === 'egreso') return 'movimientos_financieros'
+  if (forced === 'movimientos' || forced === 'movimientos_financieros' || forced === 'ingreso' || forced === 'egreso') return 'movimientos_financieros'
   const t = normalizeText(Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join(' '))
   if (/(producto|sku|stock|costo|precio|inventario|tengo)/.test(t) && !/(alquiler|gasto alquiler|transferencia)/.test(t)) return 'inventario_items'
   if (/(monto|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
@@ -1512,14 +1513,16 @@ function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
   if (!tipo) tipo = detectTipo([descripcion, pick(raw, ['categoria', 'categoría'])].join(' '))
   if (tipo && tipo !== 'ingreso' && tipo !== 'egreso') tipo = detectTipo(tipo)
   const fecha = formatDateValue(pick(raw, ['fecha', 'date', 'dia', 'día']))
-  const categoria = String(pick(raw, ['categoria', 'categoría', 'rubro']) || 'sin_categoria').trim() || 'sin_categoria'
+  const categoriaRaw = pick(raw, ['categoria', 'categoría', 'rubro'])
+  const categoria = String(categoriaRaw || 'sin_categoria').trim() || 'sin_categoria'
   const medio = String(pick(raw, ['medio_pago', 'medio de pago', 'pago', 'forma_pago']) || detectMedio(JSON.stringify(raw))).trim()
 
   if (!descripcion) errors.push('Falta descripción')
   if (monto === null) errors.push('Falta monto')
   else if (!Number.isFinite(monto) || monto <= 0) errors.push('Monto inválido')
-  if (!tipo) warnings.push('Falta tipo')
+  if (!tipo) errors.push('Falta tipo: ingreso o egreso')
   if (!fecha) warnings.push('Falta fecha')
+  if (!categoriaRaw) warnings.push('Falta categoría')
 
   const status = errors.length ? 'error' : warnings.length ? 'revisar' : 'listo'
   return {
@@ -1530,7 +1533,7 @@ function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
     errors,
     warnings,
     raw,
-    normalized: { user_id: CU.id, fecha, descripcion, monto: Number.isFinite(monto) ? monto : 0, tipo: tipo || 'ingreso', medio_pago: medio || null, categoria, mes: fecha ? fecha.slice(0, 7) : null, origen: source },
+    normalized: { user_id: CU.id, fecha, descripcion, monto: Number.isFinite(monto) ? monto : 0, tipo, medio_pago: medio || null, categoria, mes: fecha ? fecha.slice(0, 7) : null, origen: source },
     label: descripcion || 'Sin descripción',
     metric: Number.isFinite(monto) ? '$' + fmt(monto) : '—',
     action: errors.length ? 'Corregir' : warnings.length ? 'Confirmar con aviso' : 'Guardar'
@@ -1642,7 +1645,7 @@ async function handleImportFile() {
   const ws = wb.Sheets[wb.SheetNames[0]]
   const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
   if (!rows.length) { toastErr('El archivo no tiene filas para importar'); return }
-  analyzeImportRows(rows, file.name, 'auto')
+  analyzeImportRows(rows, file.name, V('im-file-kind'))
 }
 
 function handleManualPrepare() {
@@ -1660,6 +1663,8 @@ function handleManualPrepare() {
 function renderImportPreview() {
   document.getElementById('im-summary-card').style.display = 'none'
   document.getElementById('im-preview-card').style.display = importRows.length ? 'block' : 'none'
+  const btn = document.getElementById('im-confirm-btn')
+  if (btn) { btn.disabled = false; btn.textContent = 'Confirmar carga' }
   const b = { listo: 'bg', revisar: 'by', error: 'br' }
   document.getElementById('im-preview').innerHTML = importRows.map(r => {
     const notes = [...r.errors, ...r.warnings].map(escapeHTML).join('<br>') || '—'
@@ -1670,22 +1675,29 @@ function renderImportPreview() {
 async function confirmImport() {
   if (!importRows.length) { toastErr('No hay preview para confirmar'); return }
   const btn = document.getElementById('im-confirm-btn')
-  btn.disabled = true; btn.textContent = 'Guardando...'
+  if (btn.disabled) return
   const validRows = importRows.filter(r => r.status !== 'error')
+  if (!validRows.length) { toastErr('No hay filas válidas para guardar'); return }
+  btn.disabled = true; btn.textContent = 'Guardando...'
   const targets = [...new Set(importRows.map(r => r.target).filter(t => t !== 'unknown'))]
   const batchTarget = targets.length === 1 ? targets[0] : targets.length > 1 ? 'mixed' : 'unknown'
+  let batchId = null
+  const failBatch = async () => {
+    if (batchId) await sb.from('import_batches').update({ status: 'failed' }).eq('id', batchId).eq('user_id', CU.id)
+  }
 
   const { data: batch, error: bErr } = await sb.from('import_batches').insert({
-    user_id: CU.id, source: importSource, target: batchTarget, status: validRows.length ? 'confirmed' : 'failed',
+    user_id: CU.id, source: importSource, target: batchTarget, status: 'preview',
     nombre_archivo: importSource === 'manual' || importSource === 'mensaje' ? null : importSource,
     total_filas: importRows.length,
     filas_validas: validRows.length,
     filas_con_error: importRows.length - validRows.length
   }).select('id').single()
   if (handleSupaError(bErr, 'import_batch')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  batchId = batch.id
 
   const importPayload = importRows.map(r => ({
-    batch_id: batch.id,
+    batch_id: batchId,
     user_id: CU.id,
     row_number: r.rowNumber,
     raw_data: r.raw || {},
@@ -1694,21 +1706,24 @@ async function confirmImport() {
     status: r.importStatus
   }))
   const { error: rowsErr } = await sb.from('import_rows').insert(importPayload)
-  if (handleSupaError(rowsErr, 'import_rows')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  if (handleSupaError(rowsErr, 'import_rows')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
 
   const movs = validRows.filter(r => r.target === 'movimientos_financieros').map(r => r.normalized)
   const invs = validRows.filter(r => r.target === 'inventario_items').map(r => r.normalized)
   if (movs.length) {
     const { error } = await sb.from('movimientos_financieros').insert(movs)
-    if (handleSupaError(error, 'movimientos_financieros')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+    if (handleSupaError(error, 'movimientos_financieros')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
   }
   if (invs.length) {
     const { error } = await sb.from('inventario_items').insert(invs)
-    if (handleSupaError(error, 'inventario_items')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+    if (handleSupaError(error, 'inventario_items')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
   }
+  const { error: doneErr } = await sb.from('import_batches').update({ status: 'confirmed' }).eq('id', batchId).eq('user_id', CU.id)
+  if (handleSupaError(doneErr, 'confirm_import_batch')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
 
   renderImportSummary(validRows)
-  btn.disabled = false; btn.textContent = 'Confirmar carga'
+  importRows = []
+  btn.disabled = true; btn.textContent = 'Carga confirmada'
   toast('Carga confirmada ✓')
 }
 
