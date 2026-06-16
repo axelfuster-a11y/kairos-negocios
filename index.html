@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kairós — El momento justo para tu negocio</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -264,6 +265,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico">💰</span><span>Finanzas</span></div>
       <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico">📦</span><span>Productos</span></div>
       <div class="ni" data-p="leads" onclick="go('leads',this)"><span class="ni-ico">👥</span><span>Clientes & Leads</span></div>
+      <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">📥</span><span>Carga inteligente</span></div>
       <div class="ns-title">Crecimiento</div>
       <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">📣</span><span>Publicidad</span></div>
       <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">📅</span><span>Contenido</span></div>
@@ -450,6 +452,82 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="kol"><div class="kol-t">💬 Contactados</div><div id="col-contactado"></div></div>
           <div class="kol"><div class="kol-t">📝 Con propuesta</div><div id="col-propuesta"></div></div>
           <div class="kol"><div class="kol-t">✅ Clientes</div><div id="col-cliente"></div></div>
+        </div>
+      </div>
+
+      <!-- CARGA INTELIGENTE -->
+      <div class="page" id="page-import">
+        <div class="ph"><div class="pt">Carga inteligente</div><div class="ps">Prepará datos, revisá el preview y confirmá antes de guardar.</div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Flujo seguro</div><div class="ctxt">Nada se guarda sin confirmación. Kairós analiza el dato, muestra errores o avisos y recién después carga en Supabase.</div></div></div>
+
+        <div class="g3" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-t">💬 Mensaje inteligente</div>
+            <div class="field"><label>Texto</label><textarea id="im-msg" placeholder="vendí cortina blackout por 60000 en efectivo"></textarea></div>
+            <div class="field"><label>Tipo de dato</label><select id="im-kind"><option value="auto">detectar automáticamente</option><option value="inventario">producto/stock</option><option value="ingreso">ingreso/venta</option><option value="egreso">egreso/gasto</option></select></div>
+            <button class="btn btn-gold btn-full" onclick="handleSmartMessage()">Analizar mensaje</button>
+          </div>
+
+          <div class="card">
+            <div class="card-t">📄 Subir archivo</div>
+            <div class="field"><label>Archivo Excel o CSV</label><input type="file" id="im-file" accept=".xlsx,.xls,.csv"></div>
+            <button class="btn btn-gold btn-full" onclick="handleImportFile()">Analizar archivo</button>
+          </div>
+
+          <div class="card">
+            <div class="card-t">✍ Carga manual</div>
+            <div class="field"><label>Tipo</label><select id="im-man-type" onchange="toggleManualImport()"><option value="movimiento">Movimiento financiero</option><option value="inventario">Producto / stock</option></select></div>
+            <div id="im-man-fin">
+              <div class="field"><label>Fecha</label><input type="date" id="im-f-fecha"></div>
+              <div class="field"><label>Descripción</label><input type="text" id="im-f-desc" placeholder="Venta, alquiler..."></div>
+              <div class="field"><label>Monto</label><input type="number" id="im-f-monto" min="0" placeholder="0"></div>
+              <div class="field"><label>Tipo</label><select id="im-f-tipo"><option value="">Seleccioná...</option><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>
+              <div class="field"><label>Medio de pago</label><input type="text" id="im-f-medio" placeholder="efectivo, transferencia..."></div>
+              <div class="field"><label>Categoría</label><input type="text" id="im-f-cat" placeholder="ventas, alquiler..."></div>
+            </div>
+            <div id="im-man-inv" style="display:none">
+              <div class="field"><label>Producto</label><input type="text" id="im-p-prod" placeholder="Sábanas blancas"></div>
+              <div class="field"><label>SKU</label><input type="text" id="im-p-sku"></div>
+              <div class="field"><label>Categoría</label><input type="text" id="im-p-cat"></div>
+              <div class="field"><label>Variante</label><input type="text" id="im-p-var"></div>
+              <div class="field"><label>Medida</label><input type="text" id="im-p-med"></div>
+              <div class="field"><label>Color</label><input type="text" id="im-p-col"></div>
+              <div class="field"><label>Stock actual</label><input type="number" id="im-p-stock" min="0"></div>
+              <div class="field"><label>Stock mínimo</label><input type="number" id="im-p-min" min="0"></div>
+              <div class="field"><label>Costo unitario</label><input type="number" id="im-p-costo" min="0"></div>
+              <div class="field"><label>Costo extra</label><input type="number" id="im-p-extra" min="0"></div>
+              <div class="field"><label>Precio local</label><input type="number" id="im-p-plocal" min="0"></div>
+              <div class="field"><label>Precio web</label><input type="number" id="im-p-pweb" min="0"></div>
+              <div class="field"><label>Proveedor</label><input type="text" id="im-p-prov"></div>
+              <div class="field"><label>Notas</label><input type="text" id="im-p-notas"></div>
+            </div>
+            <button class="btn btn-gold btn-full" onclick="handleManualPrepare()">Preparar preview</button>
+          </div>
+        </div>
+
+        <div class="card" id="im-preview-card" style="display:none;margin-bottom:20px">
+          <div class="card-t">📋 Preview</div>
+          <div class="tw"><table><thead><tr><th>Fila</th><th>Destino</th><th>Descripción / Producto</th><th>Monto / Stock</th><th>Estado</th><th>Errores</th><th>Acción</th></tr></thead><tbody id="im-preview"></tbody></table></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+            <button class="btn btn-ghost" onclick="resetImport()">Cancelar / limpiar</button>
+            <button class="btn btn-gold" id="im-confirm-btn" onclick="confirmImport()">Confirmar carga</button>
+          </div>
+        </div>
+
+        <div class="card" id="im-summary-card" style="display:none">
+          <div class="card-t">✅ Resumen final</div>
+          <div class="g4">
+            <div class="stat"><div class="sl">Importadas</div><div class="sv" id="im-s-ok">0</div></div>
+            <div class="stat"><div class="sl">Warnings</div><div class="sv" id="im-s-warn" style="color:var(--yel)">0</div></div>
+            <div class="stat"><div class="sl">Errores</div><div class="sv" id="im-s-err" style="color:var(--red)">0</div></div>
+            <div class="stat"><div class="sl">Productos</div><div class="sv" id="im-s-prod" style="color:var(--blue)">0</div></div>
+          </div>
+          <div class="g4" style="margin-top:14px">
+            <div class="stat"><div class="sl">Ingresos</div><div class="sv" id="im-s-ing" style="color:var(--green)">$0</div></div>
+            <div class="stat"><div class="sl">Egresos</div><div class="sv" id="im-s-egr" style="color:var(--red)">$0</div></div>
+            <div class="stat"><div class="sl">Stock a costo</div><div class="sv" id="im-s-costo">$0</div></div>
+            <div class="stat"><div class="sl">Stock a venta</div><div class="sv" id="im-s-venta">$0</div></div>
+          </div>
         </div>
       </div>
 
@@ -1297,6 +1375,362 @@ async function renderDash() {
     { ok: (prods?.length || 0) > 0, ico: (prods?.length || 0) ? '✅' : '📦', txt: (prods?.length || 0) ? `${prods.length} producto(s) en catálogo` : 'Cargá tus productos', p: 'prod' },
   ]
   document.getElementById('d-est').innerHTML = items.map(i => `<div class="mrow" style="${!i.ok ? 'cursor:pointer' : ''}" ${!i.ok ? `onclick="goPage('${i.p}')"` : ''}><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--txt)'}">${i.txt}</span></div>${!i.ok ? '<span style="color:var(--gold);font-size:12px">→</span>' : ''}</div>`).join('')
+}
+
+// ══════════════════════════════════════
+// CARGA INTELIGENTE
+// ══════════════════════════════════════
+let importRows = []
+let importSource = 'manual'
+
+function toggleManualImport() {
+  const isInv = V('im-man-type') === 'inventario'
+  document.getElementById('im-man-fin').style.display = isInv ? 'none' : 'block'
+  document.getElementById('im-man-inv').style.display = isInv ? 'block' : 'none'
+}
+
+function normalizeText(v) {
+  return String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function normalizeKey(k) {
+  return normalizeText(k).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+function rowMap(raw) {
+  const out = {}
+  Object.entries(raw || {}).forEach(([k, v]) => { out[normalizeKey(k)] = v })
+  return out
+}
+
+function pick(raw, aliases) {
+  const r = rowMap(raw)
+  for (const a of aliases) {
+    const v = r[normalizeKey(a)]
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v
+  }
+  return ''
+}
+
+function parseNumberValue(v) {
+  if (v === null || v === undefined || v === '') return null
+  if (typeof v === 'number') return Number.isFinite(v) ? v : NaN
+  let s = String(v).trim().replace(/[^\d,.-]/g, '')
+  if (!s) return null
+  const hasComma = s.includes(','), hasDot = s.includes('.')
+  if (hasComma && hasDot && s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.')
+  else if (hasComma && !hasDot) s = s.replace(',', '.')
+  else if (hasDot && !hasComma && /\.\d{3}$/.test(s)) s = s.replace(/\./g, '')
+  else s = s.replace(/,/g, '')
+  const n = Number(s)
+  return Number.isFinite(n) ? n : NaN
+}
+
+function formatDateValue(v) {
+  if (!v) return null
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
+  const s = String(v).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  const dmy = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/)
+  if (dmy) {
+    const y = dmy[3].length === 2 ? '20' + dmy[3] : dmy[3]
+    return `${y}-${String(dmy[2]).padStart(2, '0')}-${String(dmy[1]).padStart(2, '0')}`
+  }
+  return s
+}
+
+function detectTipo(v) {
+  const t = normalizeText(v)
+  if (/(venta|ventas|ingreso|entrada|vendi|vendí|cobre|cobro)/.test(t)) return 'ingreso'
+  if (/(gasto|gastos|egreso|salida|compra|alquiler|pague|pago)/.test(t)) return 'egreso'
+  return ''
+}
+
+function detectMedio(v) {
+  const t = normalizeText(v)
+  if (t.includes('mercado pago') || t.includes('mercado_pago')) return 'mercado_pago'
+  if (t.includes('transferencia')) return 'transferencia'
+  if (t.includes('efectivo')) return 'efectivo'
+  if (t.includes('debito')) return 'debito'
+  if (t.includes('credito')) return 'credito'
+  return ''
+}
+
+function detectRowTarget(raw, forced = 'auto') {
+  if (forced === 'inventario') return 'inventario_items'
+  if (forced === 'ingreso' || forced === 'egreso') return 'movimientos_financieros'
+  const t = normalizeText(Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join(' '))
+  if (/(producto|sku|stock|costo|precio|inventario|tengo)/.test(t) && !/(alquiler|gasto alquiler|transferencia)/.test(t)) return 'inventario_items'
+  if (/(monto|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
+  return 'unknown'
+}
+
+function parseNaturalMessage(text, forced = 'auto') {
+  const t = normalizeText(text)
+  const target = detectRowTarget({ texto: text }, forced)
+  if (target === 'movimientos_financieros') {
+    const explicitMonto = text.match(/\b(?:por|monto|total|de)\s+\$?\s*([\d.,]+)/i)
+    const montoMatch = explicitMonto || text.match(/\$?\s*([\d.,]+)/i)
+    const tipo = forced === 'ingreso' ? 'ingreso' : forced === 'egreso' ? 'egreso' : detectTipo(text)
+    let descripcion = text
+      .replace(/^\s*(vendi|vendí|venta|ingreso|entrada|gasto|egreso|salida|compra)\s+/i, '')
+      .replace(/\s+por\s+\$?\s*[\d.,]+/i, '')
+      .replace(new RegExp(`\\s*\\$?\\s*${montoMatch ? montoMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : ''}\\s*`, 'i'), ' ')
+      .replace(/\s+(en|por)\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)/i, '')
+      .replace(/\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)$/i, '')
+      .trim()
+    return { target, raw: { descripcion, monto: montoMatch ? montoMatch[1] : '', tipo, medio_pago: detectMedio(text), categoria: tipo === 'egreso' ? 'gastos' : 'ventas' } }
+  }
+  if (target === 'inventario_items') {
+    const stock = text.match(/(?:tengo|stock)\s+([\d.,]+)/i)
+    const stockMin = text.match(/stock\s+m[ií]nimo\s+([\d.,]+)/i)
+    const costo = text.match(/costo\s+([\d.,]+)/i)
+    const precio = text.match(/precio\s+([\d.,]+)/i)
+    let producto = text
+      .replace(/(?:tengo|stock)\s+[\d.,]+\s*/i, '')
+      .replace(/costo\s+[\d.,]+/i, '')
+      .replace(/precio\s+[\d.,]+/i, '')
+      .replace(/stock\s+m[ií]nimo\s+[\d.,]+/i, '')
+      .trim()
+    return { target, raw: { producto, stock_actual: stock ? stock[1] : '', stock_minimo: stockMin ? stockMin[1] : '', costo_unitario: costo ? costo[1] : '', precio_venta_local: precio ? precio[1] : '' } }
+  }
+  return { target: 'unknown', raw: { texto: text } }
+}
+
+function buildImportRow(rowNumber, target, raw, source) {
+  if (target === 'movimientos_financieros') return normalizeFinancialRow(raw, rowNumber, source)
+  if (target === 'inventario_items') return normalizeInventoryRow(raw, rowNumber, source)
+  return { rowNumber, target: 'unknown', status: 'error', importStatus: 'error', errors: ['No se pudo detectar el destino'], warnings: [], raw, normalized: null, label: 'Sin destino', metric: '—', action: 'Revisar datos' }
+}
+
+function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
+  const errors = [], warnings = []
+  const descripcion = String(pick(raw, ['descripcion', 'descripción', 'detalle', 'concepto', 'producto', 'texto']) || '').trim()
+  const montoRaw = pick(raw, ['monto', 'importe', 'total', 'precio', 'valor'])
+  const monto = parseNumberValue(montoRaw)
+  let tipo = normalizeText(pick(raw, ['tipo', 'movimiento', 'operacion', 'operación']))
+  if (!tipo) tipo = detectTipo([descripcion, pick(raw, ['categoria', 'categoría'])].join(' '))
+  if (tipo && tipo !== 'ingreso' && tipo !== 'egreso') tipo = detectTipo(tipo)
+  const fecha = formatDateValue(pick(raw, ['fecha', 'date', 'dia', 'día']))
+  const categoria = String(pick(raw, ['categoria', 'categoría', 'rubro']) || 'sin_categoria').trim() || 'sin_categoria'
+  const medio = String(pick(raw, ['medio_pago', 'medio de pago', 'pago', 'forma_pago']) || detectMedio(JSON.stringify(raw))).trim()
+
+  if (!descripcion) errors.push('Falta descripción')
+  if (monto === null) errors.push('Falta monto')
+  else if (!Number.isFinite(monto) || monto <= 0) errors.push('Monto inválido')
+  if (!tipo) warnings.push('Falta tipo')
+  if (!fecha) warnings.push('Falta fecha')
+
+  const status = errors.length ? 'error' : warnings.length ? 'revisar' : 'listo'
+  return {
+    rowNumber,
+    target: 'movimientos_financieros',
+    status,
+    importStatus: errors.length ? 'error' : warnings.length ? 'warning' : 'valid',
+    errors,
+    warnings,
+    raw,
+    normalized: { user_id: CU.id, fecha, descripcion, monto: Number.isFinite(monto) ? monto : 0, tipo: tipo || 'ingreso', medio_pago: medio || null, categoria, mes: fecha ? fecha.slice(0, 7) : null, origen: source },
+    label: descripcion || 'Sin descripción',
+    metric: Number.isFinite(monto) ? '$' + fmt(monto) : '—',
+    action: errors.length ? 'Corregir' : warnings.length ? 'Confirmar con aviso' : 'Guardar'
+  }
+}
+
+function normalizeInventoryRow(raw, rowNumber, source = 'manual') {
+  const errors = [], warnings = []
+  const producto = String(pick(raw, ['producto', 'nombre', 'item', 'descripcion', 'descripción']) || '').trim()
+  const stock = parseNumberValue(pick(raw, ['stock_actual', 'stock', 'cantidad', 'unidades']))
+  const stockMin = parseNumberValue(pick(raw, ['stock_minimo', 'stock mínimo', 'minimo', 'mínimo']))
+  const costo = parseNumberValue(pick(raw, ['costo_unitario', 'costo', 'costo unitario']))
+  const extra = parseNumberValue(pick(raw, ['costo_extra', 'extra', 'costo extra']))
+  const precioLocal = parseNumberValue(pick(raw, ['precio_venta_local', 'precio_local', 'precio', 'precio venta local']))
+  const precioWeb = parseNumberValue(pick(raw, ['precio_venta_web', 'precio_web', 'precio venta web']))
+
+  if (!producto) errors.push('Falta producto')
+  ;[['stock', stock], ['costo', costo], ['precio', precioLocal]].forEach(([lbl, n]) => {
+    if (n === null) warnings.push(`Falta ${lbl}`)
+    else if (!Number.isFinite(n) || n < 0) errors.push(`${lbl} inválido`)
+  })
+  ;[['stock mínimo', stockMin], ['costo extra', extra], ['precio web', precioWeb]].forEach(([lbl, n]) => {
+    if (n !== null && (!Number.isFinite(n) || n < 0)) errors.push(`${lbl} inválido`)
+  })
+
+  const stockVal = Number.isFinite(stock) ? Math.trunc(stock) : null
+  const minVal = Number.isFinite(stockMin) ? Math.trunc(stockMin) : 0
+  const costoVal = Number.isFinite(costo) ? costo : null
+  const extraVal = Number.isFinite(extra) ? extra : 0
+  const costoTotal = costoVal !== null ? costoVal + extraVal : null
+  const localVal = Number.isFinite(precioLocal) ? precioLocal : null
+  const webVal = Number.isFinite(precioWeb) ? precioWeb : null
+  const ganLocal = localVal !== null && costoTotal !== null ? localVal - costoTotal : 0
+  const marLocal = localVal > 0 ? (ganLocal / localVal) * 100 : 0
+  const ganWeb = webVal !== null && costoTotal !== null ? webVal - costoTotal : 0
+  const marWeb = webVal > 0 ? (ganWeb / webVal) * 100 : 0
+  let estado = 'sin_datos'
+  if (stockVal !== null) estado = stockVal <= 0 ? 'rojo' : stockVal <= minVal ? 'amarillo' : 'verde'
+
+  let accion = 'Completar datos para calcular margen'
+  if (stockVal !== null && stockVal <= 0) accion = 'Reponer urgente / pausar publicación'
+  else if (stockVal !== null && stockVal <= minVal) accion = 'Reponer / vender con cuidado'
+  else if (costoVal === null || localVal === null) accion = 'Completar datos para calcular margen'
+  else if (marLocal < 25) accion = 'Revisar precio o liquidar'
+  else accion = 'Publicar fuerte'
+
+  const status = errors.length ? 'error' : warnings.length ? 'revisar' : 'listo'
+  return {
+    rowNumber,
+    target: 'inventario_items',
+    status,
+    importStatus: errors.length ? 'error' : warnings.length ? 'warning' : 'valid',
+    errors,
+    warnings,
+    raw,
+    normalized: {
+      user_id: CU.id,
+      sku: String(pick(raw, ['sku']) || '').trim() || null,
+      categoria: String(pick(raw, ['categoria', 'categoría']) || '').trim() || null,
+      producto,
+      variante: String(pick(raw, ['variante']) || '').trim() || null,
+      medida: String(pick(raw, ['medida', 'talle', 'tamaño']) || '').trim() || null,
+      color: String(pick(raw, ['color']) || '').trim() || null,
+      stock_actual: stockVal,
+      stock_minimo: minVal,
+      costo_unitario: costoVal,
+      costo_extra: extraVal,
+      costo_total: costoTotal,
+      precio_venta_local: localVal,
+      precio_venta_web: webVal,
+      ganancia_local: ganLocal,
+      margen_local_pct: marLocal,
+      ganancia_web: ganWeb,
+      margen_web_pct: marWeb,
+      estado_stock: estado,
+      accion_recomendada: accion,
+      proveedor: String(pick(raw, ['proveedor']) || '').trim() || null,
+      notas: String(pick(raw, ['notas', 'nota']) || '').trim() || null,
+      origen: source
+    },
+    label: producto || 'Sin producto',
+    metric: stockVal !== null ? String(stockVal) : '—',
+    action: accion
+  }
+}
+
+function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
+  importSource = source
+  importRows = rows.map((raw, i) => {
+    const parsed = raw?.target ? raw : { target: detectRowTarget(raw, forced), raw }
+    return buildImportRow(i + 1, parsed.target, parsed.raw || raw, source)
+  })
+  renderImportPreview()
+}
+
+function handleSmartMessage() {
+  const msg = V('im-msg').trim()
+  if (!msg) { toastErr('Escribí un mensaje para analizar'); return }
+  const parsed = parseNaturalMessage(msg, V('im-kind'))
+  analyzeImportRows([parsed], 'mensaje', parsed.target === 'unknown' ? 'auto' : parsed.target)
+}
+
+async function handleImportFile() {
+  const file = document.getElementById('im-file').files[0]
+  if (!file) { toastErr('Seleccioná un archivo'); return }
+  if (!window.XLSX) { toastErr('No se pudo cargar el lector de archivos'); return }
+  const buf = await file.arrayBuffer()
+  const wb = XLSX.read(buf, { type: 'array' })
+  const ws = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+  if (!rows.length) { toastErr('El archivo no tiene filas para importar'); return }
+  analyzeImportRows(rows, file.name, 'auto')
+}
+
+function handleManualPrepare() {
+  if (V('im-man-type') === 'inventario') {
+    analyzeImportRows([{
+      producto: V('im-p-prod'), sku: V('im-p-sku'), categoria: V('im-p-cat'), variante: V('im-p-var'), medida: V('im-p-med'), color: V('im-p-col'),
+      stock_actual: V('im-p-stock'), stock_minimo: V('im-p-min'), costo_unitario: V('im-p-costo'), costo_extra: V('im-p-extra'),
+      precio_venta_local: V('im-p-plocal'), precio_venta_web: V('im-p-pweb'), proveedor: V('im-p-prov'), notas: V('im-p-notas')
+    }], 'manual', 'inventario')
+  } else {
+    analyzeImportRows([{ fecha: V('im-f-fecha'), descripcion: V('im-f-desc'), monto: V('im-f-monto'), tipo: V('im-f-tipo'), medio_pago: V('im-f-medio'), categoria: V('im-f-cat') }], 'manual', 'auto')
+  }
+}
+
+function renderImportPreview() {
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-preview-card').style.display = importRows.length ? 'block' : 'none'
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  document.getElementById('im-preview').innerHTML = importRows.map(r => {
+    const notes = [...r.errors, ...r.warnings].map(escapeHTML).join('<br>') || '—'
+    return `<tr><td>${r.rowNumber}</td><td>${r.target === 'inventario_items' ? 'Producto/stock' : r.target === 'movimientos_financieros' ? 'Movimiento' : 'Sin destino'}</td><td>${escapeHTML(r.label)}</td><td>${escapeHTML(r.metric)}</td><td><span class="badge ${b[r.status]}">${r.status}</span></td><td style="color:${r.errors.length ? 'var(--red)' : r.warnings.length ? 'var(--yel)' : 'var(--txt3)'}">${notes}</td><td>${escapeHTML(r.action)}</td></tr>`
+  }).join('')
+}
+
+async function confirmImport() {
+  if (!importRows.length) { toastErr('No hay preview para confirmar'); return }
+  const btn = document.getElementById('im-confirm-btn')
+  btn.disabled = true; btn.textContent = 'Guardando...'
+  const validRows = importRows.filter(r => r.status !== 'error')
+  const targets = [...new Set(importRows.map(r => r.target).filter(t => t !== 'unknown'))]
+  const batchTarget = targets.length === 1 ? targets[0] : targets.length > 1 ? 'mixed' : 'unknown'
+
+  const { data: batch, error: bErr } = await sb.from('import_batches').insert({
+    user_id: CU.id, source: importSource, target: batchTarget, status: validRows.length ? 'confirmed' : 'failed',
+    nombre_archivo: importSource === 'manual' || importSource === 'mensaje' ? null : importSource,
+    total_filas: importRows.length,
+    filas_validas: validRows.length,
+    filas_con_error: importRows.length - validRows.length
+  }).select('id').single()
+  if (handleSupaError(bErr, 'import_batch')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+
+  const importPayload = importRows.map(r => ({
+    batch_id: batch.id,
+    user_id: CU.id,
+    row_number: r.rowNumber,
+    raw_data: r.raw || {},
+    normalized_data: r.normalized,
+    errors: [...r.errors, ...r.warnings],
+    status: r.importStatus
+  }))
+  const { error: rowsErr } = await sb.from('import_rows').insert(importPayload)
+  if (handleSupaError(rowsErr, 'import_rows')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+
+  const movs = validRows.filter(r => r.target === 'movimientos_financieros').map(r => r.normalized)
+  const invs = validRows.filter(r => r.target === 'inventario_items').map(r => r.normalized)
+  if (movs.length) {
+    const { error } = await sb.from('movimientos_financieros').insert(movs)
+    if (handleSupaError(error, 'movimientos_financieros')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  }
+  if (invs.length) {
+    const { error } = await sb.from('inventario_items').insert(invs)
+    if (handleSupaError(error, 'inventario_items')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  }
+
+  renderImportSummary(validRows)
+  btn.disabled = false; btn.textContent = 'Confirmar carga'
+  toast('Carga confirmada ✓')
+}
+
+function renderImportSummary(validRows) {
+  const warnings = importRows.filter(r => r.status === 'revisar').length
+  const errors = importRows.filter(r => r.status === 'error').length
+  const movs = validRows.filter(r => r.target === 'movimientos_financieros').map(r => r.normalized)
+  const invs = validRows.filter(r => r.target === 'inventario_items').map(r => r.normalized)
+  const ing = movs.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + (b.monto || 0), 0)
+  const egr = movs.filter(m => m.tipo === 'egreso').reduce((a, b) => a + (b.monto || 0), 0)
+  const stockCosto = invs.reduce((a, p) => a + ((p.stock_actual || 0) * (p.costo_total || 0)), 0)
+  const stockVenta = invs.reduce((a, p) => a + ((p.stock_actual || 0) * (p.precio_venta_local || p.precio_venta_web || 0)), 0)
+  S('im-s-ok', validRows.length); S('im-s-warn', warnings); S('im-s-err', errors); S('im-s-prod', invs.length)
+  S('im-s-ing', '$' + fmt(ing)); S('im-s-egr', '$' + fmt(egr)); S('im-s-costo', '$' + fmt(stockCosto)); S('im-s-venta', '$' + fmt(stockVenta))
+  document.getElementById('im-summary-card').style.display = 'block'
+}
+
+function resetImport() {
+  importRows = []
+  document.getElementById('im-preview-card').style.display = 'none'
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-preview').innerHTML = ''
 }
 
 // ══════════════════════════════════════
