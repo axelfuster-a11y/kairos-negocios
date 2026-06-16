@@ -335,3 +335,164 @@ Notas:
 - `normalized_data` guarda la version normalizada cuando exista.
 - `errors` guarda advertencias o errores de validacion como JSON.
 - Debe tener RLS por `user_id`.
+
+## Core Business OS preparado
+
+Estas tablas quedan preparadas para conectar ventas, inventario, movimientos de stock y acciones del bot. No reemplazan las tablas legacy `productos` ni `transacciones`.
+
+### `stock_movements`
+
+Historial de cambios de stock por item de inventario.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `inventory_item_id`
+- `tipo`
+- `cantidad`
+- `stock_antes`
+- `stock_despues`
+- `motivo`
+- `referencia_tipo`
+- `referencia_id`
+- `origen`
+- `raw_data`
+- `created_at`
+
+Notas:
+
+- `tipo` acepta `entrada`, `salida`, `ajuste`, `inicial`, `venta`, `compra` o `devolucion`.
+- `cantidad` no puede ser `0`.
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
+- Debe tener RLS por `user_id`.
+- Sirve para auditar stock sin modificar todavía el flujo de importación.
+
+### `ventas`
+
+Cabecera de ventas confirmadas.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `fecha`
+- `cliente`
+- `medio_pago`
+- `total`
+- `costo_total`
+- `ganancia`
+- `margen_pct`
+- `origen`
+- `notas`
+- `created_at`
+
+Notas:
+
+- `total` y `costo_total` no pueden ser negativos.
+- `ganancia` y `margen_pct` pueden ser negativos para detectar ventas con pérdida.
+- Debe tener RLS por `user_id`.
+
+### `venta_items`
+
+Detalle de productos o textos vendidos dentro de una venta.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `venta_id`
+- `inventory_item_id`
+- `producto_texto`
+- `cantidad`
+- `precio_unitario`
+- `costo_unitario`
+- `subtotal`
+- `ganancia`
+- `created_at`
+
+Notas:
+
+- `cantidad` debe ser mayor a `0`.
+- `precio_unitario`, `costo_unitario` y `subtotal` no pueden ser negativos.
+- `ganancia` puede ser negativa.
+- La migración referencia la venta por `(venta_id, user_id)` para evitar cruces entre usuarios.
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
+- Debe tener RLS por `user_id`.
+
+### `bot_actions`
+
+Historial de acciones propuestas por el bot antes de ejecutarlas.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `input_text`
+- `action_type`
+- `status`
+- `preview_data`
+- `result_data`
+- `error`
+- `created_at`
+- `confirmed_at`
+
+Notas:
+
+- `status` acepta `preview`, `confirmed`, `cancelled` o `failed`.
+- No debe ejecutar nada sin preview y confirmación.
+- Debe tener RLS por `user_id`.
+- `confirm_bot_action(action_id uuid)` queda como placeholder seguro: valida usuario y estado, pero no ejecuta acciones incompletas.
+
+### `inventory_aliases`
+
+Alias normalizados para conectar textos del usuario con items de inventario.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `inventory_item_id`
+- `alias`
+- `normalized_alias`
+- `created_at`
+
+Notas:
+
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
+- Debe tener RLS por `user_id`.
+- Permite que futuras cargas reconozcan variantes de nombres sin inventar productos.
+
+## Vistas preparadas
+
+### `v_finanzas_unificadas`
+
+Vista de lectura para unir movimientos financieros legacy y nuevos.
+
+Columnas:
+
+- `id`
+- `user_id`
+- `fecha`
+- `descripcion`
+- `tipo`
+- `monto`
+- `categoria`
+- `fuente`
+
+Notas:
+
+- Incluye `transacciones` con `fuente = 'legacy'`.
+- Incluye `movimientos_financieros` con `fuente = 'importado'`.
+- No modifica tablas viejas.
+- Se crea como `security_invoker` para respetar RLS de las tablas base.
+
+### `v_inventario_unificado`
+
+Vista de lectura sobre `inventario_items`.
+
+Notas:
+
+- Expone `inventario_items` con `fuente = 'importado'`.
+- No incluye todavía `productos` legacy porque el mapeo puede ser riesgoso y conviene resolverlo en una fase dedicada.
+- Se crea como `security_invoker` para respetar RLS de la tabla base.
