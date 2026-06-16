@@ -560,6 +560,15 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
         </div>
 
+        <div class="card" id="im-bot-preview-card" style="display:none;margin-bottom:20px">
+          <div class="card-t">Bot interno - preview</div>
+          <div class="tw"><table><thead><tr><th>Accion</th><th>Producto / detalle</th><th>Cantidad</th><th>Monto</th><th>Estado</th><th>Observaciones</th><th>Resultado esperado</th></tr></thead><tbody id="im-bot-preview"></tbody></table></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+            <button class="btn btn-ghost" onclick="resetImport()">Cancelar / limpiar</button>
+            <button class="btn btn-gold" id="im-bot-confirm-btn" onclick="confirmBotAction()">Confirmar accion</button>
+          </div>
+        </div>
+
         <div class="card" id="im-summary-card" style="display:none">
           <div class="card-t">✅ Resumen final</div>
           <div class="g4">
@@ -1649,6 +1658,7 @@ async function deleteImportedInventoryItem(id) {
 // ══════════════════════════════════════
 let importRows = []
 let importSource = 'manual'
+let botActionPreview = null
 
 function toggleManualImport() {
   const isInv = V('im-man-type') === 'inventario'
@@ -1731,6 +1741,185 @@ function detectRowTarget(raw, forced = 'auto') {
   if (/(monto|importe|total|valor|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
   if (detectMedio(t) || /(^|\s)\$?\s*\d{3,}(?:[.,]\d+)?(\s|$)/.test(t)) return 'movimientos_financieros'
   return 'unknown'
+}
+
+function normalizeAliasText(v) {
+  return normalizeText(v).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function stripBotProductNoise(v) {
+  return String(v || '')
+    .replace(/\b(stock|costo|precio|a|por)\s+\$?\s*[\d.,]+(?:\s*cada\s+una)?/gi, ' ')
+    .replace(/\b(stock\s+m[ií]nimo)\s+\$?\s*[\d.,]+/gi, ' ')
+    .replace(/\b(en)\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
+    .replace(/\b(cada\s+una|unidad|unidades)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function parseBotCommand(text) {
+  const t = normalizeText(text)
+  const medio = detectMedio(text)
+  if (/^(agrega|agreg[áa]|crear|crea)\b/.test(t) && /\bproducto\b/.test(t)) {
+    let producto = text.replace(/^.*?\bproducto\s+/i, '')
+    producto = stripBotProductNoise(producto)
+    return {
+      action_type: 'crear_producto',
+      input_text: text,
+      producto,
+      stock: parseNumberValue((text.match(/\bstock\s+([\d.,]+)/i) || [])[1]),
+      costo: parseNumberValue((text.match(/\bcosto\s+([\d.,]+)/i) || [])[1]),
+      precio: parseNumberValue((text.match(/\bprecio\s+([\d.,]+)/i) || [])[1])
+    }
+  }
+  if (/^(vendi|vend[íi]|venta)\b/.test(t)) {
+    const qtyMatch = text.match(/^(?:vend[íi]|vendi|venta)\s+([\d.,]+)\s+/i)
+    const qty = qtyMatch ? parseNumberValue(qtyMatch[1]) : 1
+    const unitMatch = text.match(/\ba\s+\$?\s*([\d.,]+)(?:\s*cada\s+una)?/i)
+    const totalMatch = text.match(/\bpor\s+\$?\s*([\d.,]+)/i)
+    const precio = unitMatch ? parseNumberValue(unitMatch[1]) : totalMatch ? parseNumberValue(totalMatch[1]) : null
+    let producto = text.replace(/^(?:vend[íi]|vendi|venta)\s+/i, '')
+    if (qtyMatch) producto = producto.replace(/^[\d.,]+\s+/, '')
+    producto = stripBotProductNoise(producto)
+    return { action_type: 'venta_stock', input_text: text, producto, cantidad: qty, precio_unitario: precio, medio_pago: medio }
+  }
+  if (/^(gasto|pague|pagu[ée])\b/.test(t)) {
+    const montoMatch = text.match(/\$?\s*([\d.,]+)/i)
+    let descripcion = text
+      .replace(/^(gasto|pague|pagu[ée])\s+/i, '')
+      .replace(/\$?\s*[\d.,]+/i, ' ')
+      .replace(/\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/i, ' ')
+      .trim()
+    return { action_type: 'gasto', input_text: text, descripcion, monto: parseNumberValue(montoMatch ? montoMatch[1] : ''), medio_pago: medio }
+  }
+  if (/^(compre|compr[ée])\b/.test(t)) {
+    const qtyMatch = text.match(/^(?:compr[ée]|compre)\s+([\d.,]+)\s+/i)
+    let producto = text.replace(/^(?:compr[ée]|compre)\s+/i, '')
+    if (qtyMatch) producto = producto.replace(/^[\d.,]+\s+/, '')
+    producto = stripBotProductNoise(producto)
+    const costoMatch = text.match(/\bcosto\s+\$?\s*([\d.,]+)/i) || text.match(/\ba\s+\$?\s*([\d.,]+)/i)
+    return { action_type: 'reposicion', input_text: text, producto, cantidad: parseNumberValue(qtyMatch ? qtyMatch[1] : ''), costo_unitario: parseNumberValue(costoMatch ? costoMatch[1] : ''), medio_pago: medio }
+  }
+  if (/^(ajusta|ajust[áa])\s+stock\b/.test(t)) {
+    const m = text.match(/stock\s+de\s+(.+?)\s+a\s+([\d.,]+)/i)
+    return { action_type: 'ajuste_stock', input_text: text, producto: m ? m[1].trim() : '', stock_final: parseNumberValue(m ? m[2] : '') }
+  }
+  return null
+}
+
+async function findInventoryMatch(productText) {
+  const query = normalizeAliasText(productText)
+  if (!query) return { status: 'none', matches: [] }
+  const invRes = await sb.from('inventario_items').select('id,producto,categoria,color,medida,stock_actual,stock_minimo,costo_unitario,costo_extra,costo_total,precio_venta_local,precio_venta_web').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
+  if (invRes.error) throw invRes.error
+  const aliasRes = await sb.from('inventory_aliases').select('inventory_item_id,alias,normalized_alias').eq('user_id', CU.id).limit(1000)
+  if (aliasRes.error) throw aliasRes.error
+  const aliasesByItem = {}
+  ;(aliasRes.data || []).forEach(a => {
+    aliasesByItem[a.inventory_item_id] = aliasesByItem[a.inventory_item_id] || []
+    aliasesByItem[a.inventory_item_id].push(a)
+  })
+  const scored = (invRes.data || []).map(item => {
+    const productNorm = normalizeAliasText([item.producto, item.color, item.medida].filter(Boolean).join(' '))
+    const aliasNorms = (aliasesByItem[item.id] || []).map(a => normalizeAliasText(a.normalized_alias || a.alias))
+    const all = [productNorm, ...aliasNorms].filter(Boolean)
+    let score = 0
+    if (all.some(v => v === query)) score = 100
+    else if (all.some(v => v.includes(query) || query.includes(v))) score = 70
+    else {
+      const qTokens = query.split(' ').filter(Boolean)
+      if (qTokens.length && all.some(v => qTokens.every(tok => v.includes(tok)))) score = 60
+    }
+    return { item, score }
+  }).filter(m => m.score > 0).sort((a, b) => b.score - a.score)
+  const top = scored.filter(m => m.score === scored[0]?.score)
+  if (!top.length) return { status: 'none', matches: [] }
+  if (top.length > 1) return { status: 'ambiguous', matches: top.map(m => m.item) }
+  return { status: 'match', item: top[0].item, matches: [top[0].item] }
+}
+
+function stockState(stock, min) {
+  if (stock === null || stock === undefined || !Number.isFinite(Number(stock))) return 'sin_datos'
+  const s = Number(stock), m = Number(min) || 0
+  return s <= 0 ? 'rojo' : s <= m ? 'amarillo' : 'verde'
+}
+
+function inventoryAction(stock, min, costo, precio) {
+  const estado = stockState(stock, min)
+  if (estado === 'rojo') return 'Reponer urgente / pausar publicacion'
+  if (estado === 'amarillo') return 'Reponer / vender con cuidado'
+  if (!Number.isFinite(Number(costo)) || !Number.isFinite(Number(precio)) || Number(precio) <= 0) return 'Completar datos para calcular margen'
+  const margen = ((Number(precio) - Number(costo)) / Number(precio)) * 100
+  return margen >= 25 ? 'Publicar fuerte' : 'Revisar precio o liquidar'
+}
+
+function inventoryPatch(item, nextStock, nextCost = null) {
+  const costoUnit = nextCost !== null && Number.isFinite(Number(nextCost)) ? Number(nextCost) : Number(item.costo_unitario) || 0
+  const extra = Number(item.costo_extra) || 0
+  const costoTotal = costoUnit + extra
+  const precioLocal = Number(item.precio_venta_local) || 0
+  const precioWeb = Number(item.precio_venta_web) || 0
+  const ganLocal = precioLocal ? precioLocal - costoTotal : 0
+  const ganWeb = precioWeb ? precioWeb - costoTotal : 0
+  return {
+    stock_actual: Math.trunc(Number(nextStock)),
+    costo_unitario: costoUnit,
+    costo_total: costoTotal,
+    ganancia_local: ganLocal,
+    margen_local_pct: precioLocal > 0 ? (ganLocal / precioLocal) * 100 : 0,
+    ganancia_web: ganWeb,
+    margen_web_pct: precioWeb > 0 ? (ganWeb / precioWeb) * 100 : 0,
+    estado_stock: stockState(nextStock, item.stock_minimo),
+    accion_recomendada: inventoryAction(nextStock, item.stock_minimo, costoTotal, precioLocal)
+  }
+}
+
+async function buildBotActionPreview(command) {
+  const preview = { ...command, errors: [], warnings: [], rows: [], match: null, canConfirm: true }
+  const addRow = (detail, qty, amount, expected) => {
+    preview.rows = [{ action: command.action_type, detail, qty, amount, expected }]
+  }
+  if (command.action_type === 'crear_producto') {
+    if (!command.producto) preview.errors.push('Falta producto')
+    ;[['stock', command.stock], ['costo', command.costo], ['precio', command.precio]].forEach(([lbl, val]) => {
+      if (val === null) preview.errors.push(`Falta ${lbl}`)
+      else if (!Number.isFinite(val) || val < 0) preview.errors.push(`${lbl} invalido`)
+    })
+    addRow(command.producto || 'Sin producto', Number.isFinite(command.stock) ? command.stock : '—', Number.isFinite(command.precio) ? '$' + fmt(command.precio) : '—', 'Crear inventario, alias y stock inicial')
+  } else if (['venta_stock', 'reposicion', 'ajuste_stock'].includes(command.action_type)) {
+    const match = await findInventoryMatch(command.producto)
+    preview.match = match
+    if (match.status === 'none') preview.errors.push('Producto no encontrado')
+    if (match.status === 'ambiguous') { preview.warnings.push('Hay mas de un producto parecido'); preview.canConfirm = false }
+    const item = match.item
+    if (command.action_type === 'venta_stock') {
+      if (command.cantidad === null) command.cantidad = 1
+      if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
+      if (command.precio_unitario === null) preview.errors.push('Falta precio en venta')
+      else if (!Number.isFinite(command.precio_unitario) || command.precio_unitario < 0) preview.errors.push('Precio invalido')
+      if (item && Number(item.stock_actual || 0) < command.cantidad) { preview.warnings.push('Stock insuficiente: revisar antes de vender'); preview.canConfirm = false }
+      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.precio_unitario) ? '$' + fmt(command.precio_unitario * (command.cantidad || 1)) : '—', 'Registrar venta, ingreso y salida de stock')
+    }
+    if (command.action_type === 'reposicion') {
+      if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
+      if (command.costo_unitario === null) preview.warnings.push('No se registrara egreso porque falta costo')
+      else if (!Number.isFinite(command.costo_unitario) || command.costo_unitario < 0) preview.errors.push('Costo invalido')
+      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.costo_unitario) ? '$' + fmt(command.costo_unitario * command.cantidad) : '—', 'Subir stock y registrar compra')
+    }
+    if (command.action_type === 'ajuste_stock') {
+      if (!Number.isFinite(command.stock_final) || command.stock_final < 0) preview.errors.push('Stock final invalido')
+      if (item && Number(item.stock_actual || 0) === Number(command.stock_final)) preview.errors.push('El stock ya esta en ese valor')
+      addRow(item?.producto || command.producto || 'Sin producto', Number.isFinite(command.stock_final) ? command.stock_final : '—', '—', 'Ajustar stock al valor indicado')
+    }
+  } else if (command.action_type === 'gasto') {
+    if (!command.descripcion) preview.errors.push('Falta descripcion')
+    if (command.monto === null) preview.errors.push('Falta monto')
+    else if (!Number.isFinite(command.monto) || command.monto <= 0) preview.errors.push('Monto invalido')
+    addRow(command.descripcion || 'Sin descripcion', '—', Number.isFinite(command.monto) ? '$' + fmt(command.monto) : '—', 'Registrar egreso')
+  }
+  if (preview.errors.length) preview.canConfirm = false
+  preview.status = preview.errors.length ? 'error' : preview.warnings.length ? 'revisar' : 'listo'
+  return preview
 }
 
 function parseNaturalMessage(text, forced = 'auto') {
@@ -1889,6 +2078,8 @@ function normalizeInventoryRow(raw, rowNumber, source = 'manual') {
 
 function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
   importSource = source
+  botActionPreview = null
+  document.getElementById('im-bot-preview-card').style.display = 'none'
   importRows = rows.map((raw, i) => {
     const parsed = raw?.target ? raw : { target: detectRowTarget(raw, forced), raw }
     return buildImportRow(i + 1, parsed.target, parsed.raw || raw, source)
@@ -1896,9 +2087,21 @@ function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
   renderImportPreview()
 }
 
-function handleSmartMessage() {
+async function handleSmartMessage() {
   const msg = V('im-msg').trim()
   if (!msg) { toastErr('Escribí un mensaje para analizar'); return }
+  const command = parseBotCommand(msg)
+  if (command) {
+    try {
+      botActionPreview = await buildBotActionPreview(command)
+      importRows = []
+      renderBotActionPreview()
+      return
+    } catch (e) {
+      handleSupaError(e, 'bot_preview')
+      return
+    }
+  }
   const parsed = parseNaturalMessage(msg, V('im-kind'))
   analyzeImportRows([parsed], 'mensaje', parsed.target === 'unknown' ? 'auto' : parsed.target)
 }
@@ -1927,8 +2130,27 @@ function handleManualPrepare() {
   }
 }
 
+function renderBotActionPreview() {
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-preview-card').style.display = 'none'
+  const card = document.getElementById('im-bot-preview-card')
+  const btn = document.getElementById('im-bot-confirm-btn')
+  if (!botActionPreview) {
+    card.style.display = 'none'
+    return
+  }
+  card.style.display = 'block'
+  if (btn) { btn.disabled = !botActionPreview.canConfirm; btn.textContent = botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar' }
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  const notes = [...botActionPreview.errors, ...botActionPreview.warnings].map(escapeHTML).join('<br>') || '—'
+  document.getElementById('im-bot-preview').innerHTML = botActionPreview.rows.map(r => {
+    return `<tr><td>${escapeHTML(r.action)}</td><td>${escapeHTML(r.detail)}</td><td>${escapeHTML(r.qty)}</td><td>${escapeHTML(r.amount)}</td><td><span class="badge ${b[botActionPreview.status]}">${botActionPreview.status}</span></td><td style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt3)'}">${notes}</td><td>${escapeHTML(r.expected)}</td></tr>`
+  }).join('')
+}
+
 function renderImportPreview() {
   document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
   document.getElementById('im-preview-card').style.display = importRows.length ? 'block' : 'none'
   const btn = document.getElementById('im-confirm-btn')
   if (btn) { btn.disabled = false; btn.textContent = 'Confirmar carga' }
@@ -1995,6 +2217,245 @@ async function confirmImport() {
   toast('Carga confirmada ✓')
 }
 
+async function confirmBotAction() {
+  if (!botActionPreview) { toastErr('No hay accion para confirmar'); return }
+  if (!botActionPreview.canConfirm) { toastErr('Esta accion necesita correccion antes de guardar'); return }
+  const btn = document.getElementById('im-bot-confirm-btn')
+  if (btn.disabled) return
+  btn.disabled = true; btn.textContent = 'Ejecutando...'
+  const previewData = JSON.parse(JSON.stringify(botActionPreview))
+  const { data: action, error: actionErr } = await sb.from('bot_actions').insert({
+    user_id: CU.id,
+    input_text: botActionPreview.input_text,
+    action_type: botActionPreview.action_type,
+    status: 'preview',
+    preview_data: previewData
+  }).select('id').single()
+  if (handleSupaError(actionErr, 'bot_actions')) { btn.disabled = false; btn.textContent = 'Confirmar accion'; return }
+
+  try {
+    const result = await executeBotAction(botActionPreview, action.id)
+    const { error: doneErr } = await sb.from('bot_actions').update({
+      status: 'confirmed',
+      result_data: result,
+      confirmed_at: new Date().toISOString()
+    }).eq('id', action.id).eq('user_id', CU.id)
+    if (doneErr) throw doneErr
+    botActionPreview = null
+    btn.disabled = true; btn.textContent = 'Accion confirmada'
+    document.getElementById('im-bot-preview-card').style.display = 'none'
+    await loadImportedData()
+    toast('Accion confirmada')
+  } catch (e) {
+    await sb.from('bot_actions').update({ status: 'failed', error: e.message || 'Error al ejecutar accion' }).eq('id', action.id).eq('user_id', CU.id)
+    btn.disabled = false; btn.textContent = 'Confirmar accion'
+    handleSupaError(e, 'confirmBotAction')
+  }
+}
+
+async function executeBotAction(preview, actionId) {
+  if (preview.action_type === 'crear_producto') return executeCreateProductAction(preview, actionId)
+  if (preview.action_type === 'venta_stock') return executeSaleAction(preview, actionId)
+  if (preview.action_type === 'gasto') return executeExpenseAction(preview, actionId)
+  if (preview.action_type === 'reposicion') return executeRestockAction(preview, actionId)
+  if (preview.action_type === 'ajuste_stock') return executeStockAdjustmentAction(preview, actionId)
+  throw new Error('Accion no soportada')
+}
+
+async function executeCreateProductAction(preview, actionId) {
+  const stock = Math.trunc(Number(preview.stock))
+  const costo = Number(preview.costo)
+  const precio = Number(preview.precio)
+  const ganancia = precio - costo
+  const margen = precio > 0 ? (ganancia / precio) * 100 : 0
+  const itemPayload = {
+    user_id: CU.id,
+    producto: preview.producto,
+    stock_actual: stock,
+    costo_unitario: costo,
+    costo_extra: 0,
+    costo_total: costo,
+    precio_venta_local: precio,
+    ganancia_local: ganancia,
+    margen_local_pct: margen,
+    estado_stock: stockState(stock, 0),
+    accion_recomendada: inventoryAction(stock, 0, costo, precio),
+    origen: 'bot'
+  }
+  const { data: item, error: itemErr } = await sb.from('inventario_items').insert(itemPayload).select('id,stock_actual').single()
+  if (itemErr) throw itemErr
+  const { error: aliasErr } = await sb.from('inventory_aliases').insert({
+    user_id: CU.id,
+    inventory_item_id: item.id,
+    alias: preview.producto,
+    normalized_alias: normalizeAliasText(preview.producto)
+  })
+  if (aliasErr) throw aliasErr
+  if (stock !== 0) {
+    const { error: stockErr } = await sb.from('stock_movements').insert({
+      user_id: CU.id,
+      inventory_item_id: item.id,
+      tipo: 'inicial',
+      cantidad: stock,
+      stock_antes: 0,
+      stock_despues: stock,
+      motivo: 'Producto creado por bot',
+      referencia_tipo: 'bot_action',
+      referencia_id: actionId,
+      origen: 'bot',
+      raw_data: { input_text: preview.input_text }
+    })
+    if (stockErr) throw stockErr
+  }
+  return { inventory_item_id: item.id, stock_actual: stock }
+}
+
+async function executeSaleAction(preview, actionId) {
+  const item = preview.match.item
+  const qty = Math.trunc(Number(preview.cantidad || 1))
+  const price = Number(preview.precio_unitario)
+  const before = Math.trunc(Number(item.stock_actual) || 0)
+  const after = before - qty
+  const unitCost = Number(item.costo_total ?? item.costo_unitario) || 0
+  const total = qty * price
+  const costTotal = qty * unitCost
+  const gain = total - costTotal
+  const { data: venta, error: ventaErr } = await sb.from('ventas').insert({
+    user_id: CU.id,
+    fecha: today(),
+    medio_pago: preview.medio_pago || null,
+    total,
+    costo_total: costTotal,
+    ganancia: gain,
+    margen_pct: total > 0 ? (gain / total) * 100 : 0,
+    origen: 'bot',
+    notas: preview.input_text
+  }).select('id').single()
+  if (ventaErr) throw ventaErr
+  const { error: itemErr } = await sb.from('venta_items').insert({
+    user_id: CU.id,
+    venta_id: venta.id,
+    inventory_item_id: item.id,
+    producto_texto: item.producto,
+    cantidad: qty,
+    precio_unitario: price,
+    costo_unitario: unitCost,
+    subtotal: total,
+    ganancia: gain
+  })
+  if (itemErr) throw itemErr
+  const { error: movErr } = await sb.from('movimientos_financieros').insert({
+    user_id: CU.id,
+    fecha: today(),
+    descripcion: 'Venta ' + item.producto,
+    monto: total,
+    tipo: 'ingreso',
+    medio_pago: preview.medio_pago || null,
+    categoria: 'ventas',
+    mes: today().slice(0, 7),
+    origen: 'bot'
+  })
+  if (movErr) throw movErr
+  const { error: stockErr } = await sb.from('stock_movements').insert({
+    user_id: CU.id,
+    inventory_item_id: item.id,
+    tipo: 'venta',
+    cantidad: -qty,
+    stock_antes: before,
+    stock_despues: after,
+    motivo: 'Venta registrada por bot',
+    referencia_tipo: 'venta',
+    referencia_id: venta.id,
+    origen: 'bot',
+    raw_data: { input_text: preview.input_text, bot_action_id: actionId }
+  })
+  if (stockErr) throw stockErr
+  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id)
+  if (updErr) throw updErr
+  return { venta_id: venta.id, inventory_item_id: item.id, stock_antes: before, stock_despues: after, total }
+}
+
+async function executeExpenseAction(preview, actionId) {
+  const { data, error } = await sb.from('movimientos_financieros').insert({
+    user_id: CU.id,
+    fecha: today(),
+    descripcion: preview.descripcion,
+    monto: Number(preview.monto),
+    tipo: 'egreso',
+    medio_pago: preview.medio_pago || null,
+    categoria: 'gastos',
+    mes: today().slice(0, 7),
+    origen: 'bot'
+  }).select('id').single()
+  if (error) throw error
+  return { movimiento_id: data.id, bot_action_id: actionId }
+}
+
+async function executeRestockAction(preview, actionId) {
+  const item = preview.match.item
+  const qty = Math.trunc(Number(preview.cantidad))
+  const before = Math.trunc(Number(item.stock_actual) || 0)
+  const after = before + qty
+  const unitCost = Number.isFinite(Number(preview.costo_unitario)) ? Number(preview.costo_unitario) : null
+  let movimientoId = null
+  if (unitCost !== null) {
+    const { data: mov, error: movErr } = await sb.from('movimientos_financieros').insert({
+      user_id: CU.id,
+      fecha: today(),
+      descripcion: 'Compra ' + item.producto,
+      monto: qty * unitCost,
+      tipo: 'egreso',
+      medio_pago: preview.medio_pago || null,
+      categoria: 'compras',
+      mes: today().slice(0, 7),
+      origen: 'bot'
+    }).select('id').single()
+    if (movErr) throw movErr
+    movimientoId = mov.id
+  }
+  const { error: stockErr } = await sb.from('stock_movements').insert({
+    user_id: CU.id,
+    inventory_item_id: item.id,
+    tipo: 'compra',
+    cantidad: qty,
+    stock_antes: before,
+    stock_despues: after,
+    motivo: 'Reposicion registrada por bot',
+    referencia_tipo: movimientoId ? 'movimiento_financiero' : 'bot_action',
+    referencia_id: movimientoId || actionId,
+    origen: 'bot',
+    raw_data: { input_text: preview.input_text, bot_action_id: actionId }
+  })
+  if (stockErr) throw stockErr
+  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after, unitCost)).eq('id', item.id).eq('user_id', CU.id)
+  if (updErr) throw updErr
+  return { inventory_item_id: item.id, movimiento_id: movimientoId, stock_antes: before, stock_despues: after }
+}
+
+async function executeStockAdjustmentAction(preview, actionId) {
+  const item = preview.match.item
+  const before = Math.trunc(Number(item.stock_actual) || 0)
+  const after = Math.trunc(Number(preview.stock_final))
+  const delta = after - before
+  const { error: stockErr } = await sb.from('stock_movements').insert({
+    user_id: CU.id,
+    inventory_item_id: item.id,
+    tipo: 'ajuste',
+    cantidad: delta,
+    stock_antes: before,
+    stock_despues: after,
+    motivo: 'Ajuste registrado por bot',
+    referencia_tipo: 'bot_action',
+    referencia_id: actionId,
+    origen: 'bot',
+    raw_data: { input_text: preview.input_text }
+  })
+  if (stockErr) throw stockErr
+  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id)
+  if (updErr) throw updErr
+  return { inventory_item_id: item.id, stock_antes: before, stock_despues: after }
+}
+
 function renderImportSummary(validRows) {
   const warnings = importRows.filter(r => r.status === 'revisar').length
   const errors = importRows.filter(r => r.status === 'error').length
@@ -2011,9 +2472,12 @@ function renderImportSummary(validRows) {
 
 function resetImport() {
   importRows = []
+  botActionPreview = null
   document.getElementById('im-preview-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
   document.getElementById('im-summary-card').style.display = 'none'
   document.getElementById('im-preview').innerHTML = ''
+  document.getElementById('im-bot-preview').innerHTML = ''
 }
 
 // ══════════════════════════════════════
