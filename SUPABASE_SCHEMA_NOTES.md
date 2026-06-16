@@ -215,3 +215,123 @@ Dónde se usa:
 - Contenido: guarda y carga ángulo principal, tono, palabras sí y palabras no.
 
 Nota RLS: filtrar por `user_id = auth.uid()`.
+
+## Tablas preparadas para importaciones
+
+Estas tablas quedan preparadas para un flujo futuro de Excel/texto -> preview -> confirmacion -> Supabase. Todavia no son usadas por el frontend actual y no reemplazan a `transacciones` ni `productos`.
+
+### `movimientos_financieros`
+
+Tabla destino futura para movimientos normalizados de ingresos y egresos importados.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `fecha`
+- `descripcion`
+- `monto`
+- `tipo`
+- `medio_pago`
+- `categoria`
+- `mes`
+- `origen`
+- `created_at`
+
+Notas:
+
+- `tipo` acepta solo `ingreso` o `egreso`.
+- `monto` no puede ser negativo.
+- Debe tener RLS por `user_id`.
+- Todavia no reemplaza a `transacciones`.
+
+### `inventario_items`
+
+Tabla destino futura para inventario normalizado importado.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `sku`
+- `categoria`
+- `producto`
+- `variante`
+- `medida`
+- `color`
+- `stock_actual`
+- `stock_minimo`
+- `costo_unitario`
+- `costo_extra`
+- `costo_total`
+- `precio_venta_local`
+- `precio_venta_web`
+- `ganancia_local`
+- `margen_local_pct`
+- `ganancia_web`
+- `margen_web_pct`
+- `estado_stock`
+- `accion_recomendada`
+- `proveedor`
+- `notas`
+- `origen`
+- `created_at`
+- `updated_at`
+
+Notas:
+
+- Stocks, costos y precios no pueden ser negativos.
+- Ganancias y margenes pueden ser negativos para detectar productos con perdida.
+- `estado_stock` acepta `verde`, `amarillo`, `rojo` o `sin_datos`.
+- Tiene trigger para mantener `updated_at`.
+- Debe tener RLS por `user_id`.
+- Todavia no reemplaza a `productos`.
+
+### `import_batches`
+
+Tabla de cabecera para cada intento de importacion.
+
+Columnas previstas:
+
+- `id`
+- `user_id`
+- `source`
+- `target`
+- `status`
+- `nombre_archivo`
+- `total_filas`
+- `filas_validas`
+- `filas_con_error`
+- `created_at`
+
+Notas:
+
+- `target` acepta `movimientos_financieros`, `inventario_items`, `mixed` o `unknown`.
+- `status` acepta `preview`, `confirmed`, `cancelled` o `failed`.
+- Conteos de filas no pueden ser negativos.
+- Debe tener RLS por `user_id`.
+
+### `import_rows`
+
+Tabla de detalle fila por fila para preview, validacion y auditoria de importaciones.
+
+Columnas previstas:
+
+- `id`
+- `batch_id`
+- `user_id`
+- `row_number`
+- `raw_data`
+- `normalized_data`
+- `errors`
+- `status`
+- `created_at`
+
+Notas:
+
+- `batch_id` referencia a `import_batches`.
+- `status` acepta `pending`, `valid`, `warning`, `error`, `imported` o `skipped`.
+- `raw_data` guarda la fila original como JSON.
+- `normalized_data` guarda la version normalizada cuando exista.
+- `errors` guarda advertencias o errores de validacion como JSON.
+- Debe tener RLS por `user_id`.
