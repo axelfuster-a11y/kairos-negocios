@@ -364,6 +364,7 @@ Notas:
 
 - `tipo` acepta `entrada`, `salida`, `ajuste`, `inicial`, `venta`, `compra` o `devolucion`.
 - `cantidad` no puede ser `0`.
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Debe tener RLS por `user_id`.
 - Sirve para auditar stock sin modificar todavía el flujo de importación.
 
@@ -416,6 +417,7 @@ Notas:
 - `precio_unitario`, `costo_unitario` y `subtotal` no pueden ser negativos.
 - `ganancia` puede ser negativa.
 - La migración referencia la venta por `(venta_id, user_id)` para evitar cruces entre usuarios.
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Debe tener RLS por `user_id`.
 
 ### `bot_actions`
@@ -457,6 +459,7 @@ Columnas previstas:
 
 Notas:
 
+- La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Debe tener RLS por `user_id`.
 - Permite que futuras cargas reconozcan variantes de nombres sin inventar productos.
 

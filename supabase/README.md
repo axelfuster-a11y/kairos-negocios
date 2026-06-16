@@ -56,6 +56,8 @@ La migración también:
 - Activa RLS en las cinco tablas nuevas.
 - Crea policies `select`, `insert`, `update` y `delete` por `user_id`.
 - Agrega índices por `user_id`, fechas, estado, `inventory_item_id`, `venta_id` y `normalized_alias`.
+- Agrega una constraint única `(id, user_id)` en `inventario_items` para validar relaciones compuestas.
+- Las relaciones desde `stock_movements`, `venta_items` e `inventory_aliases` hacia inventario usan `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Crea `v_finanzas_unificadas`, que une `transacciones` legacy con `movimientos_financieros`.
 - Crea `v_inventario_unificado`, que expone `inventario_items` con `fuente = 'importado'`.
 - Crea `confirm_bot_action(action_id uuid)` como placeholder seguro: valida usuario y estado, pero todavía no ejecuta acciones.
@@ -77,6 +79,8 @@ La migración también:
 - Confirmar existencia de función: `confirm_bot_action(uuid)`.
 - Revisar que RLS esté activado en las cinco tablas nuevas.
 - Revisar que las policies por `auth.uid() = user_id` existan.
+- Revisar que exista `inventario_items_id_user_id_unique`.
+- Intentar crear una fila hija con `inventory_item_id` de otro usuario debe fallar por FK compuesta.
 - Consultar `v_finanzas_unificadas` con un usuario autenticado y validar que respete RLS por las tablas base.
 - Crear una fila `bot_actions` en estado `preview` y llamar `confirm_bot_action(id)` para validar que devuelve error controlado `not_implemented`.
 

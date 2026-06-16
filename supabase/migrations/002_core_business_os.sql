@@ -1,9 +1,23 @@
 create extension if not exists "pgcrypto";
 
+do $do$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'inventario_items_id_user_id_unique'
+      and conrelid = 'public.inventario_items'::regclass
+  ) then
+    alter table public.inventario_items
+      add constraint inventario_items_id_user_id_unique unique (id, user_id);
+  end if;
+end;
+$do$;
+
 create table if not exists public.stock_movements (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
-  inventory_item_id uuid references public.inventario_items(id) on delete set null,
+  inventory_item_id uuid,
   tipo text not null,
   cantidad integer not null,
   stock_antes integer,
@@ -14,6 +28,7 @@ create table if not exists public.stock_movements (
   origen text default 'manual',
   raw_data jsonb default '{}'::jsonb,
   created_at timestamptz default now(),
+  foreign key (inventory_item_id, user_id) references public.inventario_items(id, user_id) on delete restrict,
   check (tipo in ('entrada', 'salida', 'ajuste', 'inicial', 'venta', 'compra', 'devolucion')),
   check (cantidad <> 0)
 );
@@ -53,7 +68,7 @@ create table if not exists public.venta_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
   venta_id uuid not null,
-  inventory_item_id uuid references public.inventario_items(id) on delete set null,
+  inventory_item_id uuid,
   producto_texto text,
   cantidad integer not null default 1,
   precio_unitario numeric not null default 0,
@@ -62,6 +77,7 @@ create table if not exists public.venta_items (
   ganancia numeric default 0,
   created_at timestamptz default now(),
   foreign key (venta_id, user_id) references public.ventas(id, user_id) on delete cascade,
+  foreign key (inventory_item_id, user_id) references public.inventario_items(id, user_id) on delete restrict,
   check (cantidad > 0),
   check (precio_unitario >= 0),
   check (costo_unitario >= 0),
@@ -85,10 +101,11 @@ create table if not exists public.bot_actions (
 create table if not exists public.inventory_aliases (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
-  inventory_item_id uuid references public.inventario_items(id) on delete cascade not null,
+  inventory_item_id uuid not null,
   alias text not null,
   normalized_alias text not null,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  foreign key (inventory_item_id, user_id) references public.inventario_items(id, user_id) on delete restrict
 );
 
 alter table public.stock_movements enable row level security;
