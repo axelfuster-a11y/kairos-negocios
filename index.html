@@ -1389,7 +1389,7 @@ async function renderAll() {
 async function checkRecovery() {
   // Supabase manda el token en el hash de la URL
   const hash = window.location.hash
-  if (hash.includes('type=recovery') || hash.includes('type=signup')) {
+  if (hash.includes('type=recovery')) {
     // Supabase JS detecta el token del hash automáticamente
     const { data: { session } } = await sb.auth.getSession()
     if (session) {
