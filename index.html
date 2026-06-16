@@ -1522,11 +1522,14 @@ async function loadImportedMovements() {
   const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
   const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
   const latest = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(50)
-  const month = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd)
+  const recent = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
   if (latest.error) throw latest.error
-  if (month.error) throw month.error
+  if (recent.error) throw recent.error
   importedData.movements = latest.data || []
-  importedData.movementsMonth = month.data || []
+  importedData.movementsMonth = (recent.data || []).filter(mov => {
+    const dateKey = mov.fecha || (mov.created_at ? String(mov.created_at).slice(0, 10) : null)
+    return dateKey >= mesStart && dateKey < mesEnd
+  })
 }
 
 async function loadImportedInventory() {
