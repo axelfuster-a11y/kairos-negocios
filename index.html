@@ -1838,6 +1838,16 @@ async function findInventoryMatch(productText) {
   return { status: 'match', item: top[0].item, matches: [top[0].item] }
 }
 
+async function getFreshInventoryItem(id) {
+  const { data, error } = await sb.from('inventario_items')
+    .select('id,producto,categoria,color,medida,stock_actual,stock_minimo,costo_unitario,costo_extra,costo_total,precio_venta_local,precio_venta_web')
+    .eq('id', id)
+    .eq('user_id', CU.id)
+    .single()
+  if (error || !data) throw new Error('Producto no encontrado o sin permisos')
+  return data
+}
+
 function stockState(stock, min) {
   if (stock === null || stock === undefined || !Number.isFinite(Number(stock))) return 'sin_datos'
   const s = Number(stock), m = Number(min) || 0
@@ -2311,10 +2321,15 @@ async function executeCreateProductAction(preview, actionId) {
 }
 
 async function executeSaleAction(preview, actionId) {
-  const item = preview.match.item
+  const item = await getFreshInventoryItem(preview.match.item.id)
   const qty = Math.trunc(Number(preview.cantidad || 1))
   const price = Number(preview.precio_unitario)
+  if (!Number.isFinite(qty) || qty <= 0) throw new Error('Cantidad invalida')
+  if (!Number.isFinite(price) || price <= 0) throw new Error('Precio invalido')
   const before = Math.trunc(Number(item.stock_actual) || 0)
+  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
+  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
+  if (before < qty) throw new Error('Stock insuficiente al confirmar. Volvé a generar el preview.')
   const after = before - qty
   const unitCost = Number(item.costo_total ?? item.costo_unitario) || 0
   const total = qty * price
@@ -2370,8 +2385,9 @@ async function executeSaleAction(preview, actionId) {
     raw_data: { input_text: preview.input_text, bot_action_id: actionId }
   })
   if (stockErr) throw stockErr
-  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id)
+  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
   if (updErr) throw updErr
+  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
   return { venta_id: venta.id, inventory_item_id: item.id, stock_antes: before, stock_despues: after, total }
 }
 
@@ -2392,9 +2408,12 @@ async function executeExpenseAction(preview, actionId) {
 }
 
 async function executeRestockAction(preview, actionId) {
-  const item = preview.match.item
+  const item = await getFreshInventoryItem(preview.match.item.id)
   const qty = Math.trunc(Number(preview.cantidad))
+  if (!Number.isFinite(qty) || qty <= 0) throw new Error('Cantidad invalida')
   const before = Math.trunc(Number(item.stock_actual) || 0)
+  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
+  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
   const after = before + qty
   const unitCost = Number.isFinite(Number(preview.costo_unitario)) ? Number(preview.costo_unitario) : null
   let movimientoId = null
@@ -2427,15 +2446,19 @@ async function executeRestockAction(preview, actionId) {
     raw_data: { input_text: preview.input_text, bot_action_id: actionId }
   })
   if (stockErr) throw stockErr
-  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after, unitCost)).eq('id', item.id).eq('user_id', CU.id)
+  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after, unitCost)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
   if (updErr) throw updErr
+  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
   return { inventory_item_id: item.id, movimiento_id: movimientoId, stock_antes: before, stock_despues: after }
 }
 
 async function executeStockAdjustmentAction(preview, actionId) {
-  const item = preview.match.item
+  const item = await getFreshInventoryItem(preview.match.item.id)
   const before = Math.trunc(Number(item.stock_actual) || 0)
   const after = Math.trunc(Number(preview.stock_final))
+  if (!Number.isFinite(after) || after < 0) throw new Error('Stock final invalido')
+  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
+  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
   const delta = after - before
   const { error: stockErr } = await sb.from('stock_movements').insert({
     user_id: CU.id,
@@ -2451,8 +2474,9 @@ async function executeStockAdjustmentAction(preview, actionId) {
     raw_data: { input_text: preview.input_text }
   })
   if (stockErr) throw stockErr
-  const { error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id)
+  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
   if (updErr) throw updErr
+  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
   return { inventory_item_id: item.id, stock_antes: before, stock_despues: after }
 }
 
