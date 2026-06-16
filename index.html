@@ -1752,6 +1752,7 @@ function stripBotProductNoise(v) {
     .replace(/\b(stock|costo|precio|a|por)\s+\$?\s*[\d.,]+(?:\s*cada\s+una)?/gi, ' ')
     .replace(/\b(stock\s+m[ií]nimo)\s+\$?\s*[\d.,]+/gi, ' ')
     .replace(/\b(en)\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
+    .replace(/\b(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
     .replace(/\b(cada\s+una|unidad|unidades)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
