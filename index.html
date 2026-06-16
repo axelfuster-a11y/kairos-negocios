@@ -199,6 +199,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <div class="field"><label>Correo electrónico</label><input type="email" id="l-email" placeholder="tu@email.com"></div>
       <div class="field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()">Ingresar a Kairós</button>
+      <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:12px"><span style="color:var(--gold);cursor:pointer" onclick="doForgotPassword()">Olvidé mi contraseña</span></p>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:16px">¿No tenés cuenta? <span style="color:var(--gold);cursor:pointer" onclick="swTab('reg')">Creá una gratis</span></p>
     </div>
     <div id="tab-reg" style="display:none">
@@ -606,6 +607,12 @@ function escapeHTML(str) {
 
 function V(id) { const e = document.getElementById(id); return e ? e.value : '' }
 function S(id, v) { const e = document.getElementById(id); if (e) e.textContent = v }
+function numOrDefault(id, defaultValue = 0) {
+  const raw = V(id)
+  if (raw === '' || raw === null || raw === undefined) return defaultValue
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : defaultValue
+}
 function fmt(n) { return Math.round(n).toLocaleString('es-AR') }
 function fmtDec(n) { return Number(n).toFixed(1) }
 function today() { return new Date().toISOString().slice(0, 10) }
@@ -632,6 +639,7 @@ function handleSupaError(error, context = '') {
 // AUTH
 // ══════════════════════════════════════
 async function init() {
+  if (await checkRecovery()) return
   const { data: { session } } = await sb.auth.getSession()
   if (session?.user) { CU = session.user; await enterApp() }
   else { document.getElementById('loading').classList.add('hide'); document.getElementById('auth-screen').style.display = 'flex' }
@@ -660,6 +668,14 @@ async function doLogin() {
   const { error } = await sb.auth.signInWithPassword({ email, password: pass })
   btn.disabled = false; btn.textContent = 'Ingresar a Kairós'
   if (error) showAuthErr(error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : error.message)
+}
+
+async function doForgotPassword() {
+  const email = V('l-email').trim().toLowerCase()
+  if (!email) { showAuthErr('Ingresá tu email para recuperar la contraseña'); return }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  if (error) showAuthErr(error.message)
+  else showAuthOk('Te enviamos un email para recuperar tu contraseña.')
 }
 
 async function doReg() {
@@ -777,13 +793,13 @@ async function saveCfg() {
   cfgTimer = setTimeout(async () => {
     const cfg = {
       user_id: CU.id,
-      packaging_default: parseFloat(V('cfg-pkg')) || 0,
-      envio_default: parseFloat(V('cfg-env')) || 0,
-      comision_plataforma_default_pct: parseFloat(V('cfg-cplat')) || 0,
-      comision_pago_default_pct: parseFloat(V('cfg-cpago')) || 0,
-      impuestos_default_pct: parseFloat(V('cfg-imp')) || 0,
-      descuento_default_pct: parseFloat(V('cfg-desc')) || 0,
-      margen_deseado_default_pct: parseFloat(V('cfg-mar')) || 30,
+      packaging_default: numOrDefault('cfg-pkg'),
+      envio_default: numOrDefault('cfg-env'),
+      comision_plataforma_default_pct: numOrDefault('cfg-cplat'),
+      comision_pago_default_pct: numOrDefault('cfg-cpago'),
+      impuestos_default_pct: numOrDefault('cfg-imp'),
+      descuento_default_pct: numOrDefault('cfg-desc'),
+      margen_deseado_default_pct: numOrDefault('cfg-mar', 30),
     }
     const { error } = await sb.from('configuracion_costos').upsert(cfg, { onConflict: 'user_id' })
     if (!handleSupaError(error, 'saveCfg')) calcCosto()
@@ -803,23 +819,23 @@ async function loadCfg() {
 function prefillProdFromCfg(cfg) {
   if (!cfg) return
   const map = [['p-pkg','packaging_default'],['p-env','envio_default'],['p-cplat','comision_plataforma_default_pct'],['p-cpago','comision_pago_default_pct'],['p-imp','impuestos_default_pct'],['p-desc','descuento_default_pct'],['p-mar','margen_deseado_default_pct']]
-  map.forEach(([id, k]) => { const e = document.getElementById(id); if (e && (e.value === '' || e.value === '0') && cfg[k]) e.value = cfg[k] })
+  map.forEach(([id, k]) => { const e = document.getElementById(id); if (e && (e.value === '' || e.value === '0') && cfg[k] !== undefined && cfg[k] !== null) e.value = cfg[k] })
 }
 
 // ══════════════════════════════════════
 // MOTOR DE COSTOS
 // ══════════════════════════════════════
 function calcCosto() {
-  const co = parseFloat(V('p-co')) || 0
-  const pkg = parseFloat(V('p-pkg')) || 0
-  const env = parseFloat(V('p-env')) || 0
+  const co = numOrDefault('p-co')
+  const pkg = numOrDefault('p-pkg')
+  const env = numOrDefault('p-env')
   const envp = V('p-envp')
-  const cplat = (parseFloat(V('p-cplat')) || 0) / 100
-  const cpago = (parseFloat(V('p-cpago')) || 0) / 100
-  const imp = (parseFloat(V('p-imp')) || 0) / 100
-  const desc = (parseFloat(V('p-desc')) || 0) / 100
-  const mar = (parseFloat(V('p-mar')) || 30) / 100
-  const pvManual = parseFloat(V('p-pr')) || 0
+  const cplat = numOrDefault('p-cplat') / 100
+  const cpago = numOrDefault('p-cpago') / 100
+  const imp = numOrDefault('p-imp') / 100
+  const desc = numOrDefault('p-desc') / 100
+  const mar = numOrDefault('p-mar', 30) / 100
+  const pvManual = numOrDefault('p-pr')
 
   const alert = document.getElementById('p-cost-alert')
   const result = document.getElementById('p-cost-result')
@@ -960,22 +976,24 @@ async function renderFin() {
 // ══════════════════════════════════════
 async function addProd() {
   const n = V('p-n').trim(); if (!n) { toastErr('Ingresá el nombre'); return }
-  const co = parseFloat(V('p-co')) || 0
-  const pr = parseFloat(V('p-pr')) || 0
+  const co = numOrDefault('p-co')
   if (co < 0) { toastErr('El costo no puede ser negativo'); return }
-  if (pr < 0) { toastErr('El precio no puede ser negativo'); return }
   const calc = calcCosto()
+  if (co > 0 && !calc) { toastErr('Revisá los costos antes de guardar el producto'); return }
+  const precioFinalRaw = V('p-pr').trim()
+  const pr = precioFinalRaw === '' && calc ? calc.pv : numOrDefault('p-pr')
+  if (pr < 0) { toastErr('El precio no puede ser negativo'); return }
   const prod = {
     user_id: CU.id, nom: n, cat: V('p-c'), descripcion: V('p-d'),
     costo_producto: co,
-    costo_packaging: parseFloat(V('p-pkg')) || 0,
-    costo_envio: parseFloat(V('p-env')) || 0,
+    costo_packaging: numOrDefault('p-pkg'),
+    costo_envio: numOrDefault('p-env'),
     envio_pagado_por: V('p-envp'),
-    comision_plataforma_pct: parseFloat(V('p-cplat')) || 0,
-    comision_pago_pct: parseFloat(V('p-cpago')) || 0,
-    impuestos_pct: parseFloat(V('p-imp')) || 0,
-    descuento_pct: parseFloat(V('p-desc')) || 0,
-    margen_deseado_pct: parseFloat(V('p-mar')) || 30,
+    comision_plataforma_pct: numOrDefault('p-cplat'),
+    comision_pago_pct: numOrDefault('p-cpago'),
+    impuestos_pct: numOrDefault('p-imp'),
+    descuento_pct: numOrDefault('p-desc'),
+    margen_deseado_pct: numOrDefault('p-mar', 30),
     precio_minimo_rentable: calc ? calc.precioMin : 0,
     precio_sugerido: calc ? calc.precioSug : 0,
     precio_venta: pr,
