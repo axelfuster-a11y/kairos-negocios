@@ -288,6 +288,19 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
           <div class="card"><div class="card-t">🎯 Estado del negocio</div><div id="d-est"></div></div>
         </div>
+        <div class="div"><span>Datos importados / Carga inteligente</span></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
+        <div id="imp-dash-state"></div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Ingresos importados</div><div class="sv" id="id-ing" style="color:var(--green)">$0</div><div class="sn" id="id-movs">0 movimientos</div></div>
+          <div class="stat"><div class="sl">Egresos importados</div><div class="sv" id="id-egr" style="color:var(--red)">$0</div><div class="sn">Mes actual</div></div>
+          <div class="stat"><div class="sl">Balance importado</div><div class="sv" id="id-bal" style="color:var(--gold)">$0</div><div class="sn">Ingresos - egresos</div></div>
+          <div class="stat"><div class="sl">Productos importados</div><div class="sv" id="id-prod" style="color:var(--blue)">0</div><div class="sn" id="id-stock-est">Stock: 0 / 0 / 0</div></div>
+        </div>
+        <div class="g2">
+          <div class="card"><div class="card-t">Stock importado</div><div class="g2"><div class="mrow"><div class="mlbl">Valor a costo</div><div class="mval" id="id-stock-costo">$0</div></div><div class="mrow"><div class="mlbl">Valor a venta</div><div class="mval" id="id-stock-venta">$0</div></div></div></div>
+          <div class="card"><div class="card-t">Estado de stock importado</div><div id="id-stock-breakdown"></div></div>
+        </div>
       </div>
 
       <!-- MI NEGOCIO -->
@@ -350,6 +363,22 @@ tr:hover td{background:rgba(255,255,255,0.015)}
               <table><thead><tr><th>Descripción</th><th>Cat.</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
               <tbody id="tx-tb"><tr><td colspan="5"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr></tbody></table>
             </div>
+          </div>
+        </div>
+        <div class="div"><span>Movimientos importados</span></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
+        <div id="imp-fin-state"></div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Ingresos</div><div class="sv" id="if-ing" style="color:var(--green)">$0</div></div>
+          <div class="stat"><div class="sl">Egresos</div><div class="sv" id="if-egr" style="color:var(--red)">$0</div></div>
+          <div class="stat"><div class="sl">Balance</div><div class="sv" id="if-bal" style="color:var(--gold)">$0</div></div>
+          <div class="stat"><div class="sl">Cantidad</div><div class="sv" id="if-cant" style="color:var(--blue)">0</div></div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-t">Movimientos importados</div>
+          <div class="tw" style="max-height:380px;overflow-y:auto">
+            <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Monto</th><th>Medio</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
+            <tbody id="imp-mov-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr></tbody></table>
           </div>
         </div>
         <div class="div"><span>Gastos Fijos Mensuales</span></div>
@@ -430,6 +459,22 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="card-t">📦 Catálogo</div>
           <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
           <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos</div></td></tr></tbody></table></div>
+        </div>
+        <div class="div"><span>Inventario importado</span></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
+        <div id="imp-prod-state"></div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Productos cargados</div><div class="sv" id="ip-cant" style="color:var(--blue)">0</div></div>
+          <div class="stat"><div class="sl">Valor a costo</div><div class="sv" id="ip-costo">$0</div></div>
+          <div class="stat"><div class="sl">Valor a venta</div><div class="sv" id="ip-venta">$0</div></div>
+          <div class="stat"><div class="sl">Stock</div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
+        </div>
+        <div class="card">
+          <div class="card-t">Inventario importado</div>
+          <div class="tw" style="max-height:420px;overflow-y:auto">
+            <table><thead><tr><th>Producto</th><th>Cat.</th><th>Color</th><th>Medida</th><th>Stock</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Estado</th><th>Acción</th><th></th></tr></thead>
+            <tbody id="imp-inv-tb"><tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr></tbody></table>
+          </div>
         </div>
       </div>
 
@@ -528,6 +573,32 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <div class="stat"><div class="sl">Egresos</div><div class="sv" id="im-s-egr" style="color:var(--red)">$0</div></div>
             <div class="stat"><div class="sl">Stock a costo</div><div class="sv" id="im-s-costo">$0</div></div>
             <div class="stat"><div class="sl">Stock a venta</div><div class="sv" id="im-s-venta">$0</div></div>
+          </div>
+        </div>
+        <div class="div"><span>Datos cargados recientemente</span></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
+        <div id="imp-import-state"></div>
+        <div class="g2" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-t">Últimos movimientos importados</div>
+            <div class="tw" style="max-height:260px;overflow-y:auto">
+              <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Monto</th></tr></thead>
+              <tbody id="imp-recent-movs"><tr><td colspan="4"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr></tbody></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-t">Últimos items importados</div>
+            <div class="tw" style="max-height:260px;overflow-y:auto">
+              <table><thead><tr><th>Producto</th><th>Stock</th><th>Costo</th><th>Precio</th></tr></thead>
+              <tbody id="imp-recent-inv"><tr><td colspan="4"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr></tbody></table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-t">Historial de importaciones</div>
+          <div class="tw" style="max-height:300px;overflow-y:auto">
+            <table><thead><tr><th>Fecha</th><th>Source</th><th>Target</th><th>Status</th><th>Total</th><th>Válidas</th><th>Error</th></tr></thead>
+            <tbody id="imp-batches-tb"><tr><td colspan="7"><div class="empty"><div class="empty-i">📥</div>Sin historial de importaciones</div></td></tr></tbody></table>
           </div>
         </div>
       </div>
@@ -822,6 +893,7 @@ function go(page, el) {
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'))
   document.getElementById('page-' + page).classList.add('on')
   el.classList.add('on')
+  if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
 
@@ -1379,6 +1451,197 @@ async function renderDash() {
 }
 
 // ══════════════════════════════════════
+// DATOS IMPORTADOS / CARGA INTELIGENTE
+// ══════════════════════════════════════
+let importedData = { movements: [], movementsMonth: [], inventory: [], inventoryLatest: [], batches: [], loading: false, error: null }
+let importedLoadPromise = null
+
+function money(n) { return '$' + fmt(Number(n) || 0) }
+function importDate(v) { return v ? String(v).slice(0, 10) : '—' }
+function stockTotals(items) {
+  const list = items || []
+  return {
+    count: list.length,
+    costo: list.reduce((a, p) => a + ((Number(p.stock_actual) || 0) * (Number(p.costo_total ?? p.costo_unitario) || 0)), 0),
+    venta: list.reduce((a, p) => a + ((Number(p.stock_actual) || 0) * (Number(p.precio_venta_local || p.precio_venta_web) || 0)), 0),
+    rojo: list.filter(p => p.estado_stock === 'rojo').length,
+    amarillo: list.filter(p => p.estado_stock === 'amarillo').length,
+    verde: list.filter(p => p.estado_stock === 'verde').length
+  }
+}
+function movementTotals(items) {
+  const list = items || []
+  const ingresos = list.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
+  const egresos = list.filter(m => m.tipo === 'egreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
+  return { ingresos, egresos, balance: ingresos - egresos, count: list.length }
+}
+function setImportedState(id, msg, mode = 'info') {
+  const el = document.getElementById(id)
+  if (!el) return
+  if (!msg) { el.innerHTML = ''; return }
+  const color = mode === 'error' ? 'var(--red)' : 'var(--txt3)'
+  el.innerHTML = `<div class="empty" style="padding:18px;color:${color}">${escapeHTML(msg)}</div>`
+}
+function renderImportedStates() {
+  const ids = ['imp-dash-state', 'imp-fin-state', 'imp-prod-state', 'imp-import-state']
+  if (importedData.loading) ids.forEach(id => setImportedState(id, 'Cargando datos importados...'))
+  else if (importedData.error) ids.forEach(id => setImportedState(id, 'Error al cargar datos importados', 'error'))
+  else {
+    const hasAny = importedData.movements.length || importedData.inventory.length || importedData.batches.length
+    ids.forEach(id => setImportedState(id, hasAny ? '' : 'Sin datos importados todavía'))
+  }
+}
+
+async function loadImportedData() {
+  if (!CU) return
+  if (importedLoadPromise) return importedLoadPromise
+  importedData.loading = true
+  importedData.error = null
+  renderImportedStates()
+  importedLoadPromise = (async () => {
+    try {
+      await Promise.all([loadImportedMovements(), loadImportedInventory(), loadImportBatches()])
+      importedData.error = null
+    } catch (e) {
+      importedData.error = e
+      console.error('[Kairós] loadImportedData:', e)
+    } finally {
+      importedData.loading = false
+      importedLoadPromise = null
+      renderImportedDashboard()
+      renderImportedMovements()
+      renderImportedInventory()
+      renderRecentImports()
+    }
+  })()
+  return importedLoadPromise
+}
+
+async function loadImportedMovements() {
+  const { m, y } = getMes()
+  const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const latest = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(50)
+  const month = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd)
+  if (latest.error) throw latest.error
+  if (month.error) throw month.error
+  importedData.movements = latest.data || []
+  importedData.movementsMonth = month.data || []
+}
+
+async function loadImportedInventory() {
+  const { data, error } = await sb.from('inventario_items').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
+  if (error) throw error
+  importedData.inventory = data || []
+  importedData.inventoryLatest = (data || []).slice(0, 50)
+}
+
+async function loadImportBatches() {
+  const { data, error } = await sb.from('import_batches').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(25)
+  if (error) throw error
+  importedData.batches = data || []
+}
+
+function renderImportedDashboard() {
+  renderImportedStates()
+  const mt = movementTotals(importedData.movementsMonth)
+  const st = stockTotals(importedData.inventory)
+  S('id-ing', money(mt.ingresos)); S('id-egr', money(mt.egresos)); S('id-bal', money(mt.balance)); S('id-movs', mt.count + ' movimientos del mes')
+  S('id-prod', st.count); S('id-stock-costo', money(st.costo)); S('id-stock-venta', money(st.venta))
+  S('id-stock-est', `Stock: ${st.rojo} / ${st.amarillo} / ${st.verde}`)
+  const br = document.getElementById('id-stock-breakdown')
+  if (br) {
+    br.innerHTML = st.count
+      ? `<div class="mrow"><div class="mlbl">Rojo</div><div class="mval" style="color:var(--red)">${st.rojo}</div></div><div class="mrow"><div class="mlbl">Amarillo</div><div class="mval" style="color:var(--yel)">${st.amarillo}</div></div><div class="mrow"><div class="mlbl">Verde</div><div class="mval" style="color:var(--green)">${st.verde}</div></div>`
+      : '<div class="empty" style="padding:20px"><div class="empty-i">📦</div>Sin inventario importado</div>'
+  }
+}
+
+function renderImportedMovements() {
+  const rows = importedData.movements || []
+  const totals = movementTotals(rows)
+  S('if-ing', money(totals.ingresos)); S('if-egr', money(totals.egresos)); S('if-bal', money(totals.balance)); S('if-cant', totals.count)
+  const tb = document.getElementById('imp-mov-tb')
+  if (!tb) return
+  tb.innerHTML = !rows.length
+    ? '<tr><td colspan="8"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr>'
+    : rows.map(m => `<tr>
+        <td style="color:var(--txt3)">${importDate(m.fecha)}</td>
+        <td>${escapeHTML(m.descripcion || '—')}</td>
+        <td><span class="badge ${m.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(m.tipo || '—')}</span></td>
+        <td style="font-weight:600;color:${m.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${money(m.monto)}</td>
+        <td>${escapeHTML(m.medio_pago || '—')}</td>
+        <td>${escapeHTML(m.categoria || 'sin_categoria')}</td>
+        <td>${escapeHTML(m.origen || 'manual')}</td>
+        <td><button class="btn btn-del" onclick="deleteImportedMovement('${m.id}')">Eliminar</button></td>
+      </tr>`).join('')
+}
+
+function renderImportedInventory() {
+  const rows = importedData.inventoryLatest || []
+  const totals = stockTotals(importedData.inventory)
+  S('ip-cant', totals.count); S('ip-costo', money(totals.costo)); S('ip-venta', money(totals.venta)); S('ip-est', `${totals.rojo} / ${totals.amarillo} / ${totals.verde}`)
+  const badge = { rojo: 'br', amarillo: 'by', verde: 'bg', sin_datos: 'bb' }
+  const tb = document.getElementById('imp-inv-tb')
+  if (!tb) return
+  tb.innerHTML = !rows.length
+    ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr>'
+    : rows.map(p => `<tr>
+        <td><strong>${escapeHTML(p.producto || '—')}</strong></td>
+        <td>${escapeHTML(p.categoria || '—')}</td>
+        <td>${escapeHTML(p.color || '—')}</td>
+        <td>${escapeHTML(p.medida || '—')}</td>
+        <td>${p.stock_actual ?? '—'}</td>
+        <td>${money(p.costo_unitario)}</td>
+        <td>${money(p.precio_venta_local)}</td>
+        <td style="color:${Number(p.margen_local_pct) >= 25 ? 'var(--green)' : Number(p.margen_local_pct) >= 0 ? 'var(--yel)' : 'var(--red)'}">${fmtDec(Number(p.margen_local_pct) || 0)}%</td>
+        <td><span class="badge ${badge[p.estado_stock] || 'bb'}">${escapeHTML(p.estado_stock || 'sin_datos')}</span></td>
+        <td>${escapeHTML(p.accion_recomendada || '—')}</td>
+        <td><button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button></td>
+      </tr>`).join('')
+}
+
+function renderRecentImports() {
+  const movs = (importedData.movements || []).slice(0, 8)
+  const invs = (importedData.inventoryLatest || []).slice(0, 8)
+  const batches = importedData.batches || []
+  const mtb = document.getElementById('imp-recent-movs')
+  if (mtb) mtb.innerHTML = !movs.length
+    ? '<tr><td colspan="4"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr>'
+    : movs.map(m => `<tr><td>${importDate(m.fecha)}</td><td>${escapeHTML(m.descripcion || '—')}</td><td><span class="badge ${m.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(m.tipo || '—')}</span></td><td>${money(m.monto)}</td></tr>`).join('')
+  const itb = document.getElementById('imp-recent-inv')
+  if (itb) itb.innerHTML = !invs.length
+    ? '<tr><td colspan="4"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr>'
+    : invs.map(p => `<tr><td>${escapeHTML(p.producto || '—')}</td><td>${p.stock_actual ?? '—'}</td><td>${money(p.costo_unitario)}</td><td>${money(p.precio_venta_local)}</td></tr>`).join('')
+  const btb = document.getElementById('imp-batches-tb')
+  if (btb) btb.innerHTML = !batches.length
+    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">📥</div>Sin historial de importaciones</div></td></tr>'
+    : batches.map(b => `<tr><td>${importDate(b.created_at)}</td><td>${escapeHTML(b.source || '—')}</td><td>${escapeHTML(b.target || '—')}</td><td><span class="badge ${b.status === 'confirmed' ? 'bg' : b.status === 'failed' ? 'br' : 'by'}">${escapeHTML(b.status || '—')}</span></td><td>${b.total_filas ?? 0}</td><td>${b.filas_validas ?? 0}</td><td>${b.filas_con_error ?? 0}</td></tr>`).join('')
+}
+
+async function deleteImportedMovement(id) {
+  if (!confirm('¿Eliminar este movimiento importado?')) return
+  const { error } = await sb.from('movimientos_financieros').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteImportedMovement')) return
+  await loadImportedData()
+  toast('Movimiento importado eliminado')
+}
+
+async function deleteImportedInventoryItem(id) {
+  if (!confirm('¿Eliminar este item de inventario importado?')) return
+  const { error } = await sb.from('inventario_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (error) {
+    if (error.code === '23503' || String(error.message || '').toLowerCase().includes('foreign key')) {
+      toastErr('No se puede eliminar este item porque tiene movimientos, ventas o alias asociados. Más adelante se podrá archivar.')
+      return
+    }
+    if (handleSupaError(error, 'deleteImportedInventoryItem')) return
+  }
+  await loadImportedData()
+  toast('Item de inventario importado eliminado')
+}
+
+// ══════════════════════════════════════
 // CARGA INTELIGENTE
 // ══════════════════════════════════════
 let importRows = []
@@ -1725,6 +1988,7 @@ async function confirmImport() {
   renderImportSummary(validRows)
   importRows = []
   btn.disabled = true; btn.textContent = 'Carga confirmada'
+  await loadImportedData()
   toast('Carga confirmada ✓')
 }
 
@@ -1830,7 +2094,7 @@ function mdToHtml(text) {
 async function renderAll() {
   const biz = await getBiz()
   loadBizForm(biz)
-  await Promise.all([loadAng(), renderFin(), renderProds(), renderLeads(), renderPub(), renderCont(), renderRefs(), renderMet(), renderDash()])
+  await Promise.all([loadAng(), renderFin(), renderProds(), renderLeads(), renderPub(), renderCont(), renderRefs(), renderMet(), renderDash(), loadImportedData()])
 }
 
 // ══════════════════════════════════════
