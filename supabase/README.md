@@ -11,7 +11,7 @@ El frontend actual todavía no usa estas tablas. La app sigue leyendo y escribie
 Crea cuatro tablas nuevas para soportar un flujo futuro de importación con preview, confirmación y auditoría:
 
 - `movimientos_financieros`: movimientos normalizados de ingresos y egresos. Está pensada como destino futuro para datos financieros importados.
-- `inventario_items`: inventario normalizado con stock, costos, precios, margen y recomendación. Está pensada como destino futuro para productos o stock importado.
+- `inventario_items`: inventario normalizado con stock, costos, precios, margen y recomendación. Está pensada como destino futuro para productos o stock importado. Las ganancias y márgenes pueden ser negativos para detectar productos con pérdida.
 - `import_batches`: cabecera de cada importación, con origen, destino, estado y conteos.
 - `import_rows`: detalle fila por fila de cada importación, con datos crudos, datos normalizados, errores y estado.
 

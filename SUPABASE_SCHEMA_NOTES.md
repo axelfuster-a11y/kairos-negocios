@@ -280,7 +280,8 @@ Columnas previstas:
 
 Notas:
 
-- Stocks y numeros de costos/precios/margenes no pueden ser negativos.
+- Stocks, costos y precios no pueden ser negativos.
+- Ganancias y margenes pueden ser negativos para detectar productos con perdida.
 - `estado_stock` acepta `verde`, `amarillo`, `rojo` o `sin_datos`.
 - Tiene trigger para mantener `updated_at`.
 - Debe tener RLS por `user_id`.

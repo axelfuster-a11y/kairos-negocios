@@ -45,7 +45,7 @@ create table if not exists public.inventario_items (
   margen_local_pct numeric default 0,
   ganancia_web numeric default 0,
   margen_web_pct numeric default 0,
-  estado_stock text default 'sin_datos',
+  estado_stock text not null default 'sin_datos',
   accion_recomendada text,
   proveedor text,
   notas text,
@@ -59,10 +59,6 @@ create table if not exists public.inventario_items (
   check (costo_total >= 0),
   check (precio_venta_local >= 0),
   check (precio_venta_web >= 0),
-  check (ganancia_local >= 0),
-  check (margen_local_pct >= 0),
-  check (ganancia_web >= 0),
-  check (margen_web_pct >= 0),
   check (estado_stock in ('verde', 'amarillo', 'rojo', 'sin_datos'))
 );
 
@@ -77,11 +73,11 @@ create table if not exists public.import_batches (
   user_id uuid references auth.users(id) on delete cascade not null,
   source text not null,
   target text not null,
-  status text default 'preview',
+  status text not null default 'preview',
   nombre_archivo text,
-  total_filas integer default 0,
-  filas_validas integer default 0,
-  filas_con_error integer default 0,
+  total_filas integer not null default 0,
+  filas_validas integer not null default 0,
+  filas_con_error integer not null default 0,
   created_at timestamptz default now(),
   check (target in ('movimientos_financieros', 'inventario_items', 'mixed', 'unknown')),
   check (status in ('preview', 'confirmed', 'cancelled', 'failed')),
@@ -90,16 +86,31 @@ create table if not exists public.import_batches (
   check (filas_con_error >= 0)
 );
 
+do $do$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'import_batches_id_user_id_unique'
+      and conrelid = 'public.import_batches'::regclass
+  ) then
+    alter table public.import_batches
+      add constraint import_batches_id_user_id_unique unique (id, user_id);
+  end if;
+end;
+$do$;
+
 create table if not exists public.import_rows (
   id uuid primary key default gen_random_uuid(),
-  batch_id uuid references public.import_batches(id) on delete cascade not null,
+  batch_id uuid not null,
   user_id uuid references auth.users(id) on delete cascade not null,
   row_number integer not null,
   raw_data jsonb not null default '{}'::jsonb,
   normalized_data jsonb,
   errors jsonb default '[]'::jsonb,
-  status text default 'pending',
+  status text not null default 'pending',
   created_at timestamptz default now(),
+  foreign key (batch_id, user_id) references public.import_batches(id, user_id) on delete cascade,
   check (row_number > 0),
   check (status in ('pending', 'valid', 'warning', 'error', 'imported', 'skipped'))
 );
