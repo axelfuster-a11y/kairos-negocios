@@ -1462,7 +1462,8 @@ function detectRowTarget(raw, forced = 'auto') {
   if (forced === 'movimientos' || forced === 'movimientos_financieros' || forced === 'ingreso' || forced === 'egreso') return 'movimientos_financieros'
   const t = normalizeText(Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join(' '))
   if (/(producto|sku|stock|costo|precio|inventario|tengo)/.test(t) && !/(alquiler|gasto alquiler|transferencia)/.test(t)) return 'inventario_items'
-  if (/(monto|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
+  if (/(monto|importe|total|valor|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
+  if (detectMedio(t) || /(^|\s)\$?\s*\d{3,}(?:[.,]\d+)?(\s|$)/.test(t)) return 'movimientos_financieros'
   return 'unknown'
 }
 
@@ -1480,7 +1481,7 @@ function parseNaturalMessage(text, forced = 'auto') {
       .replace(/\s+(en|por)\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)/i, '')
       .replace(/\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)$/i, '')
       .trim()
-    return { target, raw: { descripcion, monto: montoMatch ? montoMatch[1] : '', tipo, medio_pago: detectMedio(text), categoria: tipo === 'egreso' ? 'gastos' : 'ventas' } }
+    return { target, raw: { descripcion, monto: montoMatch ? montoMatch[1] : '', tipo, medio_pago: detectMedio(text), categoria: tipo === 'egreso' ? 'gastos' : tipo === 'ingreso' ? 'ventas' : '' } }
   }
   if (target === 'inventario_items') {
     const stock = text.match(/(?:tengo|stock)\s+([\d.,]+)/i)
@@ -1501,7 +1502,7 @@ function parseNaturalMessage(text, forced = 'auto') {
 function buildImportRow(rowNumber, target, raw, source) {
   if (target === 'movimientos_financieros') return normalizeFinancialRow(raw, rowNumber, source)
   if (target === 'inventario_items') return normalizeInventoryRow(raw, rowNumber, source)
-  return { rowNumber, target: 'unknown', status: 'error', importStatus: 'error', errors: ['No se pudo detectar el destino'], warnings: [], raw, normalized: null, label: 'Sin destino', metric: '—', action: 'Revisar datos' }
+  return { rowNumber, target: 'unknown', status: 'error', importStatus: 'error', errors: ['No se pudo detectar el destino'], warnings: [], raw, normalized: null, label: 'Sin destino', metric: '—', action: 'Corregir datos' }
 }
 
 function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
@@ -1536,7 +1537,7 @@ function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
     normalized: { user_id: CU.id, fecha, descripcion, monto: Number.isFinite(monto) ? monto : 0, tipo, medio_pago: medio || null, categoria, mes: fecha ? fecha.slice(0, 7) : null, origen: source },
     label: descripcion || 'Sin descripción',
     metric: Number.isFinite(monto) ? '$' + fmt(monto) : '—',
-    action: errors.length ? 'Corregir' : warnings.length ? 'Confirmar con aviso' : 'Guardar'
+    action: errors.length ? 'Corregir datos' : warnings.length ? 'Confirmar con aviso' : 'Guardar'
   }
 }
 
@@ -1616,7 +1617,7 @@ function normalizeInventoryRow(raw, rowNumber, source = 'manual') {
     },
     label: producto || 'Sin producto',
     metric: stockVal !== null ? String(stockVal) : '—',
-    action: accion
+    action: errors.length ? 'Corregir datos' : accion
   }
 }
 
