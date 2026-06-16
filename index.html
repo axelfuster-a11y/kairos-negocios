@@ -122,6 +122,13 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .ai-bot{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.15);align-self:flex-start}
 .ai-usr{background:var(--sur2);border:1px solid var(--bor);align-self:flex-end}
 .ai-thnk{background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.1);align-self:flex-start;color:var(--txt3);font-style:italic}
+.ai-action{max-width:100%;width:100%;background:var(--sur2);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:12px;align-self:flex-start}
+.ai-action-t{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px}
+.ai-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.ai-action-row{background:var(--bg2);border:1px solid var(--bor);border-radius:8px;padding:8px}
+.ai-action-l{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.ai-action-v{font-size:12px;color:var(--txt)}
+.ai-action-note{font-size:12px;line-height:1.5;margin:10px 0;color:var(--txt2)}
 .ai-in{padding:14px;border-top:1px solid var(--bor);display:flex;gap:10px;flex-shrink:0}
 .ai-in input{font-size:13px}
 #wizard{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
@@ -1659,6 +1666,7 @@ async function deleteImportedInventoryItem(id) {
 let importRows = []
 let importSource = 'manual'
 let botActionPreview = null
+let botActionSurface = 'import'
 
 function toggleManualImport() {
   const isInv = V('im-man-type') === 'inventario'
@@ -1933,6 +1941,23 @@ async function buildBotActionPreview(command) {
   return preview
 }
 
+function botActionPage(actionType) {
+  if (['crear_producto', 'reposicion', 'ajuste_stock'].includes(actionType)) return 'prod'
+  if (actionType === 'gasto') return 'fin'
+  if (actionType === 'venta_stock') return 'fin'
+  return 'dash'
+}
+
+function botActionTitle(actionType) {
+  const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
+  return map[actionType] || 'Accion operativa'
+}
+
+function botActionNotes(preview) {
+  const notes = [...(preview?.errors || []), ...(preview?.warnings || [])]
+  return notes.length ? notes.map(escapeHTML).join('<br>') : 'Listo para confirmar.'
+}
+
 function parseNaturalMessage(text, forced = 'auto') {
   const t = normalizeText(text)
   const target = detectRowTarget({ texto: text }, forced)
@@ -2141,7 +2166,9 @@ function handleManualPrepare() {
   }
 }
 
-function renderBotActionPreview() {
+function renderBotActionPreview(surface = 'import') {
+  botActionSurface = surface
+  if (surface === 'ai') { renderAIBotActionPreview(); return }
   document.getElementById('im-summary-card').style.display = 'none'
   document.getElementById('im-preview-card').style.display = 'none'
   const card = document.getElementById('im-bot-preview-card')
@@ -2157,6 +2184,35 @@ function renderBotActionPreview() {
   document.getElementById('im-bot-preview').innerHTML = botActionPreview.rows.map(r => {
     return `<tr><td>${escapeHTML(r.action)}</td><td>${escapeHTML(r.detail)}</td><td>${escapeHTML(r.qty)}</td><td>${escapeHTML(r.amount)}</td><td><span class="badge ${b[botActionPreview.status]}">${botActionPreview.status}</span></td><td style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt3)'}">${notes}</td><td>${escapeHTML(r.expected)}</td></tr>`
   }).join('')
+}
+
+function renderAIBotActionPreview() {
+  const box = document.getElementById('ai-msgs')
+  if (!box || !botActionPreview) return
+  const old = document.getElementById('ai-bot-action-preview')
+  if (old) old.remove()
+  const row = botActionPreview.rows[0] || { detail: '—', qty: '—', amount: '—', expected: '—' }
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  const div = document.createElement('div')
+  div.className = 'ai-action'
+  div.id = 'ai-bot-action-preview'
+  div.innerHTML = `
+    <div class="ai-action-t">${escapeHTML(botActionTitle(botActionPreview.action_type))}</div>
+    <div class="ai-action-grid">
+      <div class="ai-action-row"><div class="ai-action-l">Detalle</div><div class="ai-action-v">${escapeHTML(row.detail)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Cantidad</div><div class="ai-action-v">${escapeHTML(row.qty)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Monto</div><div class="ai-action-v">${escapeHTML(row.amount)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Estado</div><div class="ai-action-v"><span class="badge ${b[botActionPreview.status] || 'bb'}">${escapeHTML(botActionPreview.status)}</span></div></div>
+    </div>
+    <div class="ai-action-note" style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt2)'}">${botActionNotes(botActionPreview)}</div>
+    <div class="ai-action-note">${escapeHTML(row.expected)}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="cancelAIBotAction()">Cancelar</button>
+      <button class="btn btn-gold btn-sm" id="ai-bot-confirm-btn" onclick="confirmBotAction('ai')" ${botActionPreview.canConfirm ? '' : 'disabled'}>${botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar'}</button>
+    </div>
+  `
+  box.appendChild(div)
+  box.scrollTop = box.scrollHeight
 }
 
 function renderImportPreview() {
@@ -2228,13 +2284,29 @@ async function confirmImport() {
   toast('Carga confirmada ✓')
 }
 
-async function confirmBotAction() {
+function cancelAIBotAction() {
+  botActionPreview = null
+  botActionSurface = 'import'
+  const old = document.getElementById('ai-bot-action-preview')
+  if (old) old.remove()
+  const box = document.getElementById('ai-msgs')
+  if (box) {
+    const div = document.createElement('div')
+    div.className = 'ai-msg ai-thnk'
+    div.textContent = 'Accion cancelada. No se guardo nada.'
+    box.appendChild(div)
+    box.scrollTop = box.scrollHeight
+  }
+}
+
+async function confirmBotAction(surface = botActionSurface) {
   if (!botActionPreview) { toastErr('No hay accion para confirmar'); return }
   if (!botActionPreview.canConfirm) { toastErr('Esta accion necesita correccion antes de guardar'); return }
-  const btn = document.getElementById('im-bot-confirm-btn')
+  const btn = document.getElementById(surface === 'ai' ? 'ai-bot-confirm-btn' : 'im-bot-confirm-btn')
   if (btn.disabled) return
   btn.disabled = true; btn.textContent = 'Ejecutando...'
   const previewData = JSON.parse(JSON.stringify(botActionPreview))
+  const actionType = botActionPreview.action_type
   const { data: action, error: actionErr } = await sb.from('bot_actions').insert({
     user_id: CU.id,
     input_text: botActionPreview.input_text,
@@ -2253,13 +2325,23 @@ async function confirmBotAction() {
     }).eq('id', action.id).eq('user_id', CU.id)
     if (doneErr) throw doneErr
     botActionPreview = null
+    botActionSurface = 'import'
     btn.disabled = true; btn.textContent = 'Accion confirmada'
-    document.getElementById('im-bot-preview-card').style.display = 'none'
     await loadImportedData()
+    if (surface === 'ai') {
+      const old = document.getElementById('ai-bot-action-preview')
+      if (old) old.remove()
+      appendAIMessage('Accion confirmada. Actualice los datos y te llevo a la seccion correspondiente.', 'bot')
+      goPage(botActionPage(actionType))
+      closeAI()
+    } else {
+      document.getElementById('im-bot-preview-card').style.display = 'none'
+    }
     toast('Accion confirmada')
   } catch (e) {
     await sb.from('bot_actions').update({ status: 'failed', error: e.message || 'Error al ejecutar accion' }).eq('id', action.id).eq('user_id', CU.id)
     btn.disabled = false; btn.textContent = 'Confirmar accion'
+    if (surface === 'ai') appendAIMessage(e.message || 'Error al ejecutar accion. No se completo la operacion.', 'think')
     handleSupaError(e, 'confirmBotAction')
   }
 }
@@ -2513,6 +2595,17 @@ let aiH = []
 function openAI() { document.getElementById('ai-panel').classList.add('on'); document.getElementById('ai-ov').classList.add('on'); setTimeout(() => document.getElementById('ai-inp').focus(), 300) }
 function closeAI() { document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
 
+function appendAIMessage(text, type = 'bot') {
+  const box = document.getElementById('ai-msgs')
+  const div = document.createElement('div')
+  div.className = type === 'user' ? 'ai-msg ai-usr' : type === 'think' ? 'ai-msg ai-thnk' : 'ai-msg ai-bot'
+  if (type === 'bot') div.innerHTML = mdToHtml(text)
+  else div.textContent = text
+  box.appendChild(div)
+  box.scrollTop = box.scrollHeight
+  return div
+}
+
 async function sendAI() {
   const inp = document.getElementById('ai-inp')
   const msg = inp.value.trim(); if (!msg) return
@@ -2520,20 +2613,22 @@ async function sendAI() {
   const box = document.getElementById('ai-msgs')
 
   // Crear nodo de mensaje usuario (sin innerHTML con datos del usuario)
-  const userDiv = document.createElement('div')
-  userDiv.className = 'ai-msg ai-usr'
-  userDiv.textContent = msg
-  box.appendChild(userDiv)
+  appendAIMessage(msg, 'user')
 
-  const loadDiv = document.createElement('div')
-  loadDiv.className = 'ai-msg ai-thnk'
+  const loadDiv = appendAIMessage('Pensando...', 'think')
   loadDiv.textContent = '✦ Pensando...'
-  box.appendChild(loadDiv)
-  box.scrollTop = box.scrollHeight
 
   aiH.push({ role: 'user', content: msg })
 
   try {
+    const command = parseBotCommand(msg)
+    if (command) {
+      botActionPreview = await buildBotActionPreview(command)
+      loadDiv.remove()
+      renderBotActionPreview('ai')
+      return
+    }
+
     // ✅ LLAMADA SEGURA — via Edge Function, sin API key en el frontend
     const { data, error } = await sb.functions.invoke('ai-advisor', {
       body: { message: msg, history: aiH.slice(-18) }
