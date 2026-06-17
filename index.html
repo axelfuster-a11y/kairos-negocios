@@ -607,6 +607,19 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <div class="stat"><div class="sl">Stock a venta</div><div class="sv" id="im-s-venta">$0</div></div>
           </div>
         </div>
+        <div class="div"><span>Estado del sistema</span></div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-t">Estado del sistema</div>
+          <div id="system-state-list"><div class="empty" style="padding:18px"><div class="empty-i">✦</div>Cargando estado...</div></div>
+        </div>
+        <div class="div"><span>Historial del Asesor IA</span></div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-t">Historial del Asesor IA</div>
+          <div class="tw" style="max-height:320px;overflow-y:auto">
+            <table><thead><tr><th>Fecha</th><th>Acción</th><th>Texto original</th><th>Status</th><th>Error</th><th>Confirmado</th><th>Resultado</th></tr></thead>
+            <tbody id="bot-actions-tb"><tr><td colspan="7"><div class="empty"><div class="empty-i">✦</div>Sin acciones del Asesor IA</div></td></tr></tbody></table>
+          </div>
+        </div>
         <div class="div"><span>Datos cargados recientemente</span></div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
         <div id="imp-import-state"></div>
@@ -1517,6 +1530,8 @@ async function renderDash() {
 // DATOS IMPORTADOS / CARGA INTELIGENTE
 // ══════════════════════════════════════
 let importedData = { movements: [], movementsMonth: [], inventory: [], inventoryLatest: [], batches: [], loading: false, error: null }
+importedData.botActions = []
+importedData.inventorySaleIds = new Set()
 let importedLoadPromise = null
 
 function money(n) { return '$' + fmt(Number(n) || 0) }
@@ -1563,7 +1578,7 @@ async function loadImportedData() {
   renderImportedStates()
   importedLoadPromise = (async () => {
     try {
-      await Promise.all([loadImportedMovements(), loadImportedInventory(), loadImportBatches()])
+      await Promise.all([loadImportedMovements(), loadImportedInventory(), loadImportBatches(), loadBotActions(), loadInventorySaleLinks()])
       importedData.error = null
     } catch (e) {
       importedData.error = e
@@ -1575,6 +1590,8 @@ async function loadImportedData() {
       renderImportedMovements()
       renderImportedInventory()
       renderRecentImports()
+      renderBotActionsHistory()
+      renderSystemState()
     }
   })()
   return importedLoadPromise
@@ -1606,6 +1623,18 @@ async function loadImportBatches() {
   const { data, error } = await sb.from('import_batches').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(25)
   if (error) throw error
   importedData.batches = data || []
+}
+
+async function loadBotActions() {
+  const { data, error } = await sb.from('bot_actions').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(30)
+  if (error) throw error
+  importedData.botActions = data || []
+}
+
+async function loadInventorySaleLinks() {
+  const { data, error } = await sb.from('venta_items').select('inventory_item_id').eq('user_id', CU.id).limit(1000)
+  if (error) throw error
+  importedData.inventorySaleIds = new Set((data || []).map(v => v.inventory_item_id).filter(Boolean))
 }
 
 function renderImportedDashboard() {
@@ -1652,7 +1681,9 @@ function renderImportedInventory() {
   if (!tb) return
   tb.innerHTML = !rows.length
     ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr>'
-    : rows.map(p => `<tr>
+    : rows.map(p => {
+      const hasSales = importedData.inventorySaleIds?.has(p.id)
+      return `<tr>
         <td><strong>${escapeHTML(p.producto || '—')}</strong></td>
         <td>${escapeHTML(p.categoria || '—')}</td>
         <td>${escapeHTML(p.color || '—')}</td>
@@ -1665,9 +1696,10 @@ function renderImportedInventory() {
         <td>${escapeHTML(p.accion_recomendada || '—')}</td>
         <td><div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="editImportedInventoryItem('${p.id}')">Editar</button>
-          <button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button>
+          ${hasSales ? `<button class="btn btn-ghost btn-sm" onclick="archiveImportedInventoryItem('${p.id}')">Archivar</button>` : `<button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button>`}
         </div></td>
-      </tr>`).join('')
+      </tr>`
+    }).join('')
 }
 
 function switchProductTab(tab) {
@@ -1807,6 +1839,68 @@ function renderRecentImports() {
     : batches.map(b => `<tr><td>${importDate(b.created_at)}</td><td>${escapeHTML(b.source || '—')}</td><td>${escapeHTML(b.target || '—')}</td><td><span class="badge ${b.status === 'confirmed' ? 'bg' : b.status === 'failed' ? 'br' : 'by'}">${escapeHTML(b.status || '—')}</span></td><td>${b.total_filas ?? 0}</td><td>${b.filas_validas ?? 0}</td><td>${b.filas_con_error ?? 0}</td></tr>`).join('')
 }
 
+function summarizeBotResult(data) {
+  const r = data || {}
+  if (r.venta_id) return `Venta ${money(r.total)}. Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  if (r.movimiento_id && r.stock_despues !== undefined) return `Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  if (r.movimiento_id) return 'Movimiento registrado'
+  if (r.inventory_item_id && r.stock_actual !== undefined) return `Producto creado. Stock ${r.stock_actual}`
+  if (r.inventory_item_id) return `Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  return '—'
+}
+
+function botActionLabel(type) {
+  const labels = { crear_producto: 'Crear producto', venta_stock: 'Venta', gasto: 'Gasto', reposicion: 'Reposición', ajuste_stock: 'Ajuste stock' }
+  return labels[type] || type || '—'
+}
+
+function friendlyBotError(err) {
+  const msg = String(err?.message || err || '')
+  const t = normalizeText(msg)
+  if (t.includes('stock cambio') || t.includes('el stock cambio')) return 'El stock cambió antes de confirmar. Volvé a intentar.'
+  if (t.includes('producto no encontrado')) return 'No encontré ese producto. Revisá el nombre o crealo primero.'
+  if (t.includes('producto ya existe') || t.includes('duplic')) return 'Ese producto ya existe. Usá reposición para sumar stock.'
+  if (t.includes('falta precio') || t.includes('precio invalido')) return 'Falta el precio de venta. Ejemplo: vendí 2 toalla azul a 10000 cada una.'
+  if (t.includes('stock insuficiente')) return 'No hay stock suficiente para confirmar esa venta. Revisá el inventario.'
+  if (t.includes('cantidad invalida')) return 'La cantidad no es válida. Revisá el número e intentá de nuevo.'
+  return msg || 'No se pudo completar la acción.'
+}
+
+function renderBotActionsHistory() {
+  const rows = importedData.botActions || []
+  const tb = document.getElementById('bot-actions-tb')
+  if (!tb) return
+  const badge = { preview: 'by', confirmed: 'bg', failed: 'br', cancelled: 'bb' }
+  tb.innerHTML = !rows.length
+    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">✦</div>Sin acciones del Asesor IA</div></td></tr>'
+    : rows.map(a => `<tr>
+        <td style="color:var(--txt3)">${importDate(a.created_at)}</td>
+        <td>${escapeHTML(botActionLabel(a.action_type))}</td>
+        <td>${escapeHTML((a.input_text || '—').slice(0, 90))}</td>
+        <td><span class="badge ${badge[a.status] || 'bb'}">${escapeHTML(a.status || '—')}</span></td>
+        <td style="color:${a.error ? 'var(--red)' : 'var(--txt3)'}">${escapeHTML(a.error || '—')}</td>
+        <td>${importDate(a.confirmed_at)}</td>
+        <td>${escapeHTML(summarizeBotResult(a.result_data))}</td>
+      </tr>`).join('')
+}
+
+function renderSystemState() {
+  const el = document.getElementById('system-state-list')
+  if (!el) return
+  const actions = importedData.botActions || []
+  const last = actions[0]
+  const recentErrors = actions.filter(a => a.status === 'failed').length
+  const items = [
+    { ok: !importedData.error, label: 'Supabase conectado', value: importedData.error ? 'Error al cargar datos' : 'OK' },
+    { ok: true, label: 'Asesor IA operativo', value: 'Preview y confirmación activos' },
+    { ok: importedData.inventory.length > 0, label: 'Inventario cargado', value: `${importedData.inventory.length} item(s)` },
+    { ok: importedData.movements.length > 0, label: 'Movimientos cargados', value: `${importedData.movements.length} movimiento(s)` },
+    { ok: !!last, label: 'Última acción del bot', value: last ? `${botActionLabel(last.action_type)} · ${last.status}` : 'Sin acciones' },
+    { ok: recentErrors === 0, label: 'Errores recientes del bot', value: String(recentErrors) }
+  ]
+  el.innerHTML = items.map(i => `<div class="mrow"><div class="mlbl">${i.ok ? '✅' : '⚠️'} ${escapeHTML(i.label)}</div><div class="mval" style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--yel)'}">${escapeHTML(i.value)}</div></div>`).join('')
+}
+
 async function deleteImportedMovement(id) {
   if (!confirm('¿Eliminar este movimiento importado?')) return
   const { error } = await sb.from('movimientos_financieros').delete().eq('id', id).eq('user_id', CU.id)
@@ -1836,6 +1930,24 @@ async function deleteImportedInventoryItem(id) {
 // ══════════════════════════════════════
 // CARGA INTELIGENTE
 // ══════════════════════════════════════
+async function archiveImportedInventoryItem(id) {
+  const item = (importedData.inventory || []).find(p => p.id === id) || (importedData.inventoryLatest || []).find(p => p.id === id)
+  const hasSales = importedData.inventorySaleIds?.has(id)
+  if (!hasSales) { toastErr('Este producto no tiene ventas asociadas. Podés eliminarlo si es una carga de prueba.'); return }
+  if (!confirm('¿Archivar este producto con ventas asociadas?')) return
+  const payload = {}
+  if (item && Object.prototype.hasOwnProperty.call(item, 'archivado')) payload.archivado = true
+  else if (item && Object.prototype.hasOwnProperty.call(item, 'activo')) payload.activo = false
+  else {
+    toastErr('Este producto tiene ventas. Por ahora no se puede borrar; más adelante se archivará.')
+    return
+  }
+  const { error } = await sb.from('inventario_items').update(payload).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'archiveImportedInventoryItem')) return
+  await loadImportedData()
+  toast('Producto archivado')
+}
+
 let importRows = []
 let importSource = 'manual'
 let botActionPreview = null
@@ -2060,7 +2172,7 @@ async function getFreshInventoryItem(id) {
     .eq('id', id)
     .eq('user_id', CU.id)
     .single()
-  if (error || !data) throw new Error('Producto no encontrado o sin permisos')
+  if (error || !data) throw new Error('No encontré ese producto. Revisá el nombre o crealo primero.')
   return data
 }
 
@@ -2109,7 +2221,7 @@ async function buildBotActionPreview(command) {
     if (!command.producto) preview.errors.push('Falta producto')
     else {
       const duplicate = await findInventoryDuplicate(command.producto)
-      if (duplicate.exists) preview.errors.push('Este producto ya existe. Usá reposición para sumar stock o editá el producto existente.')
+      if (duplicate.exists) preview.errors.push('Ese producto ya existe. Usá reposición para sumar stock.')
     }
     ;[['stock', command.stock], ['costo', command.costo], ['precio', command.precio]].forEach(([lbl, val]) => {
       if (val === null) preview.errors.push(`Falta ${lbl}`)
@@ -2119,14 +2231,14 @@ async function buildBotActionPreview(command) {
   } else if (['venta_stock', 'reposicion', 'ajuste_stock'].includes(command.action_type)) {
     const match = await findInventoryMatch(command.producto)
     preview.match = match
-    if (match.status === 'none') preview.errors.push('Producto no encontrado')
+    if (match.status === 'none') preview.errors.push('No encontré ese producto. Revisá el nombre o crealo primero.')
     if (match.status === 'ambiguous') { preview.warnings.push('Hay mas de un producto parecido'); preview.canConfirm = false }
     const item = match.item
     if (command.action_type === 'venta_stock') {
       if (command.cantidad === null) command.cantidad = 1
       if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
-      if (command.precio_unitario === null) preview.errors.push('Falta precio en venta')
-      else if (!Number.isFinite(command.precio_unitario) || command.precio_unitario < 0) preview.errors.push('Precio invalido')
+      if (command.precio_unitario === null) preview.errors.push('Falta el precio de venta. Ejemplo: vendí 2 toalla azul a 10000 cada una.')
+      else if (!Number.isFinite(command.precio_unitario) || command.precio_unitario < 0) preview.errors.push('Falta el precio de venta. Ejemplo: vendí 2 toalla azul a 10000 cada una.')
       if (item && Number(item.stock_actual || 0) < command.cantidad) { preview.warnings.push('Stock insuficiente: revisar antes de vender'); preview.canConfirm = false }
       addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.precio_unitario) ? '$' + fmt(command.precio_unitario * (command.cantidad || 1)) : '—', 'Registrar venta, ingreso y salida de stock')
     }
@@ -2570,10 +2682,13 @@ async function confirmBotAction(surface = botActionSurface) {
     }
     toast('Accion confirmada')
   } catch (e) {
-    await sb.from('bot_actions').update({ status: 'failed', error: e.message || 'Error al ejecutar accion' }).eq('id', action.id).eq('user_id', CU.id)
+    const friendly = friendlyBotError(e)
+    await sb.from('bot_actions').update({ status: 'failed', error: friendly }).eq('id', action.id).eq('user_id', CU.id)
     btn.disabled = false; btn.textContent = 'Confirmar accion'
-    if (surface === 'ai') appendAIMessage(e.message || 'Error al ejecutar accion. No se completo la operacion.', 'think')
-    handleSupaError(e, 'confirmBotAction')
+    if (surface === 'ai') appendAIMessage(friendly, 'think')
+    console.error('[KairÃ³s] confirmBotAction:', e)
+    toastErr(friendly)
+    await loadImportedData()
   }
 }
 
@@ -2588,7 +2703,7 @@ async function executeBotAction(preview, actionId) {
 
 async function executeCreateProductAction(preview, actionId) {
   const duplicate = await findInventoryDuplicate(preview.producto)
-  if (duplicate.exists) throw new Error('Este producto ya existe. Usá reposición para sumar stock o editá el producto existente.')
+  if (duplicate.exists) throw new Error('Ese producto ya existe. Usá reposición para sumar stock.')
   const stock = Math.trunc(Number(preview.stock))
   const costo = Number(preview.costo)
   const precio = Number(preview.precio)
@@ -2641,7 +2756,7 @@ async function executeSaleAction(preview, actionId) {
   const qty = Math.trunc(Number(preview.cantidad || 1))
   const price = Number(preview.precio_unitario)
   if (!Number.isFinite(qty) || qty <= 0) throw new Error('Cantidad invalida')
-  if (!Number.isFinite(price) || price <= 0) throw new Error('Precio invalido')
+  if (!Number.isFinite(price) || price <= 0) throw new Error('Falta el precio de venta. Ejemplo: vendí 2 toalla azul a 10000 cada una.')
   const before = Math.trunc(Number(item.stock_actual) || 0)
   const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
   if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
