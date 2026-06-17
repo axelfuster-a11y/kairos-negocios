@@ -1647,17 +1647,21 @@ async function deleteImportedMovement(id) {
 }
 
 async function deleteImportedInventoryItem(id) {
-  if (!confirm('¿Eliminar este item de inventario importado?')) return
-  const { error } = await sb.from('inventario_items').delete().eq('id', id).eq('user_id', CU.id)
-  if (error) {
-    if (error.code === '23503' || String(error.message || '').toLowerCase().includes('foreign key')) {
-      toastErr('No se puede eliminar este item porque tiene movimientos, ventas o alias asociados. Más adelante se podrá archivar.')
-      return
-    }
-    if (handleSupaError(error, 'deleteImportedInventoryItem')) return
+  if (!confirm('¿Eliminar este item de inventario importado y sus alias/movimientos de stock?')) return
+  const { data: saleRows, error: saleErr } = await sb.from('venta_items').select('id').eq('inventory_item_id', id).eq('user_id', CU.id).limit(1)
+  if (handleSupaError(saleErr, 'checkInventorySales')) return
+  if ((saleRows || []).length) {
+    toastErr('No se puede eliminar porque ya tiene ventas asociadas. Más adelante se podrá archivar.')
+    return
   }
+  const { error: aliasErr } = await sb.from('inventory_aliases').delete().eq('inventory_item_id', id).eq('user_id', CU.id)
+  if (handleSupaError(aliasErr, 'deleteInventoryAliases')) return
+  const { error: stockErr } = await sb.from('stock_movements').delete().eq('inventory_item_id', id).eq('user_id', CU.id)
+  if (handleSupaError(stockErr, 'deleteInventoryStockMovements')) return
+  const { error } = await sb.from('inventario_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteImportedInventoryItem')) return
   await loadImportedData()
-  toast('Item de inventario importado eliminado')
+  toast('Item eliminado correctamente')
 }
 
 // ══════════════════════════════════════
@@ -1847,6 +1851,13 @@ async function findInventoryMatch(productText) {
   return { status: 'match', item: top[0].item, matches: [top[0].item] }
 }
 
+async function findInventoryDuplicate(productText) {
+  const match = await findInventoryMatch(productText)
+  if (match.status === 'match') return { exists: true, item: match.item, ambiguous: false }
+  if (match.status === 'ambiguous') return { exists: true, matches: match.matches, ambiguous: true }
+  return { exists: false, item: null, ambiguous: false }
+}
+
 async function getFreshInventoryItem(id) {
   const { data, error } = await sb.from('inventario_items')
     .select('id,producto,categoria,color,medida,stock_actual,stock_minimo,costo_unitario,costo_extra,costo_total,precio_venta_local,precio_venta_web')
@@ -1900,6 +1911,10 @@ async function buildBotActionPreview(command) {
   }
   if (command.action_type === 'crear_producto') {
     if (!command.producto) preview.errors.push('Falta producto')
+    else {
+      const duplicate = await findInventoryDuplicate(command.producto)
+      if (duplicate.exists) preview.errors.push('Este producto ya existe. Usá reposición para sumar stock o editá el producto existente.')
+    }
     ;[['stock', command.stock], ['costo', command.costo], ['precio', command.precio]].forEach(([lbl, val]) => {
       if (val === null) preview.errors.push(`Falta ${lbl}`)
       else if (!Number.isFinite(val) || val < 0) preview.errors.push(`${lbl} invalido`)
@@ -2112,15 +2127,30 @@ function normalizeInventoryRow(raw, rowNumber, source = 'manual') {
   }
 }
 
-function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
-  importSource = source
-  botActionPreview = null
-  document.getElementById('im-bot-preview-card').style.display = 'none'
-  importRows = rows.map((raw, i) => {
-    const parsed = raw?.target ? raw : { target: detectRowTarget(raw, forced), raw }
-    return buildImportRow(i + 1, parsed.target, parsed.raw || raw, source)
-  })
-  renderImportPreview()
+async function applyInventoryDuplicateCheck(row) {
+  if (row.target !== 'inventario_items' || !row.normalized?.producto) return row
+  const duplicate = await findInventoryDuplicate(row.normalized.producto)
+  if (!duplicate.exists) return row
+  row.errors.push('Producto ya existente: usá reposición o editá el existente.')
+  row.status = 'error'
+  row.importStatus = 'error'
+  row.action = 'Corregir datos'
+  return row
+}
+
+async function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
+  try {
+    importSource = source
+    botActionPreview = null
+    document.getElementById('im-bot-preview-card').style.display = 'none'
+    importRows = await Promise.all(rows.map(async (raw, i) => {
+      const parsed = raw?.target ? raw : { target: detectRowTarget(raw, forced), raw }
+      return applyInventoryDuplicateCheck(buildImportRow(i + 1, parsed.target, parsed.raw || raw, source))
+    }))
+    renderImportPreview()
+  } catch (e) {
+    handleSupaError(e, 'analyzeImportRows')
+  }
 }
 
 async function handleSmartMessage() {
@@ -2139,7 +2169,7 @@ async function handleSmartMessage() {
     }
   }
   const parsed = parseNaturalMessage(msg, V('im-kind'))
-  analyzeImportRows([parsed], 'mensaje', parsed.target === 'unknown' ? 'auto' : parsed.target)
+  await analyzeImportRows([parsed], 'mensaje', parsed.target === 'unknown' ? 'auto' : parsed.target)
 }
 
 async function handleImportFile() {
@@ -2151,18 +2181,18 @@ async function handleImportFile() {
   const ws = wb.Sheets[wb.SheetNames[0]]
   const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
   if (!rows.length) { toastErr('El archivo no tiene filas para importar'); return }
-  analyzeImportRows(rows, file.name, V('im-file-kind'))
+  await analyzeImportRows(rows, file.name, V('im-file-kind'))
 }
 
-function handleManualPrepare() {
+async function handleManualPrepare() {
   if (V('im-man-type') === 'inventario') {
-    analyzeImportRows([{
+    await analyzeImportRows([{
       producto: V('im-p-prod'), sku: V('im-p-sku'), categoria: V('im-p-cat'), variante: V('im-p-var'), medida: V('im-p-med'), color: V('im-p-col'),
       stock_actual: V('im-p-stock'), stock_minimo: V('im-p-min'), costo_unitario: V('im-p-costo'), costo_extra: V('im-p-extra'),
       precio_venta_local: V('im-p-plocal'), precio_venta_web: V('im-p-pweb'), proveedor: V('im-p-prov'), notas: V('im-p-notas')
     }], 'manual', 'inventario')
   } else {
-    analyzeImportRows([{ fecha: V('im-f-fecha'), descripcion: V('im-f-desc'), monto: V('im-f-monto'), tipo: V('im-f-tipo'), medio_pago: V('im-f-medio'), categoria: V('im-f-cat') }], 'manual', 'auto')
+    await analyzeImportRows([{ fecha: V('im-f-fecha'), descripcion: V('im-f-desc'), monto: V('im-f-monto'), tipo: V('im-f-tipo'), medio_pago: V('im-f-medio'), categoria: V('im-f-cat') }], 'manual', 'auto')
   }
 }
 
@@ -2356,6 +2386,8 @@ async function executeBotAction(preview, actionId) {
 }
 
 async function executeCreateProductAction(preview, actionId) {
+  const duplicate = await findInventoryDuplicate(preview.producto)
+  if (duplicate.exists) throw new Error('Este producto ya existe. Usá reposición para sumar stock o editá el producto existente.')
   const stock = Math.trunc(Number(preview.stock))
   const costo = Number(preview.costo)
   const precio = Number(preview.precio)
