@@ -140,6 +140,12 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .wprog{display:flex;gap:6px;margin-bottom:32px}
 .wdot{height:3px;flex:1;border-radius:99px;background:var(--bor);transition:background .3s}
 .wdot.on{background:var(--gold)}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:180;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)}
+.modal-ov.on{display:flex}
+.modal-card{width:min(760px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--sur);border:1px solid var(--bor);border-radius:16px;box-shadow:0 32px 80px rgba(0,0,0,.55);padding:22px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--txt)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
 .mrow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
 .mrow:last-child{border-bottom:none}
 .mlbl{font-size:13px;color:var(--txt2)}
@@ -471,8 +477,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
 
         <div id="prod-tab-inv-pane">
-        <div class="card">
-          <div class="card-t">📦 Catálogo</div>
+        <div class="card" id="legacy-prod-card" style="display:none">
+          <div class="card-t">📦 Catálogo legacy</div>
           <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
           <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">📦</div>Sin productos</div></td></tr></tbody></table></div>
         </div>
@@ -752,6 +758,34 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   <div class="ai-in">
     <input type="text" id="ai-inp" placeholder="Preguntame lo que sea..." onkeydown="if(event.key==='Enter')sendAI()">
     <button class="btn btn-gold" onclick="sendAI()">→</button>
+  </div>
+</div>
+
+<!-- EDITAR INVENTARIO IMPORTADO -->
+<div class="modal-ov" id="inv-edit-ov" onclick="closeImportedInventoryModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Editar producto</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeImportedInventoryModal()">×</button>
+    </div>
+    <div class="g2">
+      <div class="field"><label>Producto</label><input type="text" id="ie-producto"></div>
+      <div class="field"><label>Categoría</label><input type="text" id="ie-categoria"></div>
+      <div class="field"><label>Color</label><input type="text" id="ie-color"></div>
+      <div class="field"><label>Medida</label><input type="text" id="ie-medida"></div>
+      <div class="field"><label>Stock actual</label><input type="number" id="ie-stock" min="0"></div>
+      <div class="field"><label>Stock mínimo</label><input type="number" id="ie-stock-min" min="0"></div>
+      <div class="field"><label>Costo unitario</label><input type="number" id="ie-costo" min="0" step="0.01"></div>
+      <div class="field"><label>Costo extra</label><input type="number" id="ie-extra" min="0" step="0.01"></div>
+      <div class="field"><label>Precio venta local</label><input type="number" id="ie-precio-local" min="0" step="0.01"></div>
+      <div class="field"><label>Precio venta web</label><input type="number" id="ie-precio-web" min="0" step="0.01"></div>
+      <div class="field"><label>Proveedor</label><input type="text" id="ie-proveedor"></div>
+    </div>
+    <div class="field"><label>Notas</label><textarea id="ie-notas"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeImportedInventoryModal()">Cancelar</button>
+      <button class="btn btn-gold" id="ie-save" onclick="saveImportedInventoryEdit()">Guardar cambios</button>
+    </div>
   </div>
 </div>
 
@@ -1198,6 +1232,8 @@ async function delProd(id) {
 async function renderProds() {
   const { data: ps, error } = await sb.from('productos').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
   if (error) { console.error('[Kairós] renderProds:', error); return }
+  const legacyCard = document.getElementById('legacy-prod-card')
+  if (legacyCard) legacyCard.style.display = ps?.length ? 'block' : 'none'
   const eBadge = { activo: 'bg', pausado: 'by', sin_stock: 'br' }
   const eLabel = { activo: 'Activo', pausado: 'Pausado', sin_stock: 'Sin stock' }
   document.getElementById('p-tb').innerHTML = !(ps?.length)
@@ -1665,38 +1701,69 @@ function importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, pr
   }
 }
 
-function promptInventoryText(label, currentValue, required = false) {
-  const value = prompt(label, currentValue ?? '')
-  if (value === null) return undefined
-  const clean = value.trim()
+let editingInventoryId = null
+
+function setEditField(id, value) {
+  const el = document.getElementById(id)
+  if (el) el.value = value ?? ''
+}
+
+function editFieldText(id, label, required = false) {
+  const clean = V(id).trim()
   if (required && !clean) throw new Error(`${label} es obligatorio`)
   return clean || null
 }
 
-function promptInventoryNumber(label, currentValue, integer = false) {
-  const value = prompt(label, currentValue ?? 0)
-  if (value === null) return undefined
-  const parsed = parseNumberValue(value === '' ? 0 : value)
+function editFieldNumber(id, label, integer = false) {
+  const raw = V(id).trim()
+  const parsed = parseNumberValue(raw === '' ? 0 : raw)
   if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${label} debe ser un numero mayor o igual a 0`)
   return integer ? Math.trunc(parsed) : parsed
 }
 
-async function editImportedInventoryItem(id) {
+function closeImportedInventoryModal() {
+  editingInventoryId = null
+  const modal = document.getElementById('inv-edit-ov')
+  if (modal) modal.classList.remove('on')
+}
+
+function editImportedInventoryItem(id) {
   const item = (importedData.inventory || []).find(p => p.id === id) || (importedData.inventoryLatest || []).find(p => p.id === id)
   if (!item) { toastErr('No se encontro el item para editar'); return }
+  editingInventoryId = id
+  setEditField('ie-producto', item.producto)
+  setEditField('ie-categoria', item.categoria)
+  setEditField('ie-color', item.color)
+  setEditField('ie-medida', item.medida)
+  setEditField('ie-stock', item.stock_actual ?? 0)
+  setEditField('ie-stock-min', item.stock_minimo ?? 0)
+  setEditField('ie-costo', item.costo_unitario ?? 0)
+  setEditField('ie-extra', item.costo_extra ?? 0)
+  setEditField('ie-precio-local', item.precio_venta_local ?? 0)
+  setEditField('ie-precio-web', item.precio_venta_web ?? 0)
+  setEditField('ie-proveedor', item.proveedor)
+  setEditField('ie-notas', item.notas)
+  const modal = document.getElementById('inv-edit-ov')
+  if (modal) modal.classList.add('on')
+}
+
+async function saveImportedInventoryEdit() {
+  if (!editingInventoryId) { toastErr('No hay producto para guardar'); return }
+  const btn = document.getElementById('ie-save')
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...' }
   try {
-    const producto = promptInventoryText('Producto', item.producto, true); if (producto === undefined) return
-    const categoria = promptInventoryText('Categoria', item.categoria); if (categoria === undefined) return
-    const color = promptInventoryText('Color', item.color); if (color === undefined) return
-    const medida = promptInventoryText('Medida', item.medida); if (medida === undefined) return
-    const stock = promptInventoryNumber('Stock actual', item.stock_actual, true); if (stock === undefined) return
-    const stockMin = promptInventoryNumber('Stock minimo', item.stock_minimo, true); if (stockMin === undefined) return
-    const costo = promptInventoryNumber('Costo unitario', item.costo_unitario); if (costo === undefined) return
-    const extra = promptInventoryNumber('Costo extra', item.costo_extra); if (extra === undefined) return
-    const precioLocal = promptInventoryNumber('Precio venta local', item.precio_venta_local); if (precioLocal === undefined) return
-    const precioWeb = promptInventoryNumber('Precio venta web', item.precio_venta_web); if (precioWeb === undefined) return
-    const proveedor = promptInventoryText('Proveedor', item.proveedor); if (proveedor === undefined) return
-    const notas = promptInventoryText('Notas', item.notas); if (notas === undefined) return
+    const producto = editFieldText('ie-producto', 'Producto', true)
+    const categoria = editFieldText('ie-categoria', 'Categoria')
+    const color = editFieldText('ie-color', 'Color')
+    const medida = editFieldText('ie-medida', 'Medida')
+    const stock = editFieldNumber('ie-stock', 'Stock actual', true)
+    const stockMin = editFieldNumber('ie-stock-min', 'Stock minimo', true)
+    const costo = editFieldNumber('ie-costo', 'Costo unitario')
+    const extra = editFieldNumber('ie-extra', 'Costo extra')
+    const precioLocal = editFieldNumber('ie-precio-local', 'Precio venta local')
+    const precioWeb = editFieldNumber('ie-precio-web', 'Precio venta web')
+    const proveedor = editFieldText('ie-proveedor', 'Proveedor')
+    const notas = editFieldText('ie-notas', 'Notas')
     const derived = importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb)
     const payload = {
       producto, categoria, color, medida,
@@ -1710,12 +1777,15 @@ async function editImportedInventoryItem(id) {
       notas,
       ...derived
     }
-    const { error } = await sb.from('inventario_items').update(payload).eq('id', id).eq('user_id', CU.id)
+    const { error } = await sb.from('inventario_items').update(payload).eq('id', editingInventoryId).eq('user_id', CU.id)
     if (handleSupaError(error, 'editImportedInventoryItem')) return
     await loadImportedData()
-    toast('Item actualizado correctamente')
+    closeImportedInventoryModal()
+    toast('Producto actualizado')
   } catch (e) {
-    toastErr(e.message || 'No se pudo actualizar el item')
+    toastErr(e.message || 'No se pudo actualizar el producto')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios' }
   }
 }
 
