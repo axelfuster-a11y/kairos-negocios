@@ -409,6 +409,12 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="ph"><div class="pt">Productos & Servicios</div><div class="ps">Tu catálogo con motor de costos y precios.</div></div>
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">Motor de costos</div><div class="ctxt">Ingresá el costo y Kairós calcula automáticamente el <strong>precio mínimo rentable</strong>, el <strong>precio sugerido</strong> y el <strong>margen real</strong>. Todos los porcentajes son configurables.</div></div></div>
 
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="btn btn-gold btn-sm" id="prod-tab-inv" onclick="switchProductTab('inv')">Inventario</button>
+          <button class="btn btn-ghost btn-sm" id="prod-tab-carga" onclick="switchProductTab('carga')">Carga</button>
+        </div>
+
+        <div id="prod-tab-carga-pane" style="display:none">
         <!-- Config de costos -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-t">⚙️ Configuración de costos por defecto</div>
@@ -462,6 +468,9 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
         </div>
 
+        </div>
+
+        <div id="prod-tab-inv-pane">
         <div class="card">
           <div class="card-t">📦 Catálogo</div>
           <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
@@ -482,6 +491,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <table><thead><tr><th>Producto</th><th>Cat.</th><th>Color</th><th>Medida</th><th>Stock</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Estado</th><th>Acción</th><th></th></tr></thead>
             <tbody id="imp-inv-tb"><tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr></tbody></table>
           </div>
+        </div>
         </div>
       </div>
 
@@ -909,6 +919,7 @@ function go(page, el) {
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'))
   document.getElementById('page-' + page).classList.add('on')
   el.classList.add('on')
+  if (page === 'prod') switchProductTab('inv')
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
@@ -1616,8 +1627,96 @@ function renderImportedInventory() {
         <td style="color:${Number(p.margen_local_pct) >= 25 ? 'var(--green)' : Number(p.margen_local_pct) >= 0 ? 'var(--yel)' : 'var(--red)'}">${fmtDec(Number(p.margen_local_pct) || 0)}%</td>
         <td><span class="badge ${badge[p.estado_stock] || 'bb'}">${escapeHTML(p.estado_stock || 'sin_datos')}</span></td>
         <td>${escapeHTML(p.accion_recomendada || '—')}</td>
-        <td><button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button></td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="editImportedInventoryItem('${p.id}')">Editar</button>
+          <button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button>
+        </div></td>
       </tr>`).join('')
+}
+
+function switchProductTab(tab) {
+  const inv = document.getElementById('prod-tab-inv-pane')
+  const carga = document.getElementById('prod-tab-carga-pane')
+  const invBtn = document.getElementById('prod-tab-inv')
+  const cargaBtn = document.getElementById('prod-tab-carga')
+  if (!inv || !carga) return
+  const showCarga = tab === 'carga'
+  inv.style.display = showCarga ? 'none' : 'block'
+  carga.style.display = showCarga ? 'block' : 'none'
+  if (invBtn) invBtn.className = 'btn btn-sm ' + (showCarga ? 'btn-ghost' : 'btn-gold')
+  if (cargaBtn) cargaBtn.className = 'btn btn-sm ' + (showCarga ? 'btn-gold' : 'btn-ghost')
+}
+
+function importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb) {
+  const costoTotal = costo + extra
+  const ganLocal = precioLocal - costoTotal
+  const marLocal = precioLocal > 0 ? (ganLocal / precioLocal) * 100 : 0
+  const ganWeb = precioWeb - costoTotal
+  const marWeb = precioWeb > 0 ? (ganWeb / precioWeb) * 100 : 0
+  const estado = stock <= 0 ? 'rojo' : stock <= stockMin ? 'amarillo' : 'verde'
+  return {
+    costo_total: costoTotal,
+    ganancia_local: ganLocal,
+    margen_local_pct: marLocal,
+    ganancia_web: ganWeb,
+    margen_web_pct: marWeb,
+    estado_stock: estado,
+    accion_recomendada: inventoryAction(stock, stockMin, costoTotal, precioLocal)
+  }
+}
+
+function promptInventoryText(label, currentValue, required = false) {
+  const value = prompt(label, currentValue ?? '')
+  if (value === null) return undefined
+  const clean = value.trim()
+  if (required && !clean) throw new Error(`${label} es obligatorio`)
+  return clean || null
+}
+
+function promptInventoryNumber(label, currentValue, integer = false) {
+  const value = prompt(label, currentValue ?? 0)
+  if (value === null) return undefined
+  const parsed = parseNumberValue(value === '' ? 0 : value)
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${label} debe ser un numero mayor o igual a 0`)
+  return integer ? Math.trunc(parsed) : parsed
+}
+
+async function editImportedInventoryItem(id) {
+  const item = (importedData.inventory || []).find(p => p.id === id) || (importedData.inventoryLatest || []).find(p => p.id === id)
+  if (!item) { toastErr('No se encontro el item para editar'); return }
+  try {
+    const producto = promptInventoryText('Producto', item.producto, true); if (producto === undefined) return
+    const categoria = promptInventoryText('Categoria', item.categoria); if (categoria === undefined) return
+    const color = promptInventoryText('Color', item.color); if (color === undefined) return
+    const medida = promptInventoryText('Medida', item.medida); if (medida === undefined) return
+    const stock = promptInventoryNumber('Stock actual', item.stock_actual, true); if (stock === undefined) return
+    const stockMin = promptInventoryNumber('Stock minimo', item.stock_minimo, true); if (stockMin === undefined) return
+    const costo = promptInventoryNumber('Costo unitario', item.costo_unitario); if (costo === undefined) return
+    const extra = promptInventoryNumber('Costo extra', item.costo_extra); if (extra === undefined) return
+    const precioLocal = promptInventoryNumber('Precio venta local', item.precio_venta_local); if (precioLocal === undefined) return
+    const precioWeb = promptInventoryNumber('Precio venta web', item.precio_venta_web); if (precioWeb === undefined) return
+    const proveedor = promptInventoryText('Proveedor', item.proveedor); if (proveedor === undefined) return
+    const notas = promptInventoryText('Notas', item.notas); if (notas === undefined) return
+    const derived = importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb)
+    const payload = {
+      producto, categoria, color, medida,
+      stock_actual: stock,
+      stock_minimo: stockMin,
+      costo_unitario: costo,
+      costo_extra: extra,
+      precio_venta_local: precioLocal,
+      precio_venta_web: precioWeb,
+      proveedor,
+      notas,
+      ...derived
+    }
+    const { error } = await sb.from('inventario_items').update(payload).eq('id', id).eq('user_id', CU.id)
+    if (handleSupaError(error, 'editImportedInventoryItem')) return
+    await loadImportedData()
+    toast('Item actualizado correctamente')
+  } catch (e) {
+    toastErr(e.message || 'No se pudo actualizar el item')
+  }
 }
 
 function renderRecentImports() {
@@ -1770,9 +1869,36 @@ function stripBotProductNoise(v) {
     .trim()
 }
 
+function parseStockAdditionCommand(text) {
+  const t = normalizeText(text)
+  const patterns = [
+    /^(?:suma|sumale|agrega|agregale)\s+([\d.,]+)\s+(?:de\s+)?stock\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:suma|sumale|agrega|agregale)\s+stock\s+([\d.,]+)\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:aumenta|incrementa)\s+(?:el\s+)?stock\s+de\s+(.+?)\s+en\s+([\d.,]+)$/,
+    /^(?:repone|reponer)\s+([\d.,]+)\s+(.+)$/
+  ]
+  for (const p of patterns) {
+    const m = t.match(p)
+    if (!m) continue
+    const amountFirst = !p.source.includes('(.+?)\\s+en')
+    const cantidad = parseNumberValue(amountFirst ? m[1] : m[2])
+    const producto = stripBotProductNoise(amountFirst ? m[2] : m[1])
+    return { action_type: 'reposicion', input_text: text, producto, cantidad, costo_unitario: null, medio_pago: detectMedio(text) }
+  }
+  return null
+}
+
+function looksOperationalIntent(text) {
+  const t = normalizeText(text)
+  const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|sumale|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
+  return stockIntent || /(vendi|venta|gasto|compre|compra|agregar producto|agrega producto|editar producto|edita producto)/.test(t)
+}
+
 function parseBotCommand(text) {
   const t = normalizeText(text)
   const medio = detectMedio(text)
+  const stockAdd = parseStockAdditionCommand(text)
+  if (stockAdd) return stockAdd
   if (/^(agrega|agreg[áa]|crear|crea)\b/.test(t) && /\bproducto\b/.test(t)) {
     let producto = text.replace(/^.*?\bproducto\s+/i, '')
     producto = stripBotProductNoise(producto)
@@ -1938,7 +2064,12 @@ async function buildBotActionPreview(command) {
       if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
       if (command.costo_unitario === null) preview.warnings.push('No se registrara egreso porque falta costo')
       else if (!Number.isFinite(command.costo_unitario) || command.costo_unitario < 0) preview.errors.push('Costo invalido')
-      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.costo_unitario) ? '$' + fmt(command.costo_unitario * command.cantidad) : '—', 'Subir stock y registrar compra')
+      const before = item ? Math.trunc(Number(item.stock_actual) || 0) : null
+      const after = item && Number.isFinite(command.cantidad) ? before + Math.trunc(Number(command.cantidad)) : null
+      const actionText = after !== null
+        ? `Stock: ${before} -> ${after}. ${command.costo_unitario === null ? 'Sin egreso financiero porque falta costo' : 'Subir stock y registrar compra'}`
+        : command.costo_unitario === null ? 'Subir stock sin egreso financiero porque falta costo' : 'Subir stock y registrar compra'
+      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.costo_unitario) ? '$' + fmt(command.costo_unitario * command.cantidad) : '—', actionText)
     }
     if (command.action_type === 'ajuste_stock') {
       if (!Number.isFinite(command.stock_final) || command.stock_final < 0) preview.errors.push('Stock final invalido')
@@ -2662,6 +2793,12 @@ async function sendAI() {
     }
 
     // ✅ LLAMADA SEGURA — via Edge Function, sin API key en el frontend
+    if (looksOperationalIntent(msg)) {
+      loadDiv.remove()
+      appendAIMessage('Parece que querés modificar stock, pero necesito que me indiques el producto y la cantidad con más claridad. Ejemplo: "sumá 10 de stock a prueba ia azul" o "ajustá stock de prueba ia azul a 20".', 'bot')
+      return
+    }
+
     const { data, error } = await sb.functions.invoke('ai-advisor', {
       body: { message: msg, history: aiH.slice(-18) }
     })
