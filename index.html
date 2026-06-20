@@ -68,6 +68,14 @@ select option{background:var(--sur2)}
 .nspc{flex:1}
 .ai-nav-btn{margin:8px 12px 0;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:11px 14px;color:var(--gold2);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;width:calc(100% - 24px)}
 .ai-nav-btn:hover{background:linear-gradient(135deg,rgba(201,168,76,0.22),rgba(201,168,76,0.1))}
+.dashboard-actions{margin:20px 0 24px;display:flex;flex-direction:column;gap:10px}
+.dashboard-primary{width:100%;justify-content:center;padding:15px 20px;font-size:15px}
+.dashboard-secondary{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.dashboard-link{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;padding:5px;text-decoration:underline;text-underline-offset:4px}
+.dashboard-link:hover{color:var(--gold2)}
+.mobile-nav{display:none}
+.chat-fab{position:fixed;right:24px;bottom:24px;width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,76,.45);background:linear-gradient(135deg,#c9a84c,#e8c87a);color:#0c0c0e;font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700;cursor:pointer;z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.45),0 4px 18px rgba(201,168,76,.28);transition:transform .2s,box-shadow .2s}
+.chat-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 6px 22px rgba(201,168,76,.38)}
 .content{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg)}
 .page{display:none;animation:fu .2s ease}
 .page.on{display:block}
@@ -129,8 +137,19 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .ai-action-l{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
 .ai-action-v{font-size:12px;color:var(--txt)}
 .ai-action-note{font-size:12px;line-height:1.5;margin:10px 0;color:var(--txt2)}
+.ai-msg-meta{display:block;font-size:9px;color:var(--txt3);margin-top:6px;letter-spacing:.4px}
+.ai-usr .ai-msg-meta{text-align:right}
+.ai-history{border-top:1px solid var(--bor);padding:12px 14px;background:var(--bg2);max-height:170px;overflow-y:auto;flex-shrink:0}
+.ai-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.ai-history-title{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase}
+.ai-history-link{border:0;background:transparent;color:var(--gold);font-family:'Outfit',sans-serif;font-size:11px;cursor:pointer}
+.ai-history-list{display:flex;flex-direction:column;gap:6px}
+.ai-history-item{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px 10px;text-align:left;border:1px solid var(--bor);background:var(--sur);color:var(--txt);border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'Outfit',sans-serif}
+.ai-history-item:hover{border-color:rgba(201,168,76,.35)}
+.ai-history-item span{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-history-item small{font-size:10px;color:var(--txt3)}
 .ai-in{padding:14px;border-top:1px solid var(--bor);display:flex;gap:10px;flex-shrink:0}
-.ai-in input{font-size:13px}
+.ai-in input{font-size:13px;min-height:44px}
 #wizard{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 #wizard.on{display:flex}
 .wcard{background:var(--sur);border:1px solid var(--bor);border-radius:20px;padding:40px;width:100%;max-width:500px;box-shadow:0 40px 80px rgba(0,0,0,0.6)}
@@ -168,13 +187,28 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .cost-row:last-child{border-bottom:none;padding-top:10px;margin-top:4px;border-top:1px solid var(--bor)}
 .cost-row .lbl{color:var(--txt2)}
 .cost-row .val{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600}
+.cost-help{display:block;max-width:250px;margin-top:3px;font-size:10px;font-weight:400;line-height:1.4;color:var(--txt3)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--txt);z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4)}
 #toast.on{display:block;transform:translateX(-50%) translateY(0)}
 #toast.err{border-color:rgba(248,113,113,0.4);color:var(--red)}
 /* RESET PASSWORD */
 #reset-screen{min-height:100vh;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 70%),var(--bg)}
-@media(max-width:900px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:1fr 1fr}.sidebar{width:54px}.ni span:not(.ni-ico){display:none}.ns-title{display:none}.ai-nav-btn span:last-child{display:none}.ai-nav-btn{justify-content:center}.content{padding:20px 16px}}
-@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}}
+@media(max-width:900px){
+  .g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.kanban{grid-template-columns:1fr 1fr}
+  .sidebar{display:none}
+  .content{padding:20px 16px 104px}
+  .mobile-nav{position:fixed;left:0;right:0;bottom:0;height:72px;display:grid;grid-template-columns:repeat(5,1fr);align-items:stretch;background:rgba(23,23,28,.97);border-top:1px solid var(--bor);z-index:80;backdrop-filter:blur(14px);padding-bottom:env(safe-area-inset-bottom)}
+  .mobile-ni{border:0;background:transparent;color:var(--txt3);font-family:'Outfit',sans-serif;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+  .mobile-ni.on{color:var(--gold)}
+  .mobile-ni-ico{font-size:18px;line-height:1}
+  .chat-fab{right:16px;bottom:86px;width:50px;height:50px}
+  #toast{bottom:88px}
+}
+@media(max-width:600px){
+  .g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}
+  .topbar{padding:0 14px}.topbar-user{display:none}.topbar-biz{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ai-history{max-height:150px}
+}
 </style>
 </head>
 <body>
@@ -296,6 +330,17 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="stat"><div class="sl">Egresos del mes</div><div class="sv" id="d-egr" style="color:var(--red)">$0</div><div class="sn" id="d-egr-n">—</div></div>
           <div class="stat"><div class="sl">Ganancia neta</div><div class="sv" id="d-gan" style="color:var(--gold)">$0</div><div class="sn" id="d-mar">Margen: —</div></div>
           <div class="stat"><div class="sl">Leads activos</div><div class="sv" id="d-leads" style="color:var(--blue)">0</div><div class="sn" id="d-cli">—</div></div>
+        </div>
+        <div class="g2" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Punto de equilibrio</div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
+          <div class="stat"><div class="sl">Alertas</div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
+          <div class="dashboard-secondary">
+            <button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button>
+            <button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button>
+          </div>
         </div>
         <div class="g2">
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
@@ -462,7 +507,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
                 <div class="cost-row"><span class="lbl">Costo base total</span><span class="val" id="cr-costo">$0</span></div>
                 <div class="cost-row"><span class="lbl">Precio mínimo rentable</span><span class="val" id="cr-min">$0</span></div>
                 <div class="cost-row"><span class="lbl">Precio sugerido</span><span class="val" id="cr-sug" style="color:var(--gold)">$0</span></div>
-                <div class="cost-row"><span class="lbl">Ganancia estimada</span><span class="val" id="cr-gan">$0</span></div>
+                <div class="cost-row"><span class="lbl">Ganancia bruta<span class="cost-help">De cada venta, lo que te queda después de descontar lo que te costó el producto.</span></span><span class="val" id="cr-gan">$0</span></div>
                 <div class="cost-row" style="font-weight:600"><span class="lbl" style="color:var(--txt)">Margen real</span><span class="val" id="cr-mar">0%</span></div>
               </div>
               <div id="p-cost-alert" class="cost-alert"></div>
@@ -525,7 +570,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 
       <!-- CARGA INTELIGENTE -->
       <div class="page" id="page-import">
-        <div class="ph"><div class="pt">Carga inteligente</div><div class="ps">Prepará datos, revisá el preview y confirmá antes de guardar.</div></div>
+        <div class="ph"><div class="pt">IA e importaciones</div><div class="ps">Revisá el historial del Asesor y prepará cargas con preview antes de guardar.</div></div>
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">Flujo seguro</div><div class="ctxt">Nada se guarda sin confirmación. Kairós analiza el dato, muestra errores o avisos y recién después carga en Supabase.</div></div></div>
 
         <div class="g3" style="margin-bottom:20px">
@@ -756,21 +801,38 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 
     </div>
   </div>
+  <nav class="mobile-nav" aria-label="Navegación principal">
+    <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico">⌂</span><span>Inicio</span></button>
+    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Plata</span></button>
+    <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico">□</span><span>Productos</span></button>
+    <button class="mobile-ni" data-p="leads" onclick="go('leads',this)"><span class="mobile-ni-ico">○</span><span>Clientes</span></button>
+    <button class="mobile-ni" data-p="import" onclick="go('import',this)"><span class="mobile-ni-ico">✦</span><span>IA</span></button>
+  </nav>
+  <button class="chat-fab" type="button" onclick="openAI()" aria-label="Abrir Asesor IA" title="Abrir Asesor IA">✦</button>
 </div>
 
 <!-- AI PANEL -->
 <div class="ai-ov" id="ai-ov" onclick="closeAI()"></div>
 <div class="ai-panel" id="ai-panel">
   <div class="ai-hdr">
-    <div><div class="ai-title">✦ Asesor IA</div><div style="font-size:12px;color:var(--txt3)">Seguro. Conoce tu negocio.</div></div>
+    <div><div class="ai-title">Asesor IA ✦</div><div style="font-size:12px;color:var(--txt3)">Preguntale lo que necesites</div></div>
     <button class="btn btn-ghost btn-sm" onclick="closeAI()">✕</button>
   </div>
   <div class="ai-msgs" id="ai-msgs">
-    <div class="ai-msg ai-bot">¡Hola! Soy tu asesor de negocio. ¿En qué te ayudo?</div>
+    <div class="ai-msg ai-bot">¡Hola! Soy tu asesor de negocio. ¿En qué te ayudo?<span class="ai-msg-meta">✦ Asesor · ahora</span></div>
+  </div>
+  <div class="ai-history">
+    <div class="ai-history-head">
+      <div class="ai-history-title">Acciones recientes</div>
+      <button class="ai-history-link" onclick="goPage('import');closeAI()">Ver historial</button>
+    </div>
+    <div class="ai-history-list" id="ai-recent-actions">
+      <div style="font-size:11px;color:var(--txt3)">Todavía no hay acciones confirmadas.</div>
+    </div>
   </div>
   <div class="ai-in">
-    <input type="text" id="ai-inp" placeholder="Preguntame lo que sea..." onkeydown="if(event.key==='Enter')sendAI()">
-    <button class="btn btn-gold" onclick="sendAI()">→</button>
+    <input type="text" id="ai-inp" placeholder="Escribí acá..." onkeydown="if(event.key==='Enter')sendAI()">
+    <button class="btn btn-gold" onclick="sendAI()" aria-label="Enviar mensaje" title="Enviar">➤</button>
   </div>
 </div>
 
@@ -963,13 +1025,36 @@ async function wFinish() {
 // ══════════════════════════════════════
 function go(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'))
-  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'))
-  document.getElementById('page-' + page).classList.add('on')
-  el.classList.add('on')
+  document.querySelectorAll('.ni,.mobile-ni').forEach(n => n.classList.remove('on'))
+  const target = document.getElementById('page-' + page)
+  if (!target) return
+  target.classList.add('on')
+  document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
   if (page === 'prod') switchProductTab('inv')
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
+
+function startDashboardAction(action) {
+  if (action === 'venta') {
+    openAI()
+    const input = document.getElementById('ai-inp')
+    input.value = 'vendí '
+    input.setSelectionRange(input.value.length, input.value.length)
+    return
+  }
+  if (action === 'gasto') {
+    goPage('fin')
+    document.getElementById('tx-t').value = 'egreso'
+    document.getElementById('tx-d').focus()
+    return
+  }
+  if (action === 'producto') {
+    goPage('prod')
+    switchProductTab('carga')
+    document.getElementById('p-n').focus()
+  }
+}
 
 // ══════════════════════════════════════
 // NEGOCIO
@@ -1051,6 +1136,15 @@ function prefillProdFromCfg(cfg) {
 // MOTOR DE COSTOS
 // ══════════════════════════════════════
 function calcCosto() {
+  /*
+   * Motor de costos:
+   * - Costo base = producto + packaging + envio absorbido por el negocio.
+   * - Comisiones, impuestos y descuentos se calculan sobre el precio de venta.
+   * - Precio minimo rentable = costo base / (1 - porcentajes variables).
+   * - Precio sugerido incorpora el margen deseado configurado.
+   * - Ganancia bruta = precio elegido - costo base - costos variables.
+   * - Margen real = ganancia bruta / precio elegido * 100.
+   */
   const co = numOrDefault('p-co')
   const pkg = numOrDefault('p-pkg')
   const env = numOrDefault('p-env')
@@ -1496,24 +1590,59 @@ async function renderMet() {
 // DASHBOARD
 // ══════════════════════════════════════
 async function renderDash() {
+  /*
+   * Metricas del negocio:
+   * - Ingresos y egresos se filtran por el mes actual y por tipo.
+   * - Ganancia neta = ingresos - egresos.
+   * - Margen = ganancia neta / ingresos * 100, solo cuando hay ingresos.
+   * - El punto de equilibrio usa la suma de gastos_fijos.mon y se compara con
+   *   los ingresos del mes en Finanzas.
+   * - Los datos importados se mantienen rotulados y separados de los legacy.
+   * - Leads activos son los contactos que todavia no llegaron a cliente.
+   * - El bloque importado cuenta como alertas los inventario_items en rojo.
+   */
   const { m, y } = getMes()
   const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
   const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-  const { data: txs } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd)
-  const { data: leads } = await sb.from('leads').select('*').eq('user_id', CU.id)
-  const { data: prods } = await sb.from('productos').select('id').eq('user_id', CU.id)
+  const [txResult, leadResult, prodResult, fixedResult, redResult] = await Promise.all([
+    sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd),
+    sb.from('leads').select('*').eq('user_id', CU.id),
+    sb.from('productos').select('id').eq('user_id', CU.id),
+    sb.from('gastos_fijos').select('mon').eq('user_id', CU.id),
+    sb.from('inventario_items').select('id').eq('user_id', CU.id).eq('estado_stock', 'rojo')
+  ])
+  ;[
+    ['transacciones', txResult.error],
+    ['leads', leadResult.error],
+    ['productos', prodResult.error],
+    ['gastos_fijos', fixedResult.error],
+    ['inventario_items', redResult.error]
+  ].forEach(([source, error]) => { if (error) console.error(`[Kairós] renderDash ${source}:`, error) })
+  const txs = txResult.data
+  const leads = leadResult.data
+  const prods = prodResult.data
+  const fixedCosts = fixedResult.data
+  const redInventory = redResult.data
   const b = await getBiz()
   const all = txs || [], ls = leads || []
   const ing = all.filter(t => t.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0)
   const egr = all.filter(t => t.tipo === 'egreso').reduce((a, b) => a + b.monto, 0)
   const gan = ing - egr, mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const breakEven = (fixedCosts || []).reduce((sum, item) => sum + (Number(item.mon) || 0), 0)
+  const activeLeads = ls.filter(l => l.estado !== 'cliente').length
+  const redCount = (redInventory || []).length
   S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros este mes')
   S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros este mes')
   const gEl = document.getElementById('d-gan'); gEl.textContent = '$' + fmt(gan); gEl.style.color = gan >= 0 ? 'var(--gold)' : 'var(--red)'
   S('d-mar', 'Margen: ' + mar + '%')
-  S('d-leads', ls.filter(l => l.estado !== 'cliente').length)
+  S('d-leads', activeLeads)
   S('d-cli', ls.filter(l => l.estado === 'cliente').length + ' clientes en pipeline')
-  const { data: lastTx } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5)
+  S('d-eq', '$' + fmt(breakEven))
+  S('d-eq-note', breakEven <= 0 ? 'Sin gastos fijos cargados' : ing >= breakEven ? `Superado por $${fmt(ing - breakEven)}` : `Faltan $${fmt(breakEven - ing)}`)
+  S('d-alerts', activeLeads + redCount)
+  S('d-alerts-note', `${activeLeads} leads activos · ${redCount} productos en rojo`)
+  const { data: lastTx, error: lastTxError } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5)
+  if (lastTxError) console.error('[Kairós] renderDash últimos movimientos:', lastTxError)
   document.getElementById('d-tx').innerHTML = !(lastTx?.length)
     ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Finanzas.</div>'
     : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${t.cat} · ${t.fecha}</div></div><div style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${t.tipo === 'ingreso' ? '+' : '-'}$${fmt(t.monto)}</div></div>`).join('')
@@ -1854,6 +1983,11 @@ function botActionLabel(type) {
   return labels[type] || type || '—'
 }
 
+function botStatusLabel(status) {
+  const labels = { preview: 'pendiente', confirmed: 'confirmada', failed: 'fallida', cancelled: 'cancelada' }
+  return labels[status] || status || '—'
+}
+
 function friendlyBotError(err) {
   const msg = String(err?.message || err || '')
   const t = normalizeText(msg)
@@ -1869,19 +2003,48 @@ function friendlyBotError(err) {
 function renderBotActionsHistory() {
   const rows = importedData.botActions || []
   const tb = document.getElementById('bot-actions-tb')
-  if (!tb) return
   const badge = { preview: 'by', confirmed: 'bg', failed: 'br', cancelled: 'bb' }
-  tb.innerHTML = !rows.length
-    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">✦</div>Sin acciones del Asesor IA</div></td></tr>'
-    : rows.map(a => `<tr>
+  if (tb) {
+    tb.innerHTML = !rows.length
+      ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">✦</div>Sin acciones del Asesor IA</div></td></tr>'
+      : rows.map(a => `<tr>
         <td style="color:var(--txt3)">${importDate(a.created_at)}</td>
         <td>${escapeHTML(botActionLabel(a.action_type))}</td>
         <td>${escapeHTML((a.input_text || '—').slice(0, 90))}</td>
-        <td><span class="badge ${badge[a.status] || 'bb'}">${escapeHTML(a.status || '—')}</span></td>
+        <td><span class="badge ${badge[a.status] || 'bb'}">${escapeHTML(botStatusLabel(a.status))}</span></td>
         <td style="color:${a.error ? 'var(--red)' : 'var(--txt3)'}">${escapeHTML(a.error || '—')}</td>
         <td>${importDate(a.confirmed_at)}</td>
         <td>${escapeHTML(summarizeBotResult(a.result_data))}</td>
       </tr>`).join('')
+  }
+  renderAIRecentActions()
+}
+
+function renderAIRecentActions() {
+  const el = document.getElementById('ai-recent-actions')
+  if (!el) return
+  const rows = (importedData.botActions || []).filter(a => a.status !== 'preview').slice(0, 4)
+  if (!rows.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">Todavia no hay acciones confirmadas.</div>'
+    return
+  }
+  const badge = { confirmed: 'bg', failed: 'br', cancelled: 'bb' }
+  el.innerHTML = rows.map(a => `
+    <button class="ai-history-item" type="button" onclick="showBotActionDetail('${a.id}')">
+      <span>${escapeHTML(botActionLabel(a.action_type))}</span>
+      <span class="badge ${badge[a.status] || 'by'}">${escapeHTML(botStatusLabel(a.status))}</span>
+      <small>${escapeHTML((a.input_text || '—').slice(0, 54))}</small>
+      <small>${escapeHTML(importDate(a.confirmed_at || a.created_at))}</small>
+    </button>`).join('')
+}
+
+function showBotActionDetail(id) {
+  const action = (importedData.botActions || []).find(a => a.id === id)
+  if (!action) return
+  const detail = action.error
+    ? `${botActionLabel(action.action_type)}: ${action.error}`
+    : `${botActionLabel(action.action_type)}: ${summarizeBotResult(action.result_data)}`
+  appendAIMessage(detail, action.status === 'failed' ? 'think' : 'bot')
 }
 
 function renderSystemState() {
@@ -2940,15 +3103,29 @@ function resetImport() {
 // ══════════════════════════════════════
 let aiH = []
 
-function openAI() { document.getElementById('ai-panel').classList.add('on'); document.getElementById('ai-ov').classList.add('on'); setTimeout(() => document.getElementById('ai-inp').focus(), 300) }
+function openAI() {
+  document.getElementById('ai-panel').classList.add('on')
+  document.getElementById('ai-ov').classList.add('on')
+  renderAIRecentActions()
+  if (CU) loadImportedData()
+  setTimeout(() => document.getElementById('ai-inp').focus(), 300)
+}
 function closeAI() { document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
+
+function aiClock() {
+  return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date())
+}
 
 function appendAIMessage(text, type = 'bot') {
   const box = document.getElementById('ai-msgs')
   const div = document.createElement('div')
   div.className = type === 'user' ? 'ai-msg ai-usr' : type === 'think' ? 'ai-msg ai-thnk' : 'ai-msg ai-bot'
-  if (type === 'bot') div.innerHTML = mdToHtml(text)
-  else div.textContent = text
+  if (type === 'bot') div.innerHTML = mdToHtml(String(text))
+  else div.textContent = String(text)
+  const meta = document.createElement('span')
+  meta.className = 'ai-msg-meta'
+  meta.textContent = `${type === 'user' ? 'Vos' : '✦ Asesor'} · ${aiClock()}`
+  div.appendChild(meta)
   box.appendChild(div)
   box.scrollTop = box.scrollHeight
   return div
@@ -2991,10 +3168,7 @@ async function sendAI() {
     loadDiv.remove()
 
     if (error) {
-      const errDiv = document.createElement('div')
-      errDiv.className = 'ai-msg ai-thnk'
-      errDiv.textContent = '⚠️ Error al conectar con el asesor. Intentá de nuevo.'
-      box.appendChild(errDiv)
+      appendAIMessage('Error al conectar con el asesor. Intentá de nuevo.', 'think')
       console.error('[Kairós] AI error:', error)
       return
     }
@@ -3003,18 +3177,11 @@ async function sendAI() {
     aiH.push({ role: 'assistant', content: reply })
     if (aiH.length > 20) aiH = aiH.slice(-20)
 
-    const botDiv = document.createElement('div')
-    botDiv.className = 'ai-msg ai-bot'
-    botDiv.innerHTML = mdToHtml(reply)
-    box.appendChild(botDiv)
-    box.scrollTop = box.scrollHeight
+    appendAIMessage(reply, 'bot')
 
   } catch (e) {
     loadDiv.remove()
-    const errDiv = document.createElement('div')
-    errDiv.className = 'ai-msg ai-thnk'
-    errDiv.textContent = '⚠️ Error de conexión. Intentá de nuevo.'
-    box.appendChild(errDiv)
+    appendAIMessage('Error de conexión. Intentá de nuevo.', 'think')
     console.error('[Kairós] AI catch:', e)
   }
 }
