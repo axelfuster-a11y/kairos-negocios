@@ -65,6 +65,11 @@ select option{background:var(--sur2)}
 .ni:hover{color:var(--txt);background:var(--sur2)}
 .ni.on{color:var(--gold);background:var(--gdim);border-color:rgba(201,168,76,0.15);font-weight:500}
 .ni-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sidebar-more{margin-top:8px}
+.sidebar-more summary{list-style:none;font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:1.2px;text-transform:uppercase;padding:10px 20px;cursor:pointer}
+.sidebar-more summary::-webkit-details-marker{display:none}
+.sidebar-more summary::after{content:'+';float:right}
+.sidebar-more[open] summary::after{content:'−'}
 .nspc{flex:1}
 .ai-nav-btn{margin:8px 12px 0;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:11px 14px;color:var(--gold2);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;width:calc(100% - 24px)}
 .ai-nav-btn:hover{background:linear-gradient(135deg,rgba(201,168,76,0.22),rgba(201,168,76,0.1))}
@@ -73,6 +78,24 @@ select option{background:var(--sur2)}
 .dashboard-secondary{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
 .dashboard-link{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;padding:5px;text-decoration:underline;text-underline-offset:4px}
 .dashboard-link:hover{color:var(--gold2)}
+.section-tabs{display:flex;gap:6px;overflow-x:auto;margin:-8px 0 20px;padding:4px;background:var(--bg2);border:1px solid var(--bor);border-radius:10px;width:max-content;max-width:100%}
+.section-tab{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;padding:8px 13px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.section-tab.on{background:var(--sur2);color:var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.tab-pane{display:none}
+.tab-pane.on{display:block}
+.sl{display:flex;align-items:center;gap:6px}
+.info-dot{position:relative;width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--bor2);background:transparent;color:var(--txt3);font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;cursor:help;flex-shrink:0}
+.info-dot:hover,.info-dot:focus,.info-dot.on{border-color:var(--gold);color:var(--gold);outline:none}
+.info-dot::after{content:attr(data-info);position:absolute;z-index:120;left:50%;bottom:calc(100% + 9px);width:230px;max-width:70vw;padding:9px 11px;border-radius:8px;background:#25252d;border:1px solid var(--bor2);color:var(--txt);font-size:11px;font-weight:400;line-height:1.45;text-transform:none;letter-spacing:0;box-shadow:0 10px 28px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translate(-50%,5px);transition:opacity .15s,transform .15s}
+.info-dot:hover::after,.info-dot:focus::after,.info-dot.on::after{opacity:1;transform:translate(-50%,0)}
+.profile-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--bor);background:var(--sur2);color:var(--gold);font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.profile-btn:hover{border-color:var(--gold)}
+.profile-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 20px}
+.profile-stat{background:var(--bg2);border:1px solid var(--bor);border-radius:8px;padding:12px}
+.profile-stat strong{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold)}
+.profile-stat span{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px}
+.ai-entry-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:14px 16px}
+.ai-entry-card p{font-size:12px;color:var(--txt2);line-height:1.5}
 .mobile-nav{display:none}
 .chat-fab{position:fixed;right:24px;bottom:24px;width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,76,.45);background:linear-gradient(135deg,#c9a84c,#e8c87a);color:#0c0c0e;font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700;cursor:pointer;z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.45),0 4px 18px rgba(201,168,76,.28);transition:transform .2s,box-shadow .2s}
 .chat-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 6px 22px rgba(201,168,76,.38)}
@@ -139,6 +162,9 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 .ai-action-note{font-size:12px;line-height:1.5;margin:10px 0;color:var(--txt2)}
 .ai-msg-meta{display:block;font-size:9px;color:var(--txt3);margin-top:6px;letter-spacing:.4px}
 .ai-usr .ai-msg-meta{text-align:right}
+.ai-quick-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ai-quick-action{border:1px solid var(--bor);background:var(--sur2);color:var(--txt2);font-family:'Outfit',sans-serif;font-size:11px;border-radius:20px;padding:7px 10px;cursor:pointer}
+.ai-quick-action:hover{border-color:var(--gold);color:var(--gold)}
 .ai-history{border-top:1px solid var(--bor);padding:12px 14px;background:var(--bg2);max-height:170px;overflow-y:auto;flex-shrink:0}
 .ai-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
 .ai-history-title{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:1px;text-transform:uppercase}
@@ -208,6 +234,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   .g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}
   .topbar{padding:0 14px}.topbar-user{display:none}.topbar-biz{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ai-history{max-height:150px}
+  .profile-summary{grid-template-columns:1fr}
+  .ai-entry-card{align-items:flex-start;flex-direction:column}
+  .info-dot::after{left:auto;right:-12px;transform:translateY(5px)}
+  .info-dot:hover::after,.info-dot:focus::after,.info-dot.on::after{transform:translateY(0)}
 }
 </style>
 </head>
@@ -300,6 +330,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <div class="topbar-biz" id="tb-biz"></div>
     <div class="topbar-r">
       <span class="topbar-user" id="tb-user"></span>
+      <button class="profile-btn" id="profile-btn" onclick="openProfile()" aria-label="Abrir perfil y configuración" title="Perfil y configuración">?</button>
       <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -307,16 +338,18 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <nav class="sidebar">
       <div class="ns-title">General</div>
       <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">⊞</span><span>Dashboard</span></div>
-      <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico">🏗</span><span>Mi Negocio</span></div>
       <div class="ns-title">Operaciones</div>
       <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico">💰</span><span>Finanzas</span></div>
       <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico">📦</span><span>Productos</span></div>
       <div class="ni" data-p="leads" onclick="go('leads',this)"><span class="ni-ico">👥</span><span>Clientes & Leads</span></div>
       <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">📥</span><span>Carga inteligente</span></div>
-      <div class="ns-title">Crecimiento</div>
-      <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">📣</span><span>Publicidad</span></div>
-      <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">📅</span><span>Contenido</span></div>
-      <div class="ni" data-p="met" onclick="go('met',this)"><span class="ni-ico">📊</span><span>Métricas</span></div>
+      <details class="sidebar-more">
+        <summary>Más herramientas</summary>
+        <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico">🏗</span><span>Mi Negocio</span></div>
+        <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">📣</span><span>Publicidad</span></div>
+        <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">📅</span><span>Contenido</span></div>
+        <div class="ni" data-p="met" onclick="go('met',this)"><span class="ni-ico">📊</span><span>Métricas</span></div>
+      </details>
       <div class="nspc"></div>
       <button class="ai-nav-btn" onclick="openAI()"><span>✦</span><span>Asesor IA</span></button>
     </nav>
@@ -325,15 +358,20 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="ph"><div class="pt" id="dash-title">Kairós</div><div class="ps">Resumen de tu negocio</div></div>
+        <div class="section-tabs" role="tablist" aria-label="Vistas del inicio">
+          <button class="section-tab on" id="dash-tab-summary-btn" onclick="switchDashboardTab('summary')">Resumen principal</button>
+          <button class="section-tab" id="dash-tab-imported-btn" onclick="switchDashboardTab('imported')">Carga inteligente</button>
+        </div>
+        <div class="tab-pane on" id="dash-tab-summary">
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Ingresos del mes</div><div class="sv" id="d-ing" style="color:var(--green)">$0</div><div class="sn" id="d-ing-n">—</div></div>
-          <div class="stat"><div class="sl">Egresos del mes</div><div class="sv" id="d-egr" style="color:var(--red)">$0</div><div class="sn" id="d-egr-n">—</div></div>
-          <div class="stat"><div class="sl">Ganancia neta</div><div class="sv" id="d-gan" style="color:var(--gold)">$0</div><div class="sn" id="d-mar">Margen: —</div></div>
-          <div class="stat"><div class="sl">Leads activos</div><div class="sv" id="d-leads" style="color:var(--blue)">0</div><div class="sn" id="d-cli">—</div></div>
+          <div class="stat"><div class="sl">Ingresos del mes <button class="info-dot" data-info="Suma automática de ingresos históricos, manuales, importados y creados por el Asesor IA durante el mes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-ing" style="color:var(--green)">$0</div><div class="sn" id="d-ing-n">—</div></div>
+          <div class="stat"><div class="sl">Egresos del mes <button class="info-dot" data-info="Suma automática de todos los egresos registrados durante el mes, sin sumar gastos fijos por segunda vez." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-egr" style="color:var(--red)">$0</div><div class="sn" id="d-egr-n">—</div></div>
+          <div class="stat"><div class="sl">Ganancia neta <button class="info-dot" data-info="Ingresos menos egresos del mes. Si es negativa, salió más dinero del que entró." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-gan" style="color:var(--gold)">$0</div><div class="sn" id="d-mar">Margen: —</div></div>
+          <div class="stat"><div class="sl">Leads activos <button class="info-dot" data-info="Contactos comerciales que todavía no llegaron al estado Cliente." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-leads" style="color:var(--blue)">0</div><div class="sn" id="d-cli">—</div></div>
         </div>
         <div class="g2" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Punto de equilibrio</div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
-          <div class="stat"><div class="sl">Alertas</div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
+          <div class="stat"><div class="sl">Punto de equilibrio <button class="info-dot" data-info="Total de gastos fijos mensuales. Se compara con los ingresos para mostrar cuánto falta o cuánto se superó." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
+          <div class="stat"><div class="sl">Alertas <button class="info-dot" data-info="Suma de leads pendientes y productos importados con stock en rojo que requieren atención." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
         </div>
         <div class="dashboard-actions">
           <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
@@ -346,18 +384,21 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
           <div class="card"><div class="card-t">🎯 Estado del negocio</div><div id="d-est"></div></div>
         </div>
-        <div class="div"><span>Datos importados / Carga inteligente</span></div>
+        </div>
+        <div class="tab-pane" id="dash-tab-imported">
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Datos de Carga inteligente</div><div class="ctxt">Este es el desglose de las tablas nuevas. El resumen principal ya los incluye. Si cargaste el mismo movimiento dos veces, eliminá una de las filas para corregir el total.</div></div></div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
         <div id="imp-dash-state"></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Ingresos importados</div><div class="sv" id="id-ing" style="color:var(--green)">$0</div><div class="sn" id="id-movs">0 movimientos</div></div>
-          <div class="stat"><div class="sl">Egresos importados</div><div class="sv" id="id-egr" style="color:var(--red)">$0</div><div class="sn">Mes actual</div></div>
-          <div class="stat"><div class="sl">Balance importado</div><div class="sv" id="id-bal" style="color:var(--gold)">$0</div><div class="sn">Ingresos - egresos</div></div>
-          <div class="stat"><div class="sl">Productos importados</div><div class="sv" id="id-prod" style="color:var(--blue)">0</div><div class="sn" id="id-stock-est">Stock: 0 / 0 / 0</div></div>
+          <div class="stat"><div class="sl">Ingresos importados <button class="info-dot" data-info="Suma de movimientos tipo ingreso cargados por mensaje, archivo o carga manual durante el mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="id-ing" style="color:var(--green)">$0</div><div class="sn" id="id-movs">0 movimientos</div></div>
+          <div class="stat"><div class="sl">Egresos importados <button class="info-dot" data-info="Suma de movimientos tipo egreso de Carga inteligente durante el mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="id-egr" style="color:var(--red)">$0</div><div class="sn">Mes actual</div></div>
+          <div class="stat"><div class="sl">Balance importado <button class="info-dot" data-info="Ingresos importados menos egresos importados del mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="id-bal" style="color:var(--gold)">$0</div><div class="sn">Ingresos - egresos</div></div>
+          <div class="stat"><div class="sl">Productos importados <button class="info-dot" data-info="Cantidad total de items guardados en el inventario nuevo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="id-prod" style="color:var(--blue)">0</div><div class="sn" id="id-stock-est">Stock: 0 / 0 / 0</div></div>
         </div>
         <div class="g2">
-          <div class="card"><div class="card-t">Stock importado</div><div class="g2"><div class="mrow"><div class="mlbl">Valor a costo</div><div class="mval" id="id-stock-costo">$0</div></div><div class="mrow"><div class="mlbl">Valor a venta</div><div class="mval" id="id-stock-venta">$0</div></div></div></div>
+          <div class="card"><div class="card-t">Stock importado</div><div class="g2"><div class="mrow"><div class="mlbl">Valor a costo <button class="info-dot" data-info="Stock actual multiplicado por el costo total de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-costo">$0</div></div><div class="mrow"><div class="mlbl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-venta">$0</div></div></div></div>
           <div class="card"><div class="card-t">Estado de stock importado</div><div id="id-stock-breakdown"></div></div>
+        </div>
         </div>
       </div>
 
@@ -397,14 +438,27 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 
       <!-- FINANZAS -->
       <div class="page" id="page-fin">
-        <div class="ph"><div class="pt">Finanzas</div><div class="ps">El pulso real de tu negocio.</div></div>
+        <div class="ph"><div class="pt">Plata</div><div class="ps">Entendé qué entra, qué sale y dónde se registra cada dato.</div></div>
+        <div class="section-tabs" role="tablist" aria-label="Secciones de Plata">
+          <button class="section-tab on" id="fin-tab-summary-btn" onclick="switchFinanceTab('summary')">Resumen</button>
+          <button class="section-tab" id="fin-tab-movements-btn" onclick="switchFinanceTab('movements')">Movimientos</button>
+          <button class="section-tab" id="fin-tab-imported-btn" onclick="switchFinanceTab('imported')">Operativos</button>
+          <button class="section-tab" id="fin-tab-fixed-btn" onclick="switchFinanceTab('fixed')">Gastos fijos</button>
+        </div>
+        <div class="tab-pane on" id="fin-tab-summary">
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">Los 3 números clave</div><div class="ctxt"><strong>Ingresos</strong> = todo lo que entra. <strong>Egresos</strong> = todo lo que sale. <strong>Ganancia neta</strong> = lo que realmente te queda.</div></div></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Ingresos del mes</div><div class="sv" id="f-ing" style="color:var(--green)">$0</div><div class="sn" id="f-ing-n">0 registros</div></div>
-          <div class="stat"><div class="sl">Egresos del mes</div><div class="sv" id="f-egr" style="color:var(--red)">$0</div><div class="sn" id="f-egr-n">0 registros</div></div>
-          <div class="stat"><div class="sl">Ganancia neta</div><div class="sv" id="f-gan" style="color:var(--gold)">$0</div><div class="sn" id="f-mar">Margen: 0%</div></div>
-          <div class="stat"><div class="sl">Punto de equilibrio</div><div class="sv" id="f-eq" style="color:var(--blue)">$0</div><div class="sn">Total gastos fijos</div><div class="pbar"><div class="pbar-f" id="f-eq-b" style="width:0%"></div></div></div>
+          <div class="stat"><div class="sl">Ingresos del mes <button class="info-dot" data-info="Suma unificada de ingresos históricos, manuales, importados y del Asesor IA." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-ing" style="color:var(--green)">$0</div><div class="sn" id="f-ing-n">0 registros</div></div>
+          <div class="stat"><div class="sl">Egresos del mes <button class="info-dot" data-info="Suma unificada de todos los egresos efectivamente registrados en el mes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-egr" style="color:var(--red)">$0</div><div class="sn" id="f-egr-n">0 registros</div></div>
+          <div class="stat"><div class="sl">Ganancia neta <button class="info-dot" data-info="Ingresos del mes menos egresos del mes. El margen muestra qué porcentaje de los ingresos queda como ganancia." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-gan" style="color:var(--gold)">$0</div><div class="sn" id="f-mar">Margen: 0%</div></div>
+          <div class="stat"><div class="sl">Punto de equilibrio <button class="info-dot" data-info="Suma de tus gastos fijos mensuales. La barra compara los ingresos del mes contra ese total." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-eq" style="color:var(--blue)">$0</div><div class="sn">Total gastos fijos</div><div class="pbar"><div class="pbar-f" id="f-eq-b" style="width:0%"></div></div></div>
         </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="switchFinanceTab('movements');document.getElementById('tx-d').focus()">Registrar movimiento</button>
+          <button class="btn btn-ghost" onclick="switchFinanceTab('imported')">Ver datos importados</button>
+        </div>
+        </div>
+        <div class="tab-pane" id="fin-tab-movements">
         <div class="g2">
           <div class="card">
             <div class="card-t">➕ Registrar movimiento</div>
@@ -416,30 +470,34 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <button class="btn btn-gold btn-full" onclick="addTx()">Registrar</button>
           </div>
           <div class="card">
-            <div class="card-t">📋 Últimos movimientos</div>
+            <div class="card-t">📋 Movimientos unificados</div>
             <div class="tw" style="max-height:380px;overflow-y:auto">
-              <table><thead><tr><th>Descripción</th><th>Cat.</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
-              <tbody id="tx-tb"><tr><td colspan="5"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr></tbody></table>
+              <table><thead><tr><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Fuente</th><th></th></tr></thead>
+              <tbody id="tx-tb"><tr><td colspan="7"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr></tbody></table>
             </div>
           </div>
         </div>
-        <div class="div"><span>Movimientos importados</span></div>
+        </div>
+        <div class="tab-pane" id="fin-tab-imported">
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Movimientos operativos</div><div class="ctxt">Son los datos cargados por IA, archivo o carga manual. El Resumen ya los incluye; esta pestaña permite revisar el origen y eliminar duplicados.</div></div></div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
         <div id="imp-fin-state"></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Ingresos</div><div class="sv" id="if-ing" style="color:var(--green)">$0</div></div>
-          <div class="stat"><div class="sl">Egresos</div><div class="sv" id="if-egr" style="color:var(--red)">$0</div></div>
-          <div class="stat"><div class="sl">Balance</div><div class="sv" id="if-bal" style="color:var(--gold)">$0</div></div>
-          <div class="stat"><div class="sl">Cantidad</div><div class="sv" id="if-cant" style="color:var(--blue)">0</div></div>
+          <div class="stat"><div class="sl">Ingresos <button class="info-dot" data-info="Suma de movimientos operativos tipo ingreso del mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="if-ing" style="color:var(--green)">$0</div></div>
+          <div class="stat"><div class="sl">Egresos <button class="info-dot" data-info="Suma de movimientos operativos tipo egreso del mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="if-egr" style="color:var(--red)">$0</div></div>
+          <div class="stat"><div class="sl">Balance <button class="info-dot" data-info="Ingresos operativos menos egresos operativos del mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="if-bal" style="color:var(--gold)">$0</div></div>
+          <div class="stat"><div class="sl">Cantidad <button class="info-dot" data-info="Cantidad de movimientos operativos del mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="if-cant" style="color:var(--blue)">0</div></div>
         </div>
         <div class="card" style="margin-bottom:20px">
-          <div class="card-t">Movimientos importados</div>
+          <div class="card-t">Movimientos operativos</div>
           <div class="tw" style="max-height:380px;overflow-y:auto">
             <table><thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Monto</th><th>Medio</th><th>Categoría</th><th>Origen</th><th></th></tr></thead>
             <tbody id="imp-mov-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr></tbody></table>
           </div>
         </div>
-        <div class="div"><span>Gastos Fijos Mensuales</span></div>
+        </div>
+        <div class="tab-pane" id="fin-tab-fixed">
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Gastos fijos mensuales</div><div class="ctxt">Cargá únicamente gastos que se repiten todos los meses. Se usan para calcular tu punto de equilibrio, pero no se descuentan como egreso hasta que registres el pago. Así no se cuentan dos veces.</div></div></div>
         <div class="g2">
           <div class="card">
             <div class="card-t">🔒 Agregar gasto fijo</div>
@@ -452,6 +510,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <div id="gf-lista"><div class="empty" style="padding:20px"><div class="empty-i">📌</div>Sin gastos fijos</div></div>
             <div class="mrow" style="margin-top:12px;border-top:1px solid var(--bor);padding-top:12px"><div class="mlbl" style="font-weight:600;color:var(--txt)">Total mensual</div><div class="mval" style="color:var(--red)" id="gf-tot">$0</div></div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -466,6 +525,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
 
         <div id="prod-tab-carga-pane" style="display:none">
+        <div class="ai-entry-card">
+          <div><strong style="display:block;margin-bottom:4px">¿Querés cargarlo conversando?</strong><p>El Asesor IA te pide nombre, stock, costo y precio, prepara un preview y no guarda nada hasta que confirmes.</p></div>
+          <button class="btn btn-gold" onclick="openProductAIHelp()">✦ Cargar producto con IA</button>
+        </div>
         <!-- Config de costos -->
         <div class="card" style="margin-bottom:20px">
           <div class="card-t">⚙️ Configuración de costos por defecto</div>
@@ -489,7 +552,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
               <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ropa, Servicios..."></div>
               <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Describí el producto..."></textarea></div>
               <div class="field"><label>Stock (0 si es servicio)</label><input type="number" id="p-st" placeholder="0" min="0"></div>
-              <div class="field"><label>Estado</label><select id="p-es"><option value="activo">✅ Activo</option><option value="pausado">⏸ Pausado</option><option value="sin_stock">📭 Sin stock</option></select></div>
+              <div class="field"><label>Stock mínimo</label><input type="number" id="p-min" placeholder="0" min="0"></div>
             </div>
             <div>
               <div class="field"><label>Costo del producto ($)</label><input type="number" id="p-co" placeholder="0" min="0" oninput="calcCosto()"></div>
@@ -515,7 +578,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
           <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
             <button class="btn btn-ghost" onclick="aiDescProd()">✦ Generar descripción IA</button>
-            <button class="btn btn-gold" onclick="addProd()">Agregar al catálogo</button>
+            <button class="btn btn-gold" onclick="addProd()">Agregar al inventario</button>
           </div>
         </div>
 
@@ -531,10 +594,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
         <div id="imp-prod-state"></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Productos cargados</div><div class="sv" id="ip-cant" style="color:var(--blue)">0</div></div>
-          <div class="stat"><div class="sl">Valor a costo</div><div class="sv" id="ip-costo">$0</div></div>
-          <div class="stat"><div class="sl">Valor a venta</div><div class="sv" id="ip-venta">$0</div></div>
-          <div class="stat"><div class="sl">Stock</div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
+          <div class="stat"><div class="sl">Productos cargados <button class="info-dot" data-info="Cantidad de items guardados en el inventario nuevo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-cant" style="color:var(--blue)">0</div></div>
+          <div class="stat"><div class="sl">Valor a costo <button class="info-dot" data-info="Stock actual multiplicado por el costo total de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-costo">$0</div></div>
+          <div class="stat"><div class="sl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta local o web." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-venta">$0</div></div>
+          <div class="stat"><div class="sl">Estado del stock <button class="info-dot" data-info="Cantidad de productos en rojo, amarillo y verde según stock actual y stock mínimo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
         </div>
         <div class="card">
           <div class="card-t">Inventario importado</div>
@@ -640,16 +703,16 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="card" id="im-summary-card" style="display:none">
           <div class="card-t">✅ Resumen final</div>
           <div class="g4">
-            <div class="stat"><div class="sl">Importadas</div><div class="sv" id="im-s-ok">0</div></div>
-            <div class="stat"><div class="sl">Warnings</div><div class="sv" id="im-s-warn" style="color:var(--yel)">0</div></div>
-            <div class="stat"><div class="sl">Errores</div><div class="sv" id="im-s-err" style="color:var(--red)">0</div></div>
-            <div class="stat"><div class="sl">Productos</div><div class="sv" id="im-s-prod" style="color:var(--blue)">0</div></div>
+            <div class="stat"><div class="sl">Importadas <button class="info-dot" data-info="Filas válidas que se guardaron correctamente después de confirmar." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-ok">0</div></div>
+            <div class="stat"><div class="sl">Avisos <button class="info-dot" data-info="Filas guardadas que tenían datos no críticos pendientes, como fecha o categoría." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-warn" style="color:var(--yel)">0</div></div>
+            <div class="stat"><div class="sl">Errores <button class="info-dot" data-info="Filas que no se guardaron porque faltaba un dato crítico o había un valor inválido." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-err" style="color:var(--red)">0</div></div>
+            <div class="stat"><div class="sl">Productos <button class="info-dot" data-info="Cantidad de productos incluidos en esta carga confirmada." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-prod" style="color:var(--blue)">0</div></div>
           </div>
           <div class="g4" style="margin-top:14px">
-            <div class="stat"><div class="sl">Ingresos</div><div class="sv" id="im-s-ing" style="color:var(--green)">$0</div></div>
-            <div class="stat"><div class="sl">Egresos</div><div class="sv" id="im-s-egr" style="color:var(--red)">$0</div></div>
-            <div class="stat"><div class="sl">Stock a costo</div><div class="sv" id="im-s-costo">$0</div></div>
-            <div class="stat"><div class="sl">Stock a venta</div><div class="sv" id="im-s-venta">$0</div></div>
+            <div class="stat"><div class="sl">Ingresos <button class="info-dot" data-info="Total de movimientos de ingreso incluidos en esta carga." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-ing" style="color:var(--green)">$0</div></div>
+            <div class="stat"><div class="sl">Egresos <button class="info-dot" data-info="Total de movimientos de egreso incluidos en esta carga." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-egr" style="color:var(--red)">$0</div></div>
+            <div class="stat"><div class="sl">Stock a costo <button class="info-dot" data-info="Valor del stock cargado calculado con cantidades por costo total." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-costo">$0</div></div>
+            <div class="stat"><div class="sl">Stock a venta <button class="info-dot" data-info="Valor potencial del stock cargado calculado con cantidades por precio de venta." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="im-s-venta">$0</div></div>
           </div>
         </div>
         <div class="div"><span>Estado del sistema</span></div>
@@ -698,10 +761,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="ph"><div class="pt">Publicidad</div><div class="ps">Cuánto invertís y cuánto rinde.</div></div>
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">CAC y ROAS</div><div class="ctxt"><strong>CAC</strong> = costo por cliente. <strong>ROAS</strong> = retorno por $1 invertido. Mínimo viable 2x, bueno 4x+.</div></div></div>
         <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Inversión total</div><div class="sv" id="pu-inv" style="color:var(--red)">$0</div><div class="sn">Total campañas</div></div>
-          <div class="stat"><div class="sl">Clientes generados</div><div class="sv" id="pu-cli" style="color:var(--green)">0</div></div>
-          <div class="stat"><div class="sl">CAC promedio</div><div class="sv" id="pu-cac" style="color:var(--yel)">—</div></div>
-          <div class="stat"><div class="sl">ROAS promedio</div><div class="sv" id="pu-roas" style="color:var(--gold)">—</div></div>
+          <div class="stat"><div class="sl">Inversión total <button class="info-dot" data-info="Suma del dinero invertido en todas las campañas registradas." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="pu-inv" style="color:var(--red)">$0</div><div class="sn">Total campañas</div></div>
+          <div class="stat"><div class="sl">Clientes generados <button class="info-dot" data-info="Cantidad total de clientes atribuidos a las campañas registradas." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="pu-cli" style="color:var(--green)">0</div></div>
+          <div class="stat"><div class="sl">CAC promedio <button class="info-dot" data-info="Costo de adquisición: inversión total dividida por clientes generados." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="pu-cac" style="color:var(--yel)">—</div></div>
+          <div class="stat"><div class="sl">ROAS promedio <button class="info-dot" data-info="Ingresos atribuidos a publicidad divididos por la inversión publicitaria." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="pu-roas" style="color:var(--gold)">—</div></div>
         </div>
         <div class="g2">
           <div class="card">
@@ -766,9 +829,9 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="ph"><div class="pt">Métricas</div><div class="ps">Lo que no se mide, no se puede mejorar.</div></div>
         <div class="g3" style="margin-bottom:24px">
           <div class="card"><div class="card-t">💼 Ventas</div>
-            <div class="mrow"><div class="mlbl">Clientes este mes</div><div class="mval" id="m-cli">0</div></div>
-            <div class="mrow"><div class="mlbl">Ticket promedio</div><div class="mval" id="m-tick">$0</div></div>
-            <div class="mrow"><div class="mlbl">Mejor categoría</div><div class="mval" id="m-bcat" style="font-size:13px;color:var(--txt2)">—</div></div>
+            <div class="mrow"><div class="mlbl">Ventas este mes <button class="info-dot" data-info="Cantidad de ventas confirmadas guardadas en la tabla ventas durante el mes actual." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="m-cli">0</div></div>
+            <div class="mrow"><div class="mlbl">Ticket promedio <button class="info-dot" data-info="Total vendido dividido por la cantidad de ventas confirmadas del mes." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="m-tick">$0</div></div>
+            <div class="mrow"><div class="mlbl">Principal categoría de ingreso <button class="info-dot" data-info="Categoría financiera que concentra más ingresos en el resumen unificado del mes." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="m-bcat" style="font-size:13px;color:var(--txt2)">—</div></div>
           </div>
           <div class="card"><div class="card-t">💰 Rentabilidad</div>
             <div class="mrow"><div class="mlbl">Margen</div><div class="mval" id="m-mar">0%</div></div>
@@ -806,7 +869,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Plata</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico">□</span><span>Productos</span></button>
     <button class="mobile-ni" data-p="leads" onclick="go('leads',this)"><span class="mobile-ni-ico">○</span><span>Clientes</span></button>
-    <button class="mobile-ni" data-p="import" onclick="go('import',this)"><span class="mobile-ni-ico">✦</span><span>IA</span></button>
+    <button class="mobile-ni" onclick="openAI()"><span class="mobile-ni-ico">✦</span><span>IA</span></button>
   </nav>
   <button class="chat-fab" type="button" onclick="openAI()" aria-label="Abrir Asesor IA" title="Abrir Asesor IA">✦</button>
 </div>
@@ -819,7 +882,13 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <button class="btn btn-ghost btn-sm" onclick="closeAI()">✕</button>
   </div>
   <div class="ai-msgs" id="ai-msgs">
-    <div class="ai-msg ai-bot">¡Hola! Soy tu asesor de negocio. ¿En qué te ayudo?<span class="ai-msg-meta">✦ Asesor · ahora</span></div>
+    <div class="ai-msg ai-bot">Podés consultarme sobre tu negocio o preparar una acción para confirmar.<span class="ai-msg-meta">✦ Asesor · ahora</span></div>
+    <div class="ai-quick-actions">
+      <button class="ai-quick-action" onclick="seedAIExample('vendí 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
+      <button class="ai-quick-action" onclick="seedAIExample('gasto alquiler 250000 transferencia')">Anotar gasto</button>
+      <button class="ai-quick-action" onclick="seedAIExample('agregá producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
+      <button class="ai-quick-action" onclick="seedAIExample('sumá 10 de stock a nombre del producto')">Sumar stock</button>
+    </div>
   </div>
   <div class="ai-history">
     <div class="ai-history-head">
@@ -833,6 +902,36 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   <div class="ai-in">
     <input type="text" id="ai-inp" placeholder="Escribí acá..." onkeydown="if(event.key==='Enter')sendAI()">
     <button class="btn btn-gold" onclick="sendAI()" aria-label="Enviar mensaje" title="Enviar">➤</button>
+  </div>
+</div>
+
+<!-- PERFIL Y CONFIGURACION -->
+<div class="modal-ov" id="profile-ov" onclick="closeProfile()">
+  <div class="modal-card" style="width:min(620px,100%)" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><div class="modal-title">Perfil y configuración</div><div style="font-size:12px;color:var(--txt3)">Tu cuenta y un resumen breve del negocio.</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeProfile()">×</button>
+    </div>
+    <div class="card" style="padding:14px;margin-bottom:16px">
+      <div class="mrow"><div class="mlbl">Email</div><div class="mval" id="profile-email" style="font-size:13px">—</div></div>
+      <div class="mrow"><div class="mlbl">Cuenta creada</div><div class="mval" id="profile-created" style="font-size:13px">—</div></div>
+      <div class="mrow"><div class="mlbl">Negocio</div><div class="mval" id="profile-business" style="font-size:13px">Sin configurar</div></div>
+      <div class="mrow"><div class="mlbl">Rubro</div><div class="mval" id="profile-category" style="font-size:13px">—</div></div>
+    </div>
+    <div class="profile-summary">
+      <div class="profile-stat"><strong id="profile-products">0</strong><span>Productos</span></div>
+      <div class="profile-stat"><strong id="profile-movements">0</strong><span>Movimientos recientes</span></div>
+      <div class="profile-stat"><strong id="profile-leads">0</strong><span>Leads activos</span></div>
+    </div>
+    <div class="card" style="padding:14px;margin-bottom:16px">
+      <div class="card-t">Resumen del negocio</div>
+      <div id="profile-summary-text" style="font-size:13px;color:var(--txt2);line-height:1.6">Completá los datos de Mi Negocio para ver un resumen.</div>
+    </div>
+    <div class="modal-actions" style="flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="closeProfile();goPage('neg')">Editar negocio</button>
+      <button class="btn btn-ghost" onclick="closeProfile();goPage('prod');switchProductTab('carga')">Configurar costos</button>
+      <button class="btn btn-gold" onclick="closeProfile()">Listo</button>
+    </div>
   </div>
 </div>
 
@@ -900,7 +999,10 @@ function numOrDefault(id, defaultValue = 0) {
 }
 function fmt(n) { return Math.round(n).toLocaleString('es-AR') }
 function fmtDec(n) { return Number(n).toFixed(1) }
-function today() { return new Date().toISOString().slice(0, 10) }
+function today() {
+  const n = new Date()
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
+}
 function getMes() { const n = new Date(); return { m: n.getMonth() + 1, y: n.getFullYear() } }
 
 let toastT
@@ -987,6 +1089,7 @@ async function enterApp() {
   document.getElementById('auth-screen').style.display = 'none'
   document.getElementById('app').classList.add('on')
   document.getElementById('tb-user').textContent = CU.email
+  document.getElementById('profile-btn').textContent = String(CU.email || '?').slice(0, 1).toUpperCase()
   document.getElementById('tx-f').value = today()
   setDashTitle()
   await renderAll()
@@ -1030,10 +1133,39 @@ function go(page, el) {
   if (!target) return
   target.classList.add('on')
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
+  if (page === 'dash') switchDashboardTab('summary')
+  if (page === 'fin') switchFinanceTab('summary')
   if (page === 'prod') switchProductTab('inv')
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
+
+function switchSectionTab(prefix, tab, tabs) {
+  tabs.forEach(name => {
+    document.getElementById(`${prefix}-tab-${name}`)?.classList.toggle('on', name === tab)
+    document.getElementById(`${prefix}-tab-${name}-btn`)?.classList.toggle('on', name === tab)
+  })
+}
+
+function switchDashboardTab(tab) {
+  switchSectionTab('dash', tab, ['summary', 'imported'])
+  if (tab === 'imported') loadImportedData()
+}
+
+function switchFinanceTab(tab) {
+  switchSectionTab('fin', tab, ['summary', 'movements', 'imported', 'fixed'])
+  if (tab === 'imported') loadImportedData()
+}
+
+function toggleInfo(event, button) {
+  event.stopPropagation()
+  document.querySelectorAll('.info-dot.on').forEach(el => { if (el !== button) el.classList.remove('on') })
+  button.classList.toggle('on')
+}
+
+document.addEventListener('click', event => {
+  if (!event.target.closest('.info-dot')) document.querySelectorAll('.info-dot.on').forEach(el => el.classList.remove('on'))
+})
 
 function startDashboardAction(action) {
   if (action === 'venta') {
@@ -1045,6 +1177,7 @@ function startDashboardAction(action) {
   }
   if (action === 'gasto') {
     goPage('fin')
+    switchFinanceTab('movements')
     document.getElementById('tx-t').value = 'egreso'
     document.getElementById('tx-d').focus()
     return
@@ -1054,6 +1187,23 @@ function startDashboardAction(action) {
     switchProductTab('carga')
     document.getElementById('p-n').focus()
   }
+}
+
+function seedAIExample(text) {
+  openAI()
+  const input = document.getElementById('ai-inp')
+  input.value = text
+  input.focus()
+  input.setSelectionRange(0, input.value.length)
+}
+
+function openProductAIHelp() {
+  openAI()
+  appendAIMessage('Para crear un producto indicame nombre, stock, costo y precio. También podés agregar categoría, color o medida. Voy a mostrarte un preview antes de guardar.', 'bot')
+  const input = document.getElementById('ai-inp')
+  input.value = 'agregá producto '
+  input.focus()
+  input.setSelectionRange(input.value.length, input.value.length)
 }
 
 // ══════════════════════════════════════
@@ -1087,6 +1237,42 @@ function setTbBiz(b) {
   document.getElementById('tb-biz').innerHTML = b?.nom
     ? `<strong>${escapeHTML(b.nom)}</strong>${b.rub ? ' · ' + escapeHTML(b.rub) : ''}`
     : '<span style="color:var(--txt3)">Sin negocio configurado</span>'
+}
+
+async function openProfile() {
+  const modal = document.getElementById('profile-ov')
+  modal.classList.add('on')
+  document.getElementById('profile-email').textContent = CU?.email || '—'
+  document.getElementById('profile-created').textContent = CU?.created_at ? new Date(CU.created_at).toLocaleDateString('es-AR') : '—'
+  document.getElementById('profile-business').textContent = 'Cargando...'
+  try {
+    const [biz, leadResult, finance] = await Promise.all([
+      getBiz(),
+      sb.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', CU.id).neq('estado', 'cliente'),
+      loadUnifiedFinances(),
+      loadImportedData()
+    ])
+    if (leadResult.error) throw leadResult.error
+    document.getElementById('profile-business').textContent = biz?.nom || 'Sin configurar'
+    document.getElementById('profile-category').textContent = biz?.rub || '—'
+    document.getElementById('profile-products').textContent = importedData.inventory.length
+    document.getElementById('profile-movements').textContent = finance.recent.length
+    document.getElementById('profile-leads').textContent = leadResult.count || 0
+    const parts = [
+      biz?.nom ? `${biz.nom}${biz.rub ? ` es un negocio de ${biz.rub}` : ''}.` : 'Todavía no configuraste el nombre del negocio.',
+      biz?.cli ? `Cliente principal: ${biz.cli}.` : '',
+      biz?.can ? `Canales: ${biz.can}.` : '',
+      importedData.inventory.length ? `${importedData.inventory.length} productos en inventario.` : 'Sin productos en el inventario nuevo.'
+    ].filter(Boolean)
+    document.getElementById('profile-summary-text').textContent = parts.join(' ')
+  } catch (error) {
+    console.error('[Kairós] openProfile:', error)
+    document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intentá nuevamente.'
+  }
+}
+
+function closeProfile() {
+  document.getElementById('profile-ov').classList.remove('on')
 }
 
 function setDashTitle() {
@@ -1221,21 +1407,110 @@ function calcCosto() {
 // ══════════════════════════════════════
 // FINANZAS
 // ══════════════════════════════════════
+let unifiedFinanceCache = null
+let unifiedFinancePromise = null
+
+function invalidateUnifiedFinances() {
+  unifiedFinanceCache = null
+  unifiedFinancePromise = null
+}
+
+function financeDateKey(row) {
+  return row.fecha || (row.created_at ? String(row.created_at).slice(0, 10) : null)
+}
+
+function normalizeLegacyMovement(row) {
+  return {
+    ...row,
+    categoria: row.cat || 'sin_categoria',
+    fuente: 'histórico',
+    sourceTable: 'transacciones'
+  }
+}
+
+function normalizeOperationalMovement(row) {
+  return {
+    ...row,
+    categoria: row.categoria || 'sin_categoria',
+    fuente: row.origen === 'manual' ? 'manual' : row.origen === 'bot' ? 'Asesor IA' : row.origen || 'Carga inteligente',
+    sourceTable: 'movimientos_financieros'
+  }
+}
+
+async function loadUnifiedFinances(force = false) {
+  if (!force && unifiedFinanceCache) return unifiedFinanceCache
+  if (!force && unifiedFinancePromise) return unifiedFinancePromise
+  unifiedFinancePromise = (async () => {
+    const { m, y } = getMes()
+    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+    const [legacyResult, operationalResult] = await Promise.all([
+      sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000),
+      sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+    ])
+    if (legacyResult.error) console.error('[Kairós] finanzas históricas:', legacyResult.error)
+    if (operationalResult.error) console.error('[Kairós] finanzas operativas:', operationalResult.error)
+    if (legacyResult.error && operationalResult.error) throw operationalResult.error
+    const all = [
+      ...(legacyResult.data || []).map(normalizeLegacyMovement),
+      ...(operationalResult.data || []).map(normalizeOperationalMovement)
+    ].sort((a, b) => String(b.created_at || b.fecha || '').localeCompare(String(a.created_at || a.fecha || '')))
+    const month = all.filter(row => {
+      const key = financeDateKey(row)
+      return key && key >= monthStart && key < monthEnd
+    })
+    unifiedFinanceCache = {
+      all,
+      month,
+      recent: all.slice(0, 50),
+      totals: movementTotals(month),
+      monthStart,
+      monthEnd
+    }
+    return unifiedFinanceCache
+  })()
+  try {
+    return await unifiedFinancePromise
+  } finally {
+    unifiedFinancePromise = null
+  }
+}
+
 async function addTx() {
   const d = V('tx-d').trim(), mo = parseFloat(V('tx-m')) || 0
   if (!d) { toastErr('Ingresá una descripción'); return }
   if (mo <= 0) { toastErr('El monto debe ser mayor a 0'); return }
-  const { error } = await sb.from('transacciones').insert({ user_id: CU.id, tipo: V('tx-t'), descripcion: d, cat: V('tx-c'), monto: mo, fecha: V('tx-f') || today() })
+  const { error } = await sb.from('movimientos_financieros').insert({
+    user_id: CU.id,
+    tipo: V('tx-t'),
+    descripcion: d,
+    categoria: V('tx-c') || 'sin_categoria',
+    monto: mo,
+    fecha: V('tx-f') || today(),
+    origen: 'manual'
+  })
   if (handleSupaError(error, 'addTx')) return
+  invalidateUnifiedFinances()
   document.getElementById('tx-d').value = ''; document.getElementById('tx-m').value = ''
-  await renderFin(); await renderDash(); toast('Movimiento registrado ✓')
+  await Promise.all([renderFin(), renderDash(), loadImportedData()]); toast('Movimiento registrado ✓')
 }
 
 async function delTx(id) {
   if (!confirm('¿Eliminar este movimiento?')) return
   const { error } = await sb.from('transacciones').delete().eq('id', id).eq('user_id', CU.id)
   if (handleSupaError(error, 'delTx')) return
+  invalidateUnifiedFinances()
   await renderFin(); await renderDash()
+}
+
+async function deleteUnifiedMovement(sourceTable, id) {
+  const sourceLabel = sourceTable === 'transacciones' ? 'histórico' : 'operativo'
+  if (!confirm(`¿Eliminar este movimiento ${sourceLabel}?`)) return
+  const { error } = await sb.from(sourceTable).delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteUnifiedMovement')) return
+  invalidateUnifiedFinances()
+  await Promise.all([renderFin(), renderDash(), loadImportedData()])
+  toast('Movimiento eliminado')
 }
 
 async function addGF() {
@@ -1256,33 +1531,32 @@ async function delGF(id) {
 }
 
 async function renderFin() {
-  const { m, y } = getMes()
-  const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
-  const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-  const { data: txs, error: e1 } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd).order('fecha', { ascending: false })
-  const { data: gfs, error: e2 } = await sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
-  if (e1) console.error('[Kairós] renderFin txs:', e1)
-  if (e2) console.error('[Kairós] renderFin gfs:', e2)
-  const all = txs || [], allGF = gfs || []
-  const ing = all.filter(t => t.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0)
-  const egr = all.filter(t => t.tipo === 'egreso').reduce((a, b) => a + b.monto, 0)
-  const gan = ing - egr, mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
-  const tf = allGF.reduce((a, b) => a + b.mon, 0)
-  S('f-ing', '$' + fmt(ing)); S('f-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros')
-  S('f-egr', '$' + fmt(egr)); S('f-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros')
+  const [finance, fixedResult] = await Promise.all([
+    loadUnifiedFinances(),
+    sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
+  ])
+  if (fixedResult.error) console.error('[Kairós] renderFin gastos fijos:', fixedResult.error)
+  const all = finance.month
+  const allGF = fixedResult.data || []
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const tf = allGF.reduce((a, b) => a + (Number(b.mon) || 0), 0)
+  S('f-ing', '$' + fmt(ing)); S('f-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros unificados')
+  S('f-egr', '$' + fmt(egr)); S('f-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros unificados')
   S('f-gan', '$' + fmt(gan)); document.getElementById('f-gan').style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'
   S('f-mar', 'Margen: ' + mar + '%'); S('f-eq', '$' + fmt(tf))
   const pct = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
   const bar = document.getElementById('f-eq-b'); bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--yel)' : 'var(--red)'
-  const { data: allTx } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(40)
-  document.getElementById('tx-tb').innerHTML = !(allTx?.length)
-    ? '<tr><td colspan="5"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr>'
-    : (allTx || []).map(t => `<tr>
+  document.getElementById('tx-tb').innerHTML = !finance.recent.length
+    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">💸</div>Sin movimientos</div></td></tr>'
+    : finance.recent.map(t => `<tr>
         <td>${escapeHTML(t.descripcion)}</td>
-        <td><span class="badge ${t.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(t.cat)}</span></td>
+        <td>${escapeHTML(t.categoria || 'sin_categoria')}</td>
+        <td><span class="badge ${t.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(t.tipo)}</span></td>
         <td style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">$${fmt(t.monto)}</td>
-        <td style="color:var(--txt3)">${t.fecha}</td>
-        <td><button class="btn btn-del" onclick="delTx('${t.id}')">✕</button></td>
+        <td style="color:var(--txt3)">${escapeHTML(financeDateKey(t) || '—')}</td>
+        <td><span class="badge bb">${escapeHTML(t.fuente)}</span></td>
+        <td><button class="btn btn-del" onclick="deleteUnifiedMovement('${t.sourceTable}','${t.id}')">✕</button></td>
       </tr>`).join('')
   document.getElementById('gf-lista').innerHTML = !allGF.length
     ? '<div class="empty" style="padding:20px"><div class="empty-i">📌</div>Sin gastos fijos</div>'
@@ -1302,31 +1576,74 @@ async function addProd() {
   const precioFinalRaw = V('p-pr').trim()
   const pr = precioFinalRaw === '' && calc ? calc.pv : numOrDefault('p-pr')
   if (pr < 0) { toastErr('El precio no puede ser negativo'); return }
-  const prod = {
-    user_id: CU.id, nom: n, cat: V('p-c'), descripcion: V('p-d'),
-    costo_producto: co,
-    costo_packaging: numOrDefault('p-pkg'),
-    costo_envio: numOrDefault('p-env'),
-    envio_pagado_por: V('p-envp'),
-    comision_plataforma_pct: numOrDefault('p-cplat'),
-    comision_pago_pct: numOrDefault('p-cpago'),
-    impuestos_pct: numOrDefault('p-imp'),
-    descuento_pct: numOrDefault('p-desc'),
-    margen_deseado_pct: numOrDefault('p-mar', 30),
-    precio_minimo_rentable: calc ? calc.precioMin : 0,
-    precio_sugerido: calc ? calc.precioSug : 0,
-    precio_venta: pr,
-    ganancia_estimada: calc ? calc.ganancia : 0,
-    margen_real_pct: calc ? calc.margenReal : 0,
-    stock: parseInt(V('p-st')) || 0,
-    estado: V('p-es')
+  const duplicate = await findInventoryDuplicate(n)
+  if (duplicate.exists) { toastErr('Ese producto ya existe. Usá reposición para sumar stock.'); return }
+  const stock = Math.max(0, Math.trunc(numOrDefault('p-st')))
+  const stockMin = Math.max(0, Math.trunc(numOrDefault('p-min')))
+  const costoTotal = calc ? Number(calc.costoBase) : co
+  const costoExtra = Math.max(0, costoTotal - co)
+  const ganancia = pr - costoTotal
+  const margen = pr > 0 ? (ganancia / pr) * 100 : 0
+  let itemId = null
+  try {
+    const { data: item, error: itemError } = await sb.from('inventario_items').insert({
+      user_id: CU.id,
+      producto: n,
+      categoria: V('p-c').trim() || null,
+      stock_actual: stock,
+      stock_minimo: stockMin,
+      costo_unitario: co,
+      costo_extra: costoExtra,
+      costo_total: costoTotal,
+      precio_venta_local: pr,
+      precio_venta_web: 0,
+      ganancia_local: ganancia,
+      margen_local_pct: margen,
+      ganancia_web: -costoTotal,
+      margen_web_pct: 0,
+      estado_stock: stockState(stock, stockMin),
+      accion_recomendada: inventoryAction(stock, stockMin, costoTotal, pr),
+      notas: V('p-d').trim() || null,
+      origen: 'manual'
+    }).select('id').single()
+    if (itemError) throw itemError
+    itemId = item.id
+    const { error: aliasError } = await sb.from('inventory_aliases').insert({
+      user_id: CU.id,
+      inventory_item_id: itemId,
+      alias: n,
+      normalized_alias: normalizeAliasText(n)
+    })
+    if (aliasError) throw aliasError
+    if (stock > 0) {
+      const { error: stockError } = await sb.from('stock_movements').insert({
+        user_id: CU.id,
+        inventory_item_id: itemId,
+        tipo: 'inicial',
+        cantidad: stock,
+        stock_antes: 0,
+        stock_despues: stock,
+        motivo: 'Carga manual desde Productos',
+        origen: 'manual',
+        raw_data: { producto: n }
+      })
+      if (stockError) throw stockError
+    }
+  } catch (error) {
+    if (itemId) {
+      await sb.from('inventory_aliases').delete().eq('inventory_item_id', itemId).eq('user_id', CU.id)
+      await sb.from('stock_movements').delete().eq('inventory_item_id', itemId).eq('user_id', CU.id)
+      await sb.from('inventario_items').delete().eq('id', itemId).eq('user_id', CU.id)
+    }
+    handleSupaError(error, 'addProd')
+    return
   }
-  const { error } = await sb.from('productos').insert(prod)
-  if (handleSupaError(error, 'addProd')) return
-  ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
   document.getElementById('p-cost-result').style.display = 'none'
   document.getElementById('p-cost-alert').style.display = 'none'
-  await renderProds(); toast('Producto agregado ✓')
+  await Promise.all([loadImportedData(), renderDash()])
+  switchProductTab('inv')
+  toast('Producto agregado al inventario ✓')
 }
 
 async function delProd(id) {
@@ -1441,7 +1758,9 @@ async function renderPub() {
   const { data: camps, error } = await sb.from('campanas').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
   if (error) { console.error('[Kairós] renderPub:', error); return }
   const cs = camps || []
-  const ti = cs.reduce((a, b) => a + b.inv, 0), tc = cs.reduce((a, b) => a + b.cli, 0), tig = cs.reduce((a, b) => a + b.ing, 0)
+  const ti = cs.reduce((a, b) => a + (Number(b.inv) || 0), 0)
+  const tc = cs.reduce((a, b) => a + (Number(b.cli) || 0), 0)
+  const tig = cs.reduce((a, b) => a + (Number(b.ing) || 0), 0)
   S('pu-inv', '$' + fmt(ti)); S('pu-cli', tc)
   S('pu-cac', tc > 0 ? '$' + fmt(ti / tc) : '—')
   S('pu-roas', ti > 0 && tig > 0 ? (tig / ti).toFixed(2) + 'x' : '—')
@@ -1564,15 +1883,28 @@ async function renderMet() {
   const { m, y } = getMes()
   const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
   const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-  const { data: txs } = await sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd)
-  const { data: camps } = await sb.from('campanas').select('*').eq('user_id', CU.id)
-  const all = txs || [], cs = camps || []
-  const ing = all.filter(t => t.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0)
-  const egr = all.filter(t => t.tipo === 'egreso').reduce((a, b) => a + b.monto, 0)
-  const gan = ing - egr, mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const [finance, campResult, salesResult] = await Promise.all([
+    loadUnifiedFinances(),
+    sb.from('campanas').select('*').eq('user_id', CU.id),
+    sb.from('ventas').select('id,fecha,total,created_at').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+  ])
+  if (campResult.error) console.error('[Kairós] renderMet campañas:', campResult.error)
+  if (salesResult.error) console.error('[Kairós] renderMet ventas:', salesResult.error)
+  const all = finance.month
+  const cs = campResult.data || []
+  const sales = (salesResult.data || []).filter(sale => {
+    const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
+    return key && key >= mesStart && key < mesEnd
+  })
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const iT = all.filter(t => t.tipo === 'ingreso')
-  S('m-cli', iT.length); S('m-tick', iT.length > 0 ? '$' + fmt(Math.round(ing / iT.length)) : '$0')
-  const cats = {}; iT.forEach(t => { cats[t.cat] = (cats[t.cat] || 0) + t.monto })
+  const salesTotal = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
+  S('m-cli', sales.length); S('m-tick', sales.length > 0 ? '$' + fmt(Math.round(salesTotal / sales.length)) : '$0')
+  const cats = {}; iT.forEach(t => {
+    const category = t.categoria || 'sin_categoria'
+    cats[category] = (cats[category] || 0) + Number(t.monto || 0)
+  })
   const bc = Object.entries(cats).sort((a, b) => b[1] - a[1])[0]
   S('m-bcat', bc ? bc[0] : '—')
   const mEl = document.getElementById('m-mar'); mEl.textContent = mar + '%'; mEl.style.color = mar > 20 ? 'var(--green)' : mar > 0 ? 'var(--yel)' : 'var(--red)'
@@ -1580,7 +1912,9 @@ async function renderMet() {
   let est, badge
   if (!ing && !egr) { est = 'Sin datos'; badge = 'by' } else if (gan > 0 && mar > 20) { est = '🟢 Rentable'; badge = 'bg' } else if (gan > 0) { est = '🟡 Positivo'; badge = 'by' } else { est = '🔴 En pérdida'; badge = 'br' }
   document.getElementById('m-est').innerHTML = `<span class="badge ${badge}">${est}</span>`
-  const ti = cs.reduce((a, b) => a + b.inv, 0), tc = cs.reduce((a, b) => a + b.cli, 0), tig = cs.reduce((a, b) => a + b.ing, 0)
+  const ti = cs.reduce((a, b) => a + (Number(b.inv) || 0), 0)
+  const tc = cs.reduce((a, b) => a + (Number(b.cli) || 0), 0)
+  const tig = cs.reduce((a, b) => a + (Number(b.ing) || 0), 0)
   S('m-roas', ti > 0 && tig > 0 ? (tig / ti).toFixed(2) + 'x' : '—'); S('m-cac', tc > 0 ? '$' + fmt(ti / tc) : '—')
   const can = {}; cs.forEach(c => { can[c.plat] = (can[c.plat] || 0) + c.ing })
   const mc = Object.entries(can).sort((a, b) => b[1] - a[1])[0]; S('m-can', mc ? mc[0] : '—')
@@ -1592,47 +1926,43 @@ async function renderMet() {
 async function renderDash() {
   /*
    * Metricas del negocio:
-   * - Ingresos y egresos se filtran por el mes actual y por tipo.
+   * - Ingresos y egresos unifican transacciones historicas y movimientos
+   *   operativos, usando fecha o created_at cuando la fecha falta.
    * - Ganancia neta = ingresos - egresos.
    * - Margen = ganancia neta / ingresos * 100, solo cuando hay ingresos.
    * - El punto de equilibrio usa la suma de gastos_fijos.mon y se compara con
    *   los ingresos del mes en Finanzas.
-   * - Los datos importados se mantienen rotulados y separados de los legacy.
+   * - La pestaña Carga inteligente mantiene el desglose por fuente.
    * - Leads activos son los contactos que todavia no llegaron a cliente.
    * - El bloque importado cuenta como alertas los inventario_items en rojo.
    */
-  const { m, y } = getMes()
-  const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
-  const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-  const [txResult, leadResult, prodResult, fixedResult, redResult] = await Promise.all([
-    sb.from('transacciones').select('*').eq('user_id', CU.id).gte('fecha', mesStart).lt('fecha', mesEnd),
+  const [finance, leadResult, prodResult, inventoryResult, fixedResult, biz] = await Promise.all([
+    loadUnifiedFinances(),
     sb.from('leads').select('*').eq('user_id', CU.id),
     sb.from('productos').select('id').eq('user_id', CU.id),
+    sb.from('inventario_items').select('id,estado_stock').eq('user_id', CU.id),
     sb.from('gastos_fijos').select('mon').eq('user_id', CU.id),
-    sb.from('inventario_items').select('id').eq('user_id', CU.id).eq('estado_stock', 'rojo')
+    getBiz()
   ])
   ;[
-    ['transacciones', txResult.error],
     ['leads', leadResult.error],
     ['productos', prodResult.error],
-    ['gastos_fijos', fixedResult.error],
-    ['inventario_items', redResult.error]
+    ['inventario_items', inventoryResult.error],
+    ['gastos_fijos', fixedResult.error]
   ].forEach(([source, error]) => { if (error) console.error(`[Kairós] renderDash ${source}:`, error) })
-  const txs = txResult.data
   const leads = leadResult.data
   const prods = prodResult.data
+  const inventory = inventoryResult.data || []
   const fixedCosts = fixedResult.data
-  const redInventory = redResult.data
-  const b = await getBiz()
-  const all = txs || [], ls = leads || []
-  const ing = all.filter(t => t.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0)
-  const egr = all.filter(t => t.tipo === 'egreso').reduce((a, b) => a + b.monto, 0)
-  const gan = ing - egr, mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const b = biz
+  const all = finance.month, ls = leads || []
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const breakEven = (fixedCosts || []).reduce((sum, item) => sum + (Number(item.mon) || 0), 0)
   const activeLeads = ls.filter(l => l.estado !== 'cliente').length
-  const redCount = (redInventory || []).length
-  S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros este mes')
-  S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros este mes')
+  const redCount = inventory.filter(item => item.estado_stock === 'rojo').length
+  S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros de todas las fuentes')
+  S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros de todas las fuentes')
   const gEl = document.getElementById('d-gan'); gEl.textContent = '$' + fmt(gan); gEl.style.color = gan >= 0 ? 'var(--gold)' : 'var(--red)'
   S('d-mar', 'Margen: ' + mar + '%')
   S('d-leads', activeLeads)
@@ -1641,16 +1971,17 @@ async function renderDash() {
   S('d-eq-note', breakEven <= 0 ? 'Sin gastos fijos cargados' : ing >= breakEven ? `Superado por $${fmt(ing - breakEven)}` : `Faltan $${fmt(breakEven - ing)}`)
   S('d-alerts', activeLeads + redCount)
   S('d-alerts-note', `${activeLeads} leads activos · ${redCount} productos en rojo`)
-  const { data: lastTx, error: lastTxError } = await sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5)
-  if (lastTxError) console.error('[Kairós] renderDash últimos movimientos:', lastTxError)
-  document.getElementById('d-tx').innerHTML = !(lastTx?.length)
-    ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Finanzas.</div>'
-    : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${t.cat} · ${t.fecha}</div></div><div style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${t.tipo === 'ingreso' ? '+' : '-'}$${fmt(t.monto)}</div></div>`).join('')
+  const lastTx = finance.recent.slice(0, 5)
+  document.getElementById('d-tx').innerHTML = !lastTx.length
+    ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Plata.</div>'
+    : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${escapeHTML(t.categoria)} · ${escapeHTML(financeDateKey(t) || '—')} · ${escapeHTML(t.fuente)}</div></div><div style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${t.tipo === 'ingreso' ? '+' : '-'}$${fmt(t.monto)}</div></div>`).join('')
+  const operationalProducts = inventory.length
+  const legacyProducts = prods?.length || 0
   const items = [
     { ok: !!b?.nom, ico: b?.nom ? '✅' : '🏗', txt: b?.nom ? `Negocio: ${escapeHTML(b.nom)}` : 'Completá los datos de tu negocio', p: 'neg' },
-    { ok: !!ing || !!egr, ico: ing || egr ? '✅' : '💰', txt: ing || egr ? `Finanzas: $${fmt(ing)} este mes` : 'Registrá tu primer movimiento', p: 'fin' },
+    { ok: !!ing || !!egr, ico: ing || egr ? '✅' : '💰', txt: ing || egr ? `Plata: $${fmt(ing)} ingresados este mes` : 'Registrá tu primer movimiento', p: 'fin' },
     { ok: ls.length > 0, ico: ls.length ? '✅' : '👥', txt: ls.length ? `${ls.length} contacto(s) en pipeline` : 'Agregá tu primer lead', p: 'leads' },
-    { ok: (prods?.length || 0) > 0, ico: (prods?.length || 0) ? '✅' : '📦', txt: (prods?.length || 0) ? `${prods.length} producto(s) en catálogo` : 'Cargá tus productos', p: 'prod' },
+    { ok: operationalProducts + legacyProducts > 0, ico: operationalProducts + legacyProducts ? '✅' : '📦', txt: operationalProducts ? `${operationalProducts} producto(s) en inventario` : legacyProducts ? `${legacyProducts} producto(s) históricos` : 'Cargá tus productos', p: 'prod' },
   ]
   document.getElementById('d-est').innerHTML = items.map(i => `<div class="mrow" style="${!i.ok ? 'cursor:pointer' : ''}" ${!i.ok ? `onclick="goPage('${i.p}')"` : ''}><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--txt)'}">${i.txt}</span></div>${!i.ok ? '<span style="color:var(--gold);font-size:12px">→</span>' : ''}</div>`).join('')
 }
@@ -1783,14 +2114,14 @@ function renderImportedDashboard() {
 
 function renderImportedMovements() {
   const rows = importedData.movements || []
-  const totals = movementTotals(rows)
+  const totals = movementTotals(importedData.movementsMonth)
   S('if-ing', money(totals.ingresos)); S('if-egr', money(totals.egresos)); S('if-bal', money(totals.balance)); S('if-cant', totals.count)
   const tb = document.getElementById('imp-mov-tb')
   if (!tb) return
   tb.innerHTML = !rows.length
     ? '<tr><td colspan="8"><div class="empty"><div class="empty-i">💸</div>Sin movimientos importados</div></td></tr>'
     : rows.map(m => `<tr>
-        <td style="color:var(--txt3)">${importDate(m.fecha)}</td>
+        <td style="color:var(--txt3)">${escapeHTML(financeDateKey(m) || '—')}</td>
         <td>${escapeHTML(m.descripcion || '—')}</td>
         <td><span class="badge ${m.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(m.tipo || '—')}</span></td>
         <td style="font-weight:600;color:${m.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${money(m.monto)}</td>
@@ -2068,7 +2399,8 @@ async function deleteImportedMovement(id) {
   if (!confirm('¿Eliminar este movimiento importado?')) return
   const { error } = await sb.from('movimientos_financieros').delete().eq('id', id).eq('user_id', CU.id)
   if (handleSupaError(error, 'deleteImportedMovement')) return
-  await loadImportedData()
+  invalidateUnifiedFinances()
+  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
   toast('Movimiento importado eliminado')
 }
 
@@ -2786,7 +3118,8 @@ async function confirmImport() {
   renderImportSummary(validRows)
   importRows = []
   btn.disabled = true; btn.textContent = 'Carga confirmada'
-  await loadImportedData()
+  invalidateUnifiedFinances()
+  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
   toast('Carga confirmada ✓')
 }
 
@@ -2833,7 +3166,8 @@ async function confirmBotAction(surface = botActionSurface) {
     botActionPreview = null
     botActionSurface = 'import'
     btn.disabled = true; btn.textContent = 'Accion confirmada'
-    await loadImportedData()
+    invalidateUnifiedFinances()
+    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
