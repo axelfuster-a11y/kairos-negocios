@@ -66,8 +66,8 @@ Columnas usadas por el frontend:
 Dónde se usa:
 
 - Finanzas: crea, lista y elimina ingresos/egresos.
-- Dashboard: calcula ingresos, egresos, ganancia neta, margen y últimos movimientos.
-- Métricas: calcula ticket promedio, mejor categoría, margen y ratio ingresos/egresos.
+- Dashboard: participa del cálculo unificado de ingresos, egresos, resultado de caja y últimos movimientos.
+- Métricas: participa del ticket promedio, mejor categoría y ratio ingresos/egresos.
 
 Nota RLS: filtrar por `user_id = auth.uid()`.
 
@@ -83,7 +83,7 @@ Columnas usadas por el frontend:
 Dónde se usa:
 
 - Finanzas: crea, lista y elimina gastos fijos.
-- Finanzas: calcula punto de equilibrio mensual.
+- Finanzas: calcula la referencia mensual de gastos fijos a cubrir, sin presentarla como punto de equilibrio contable completo.
 
 Nota RLS: filtrar por `user_id = auth.uid()`.
 
@@ -218,11 +218,11 @@ Nota RLS: filtrar por `user_id = auth.uid()`.
 
 ## Tablas preparadas para importaciones
 
-Estas tablas quedan preparadas para un flujo futuro de Excel/texto -> preview -> confirmacion -> Supabase. Todavia no son usadas por el frontend actual y no reemplazan a `transacciones` ni `productos`.
+Estas tablas sostienen el flujo Excel/texto -> preview -> confirmación -> Supabase. El frontend las usa, pero todavía no reemplazan ni eliminan a `transacciones` ni `productos`.
 
 ### `movimientos_financieros`
 
-Tabla destino futura para movimientos normalizados de ingresos y egresos importados.
+Tabla operativa para movimientos normalizados de ingresos y egresos manuales, importados, del Asesor IA y del módulo Equipo.
 
 Columnas previstas:
 
@@ -243,11 +243,11 @@ Notas:
 - `tipo` acepta solo `ingreso` o `egreso`.
 - `monto` no puede ser negativo.
 - Debe tener RLS por `user_id`.
-- Todavia no reemplaza a `transacciones`.
+- Convive con `transacciones`; la lectura unificada identifica la fuente.
 
 ### `inventario_items`
 
-Tabla destino futura para inventario normalizado importado.
+Tabla operativa para inventario normalizado creado manualmente, por importación o por el Asesor IA.
 
 Columnas previstas:
 
@@ -285,7 +285,7 @@ Notas:
 - `estado_stock` acepta `verde`, `amarillo`, `rojo` o `sin_datos`.
 - Tiene trigger para mantener `updated_at`.
 - Debe tener RLS por `user_id`.
-- Todavia no reemplaza a `productos`.
+- Convive con `productos`, que permanece como catálogo legacy.
 
 ### `import_batches`
 
@@ -442,7 +442,8 @@ Notas:
 - `status` acepta `preview`, `confirmed`, `cancelled` o `failed`.
 - No debe ejecutar nada sin preview y confirmación.
 - Debe tener RLS por `user_id`.
-- `confirm_bot_action(action_id uuid)` queda como placeholder seguro: valida usuario y estado, pero no ejecuta acciones incompletas.
+- `confirm_bot_action(action_id uuid)` valida usuario y estado y confirma transaccionalmente creación de producto, venta, gasto, reposición y ajuste de stock.
+- Si una acción falla, sus escrituras operativas se revierten y el registro queda con `status = 'failed'`.
 
 ### `inventory_aliases`
 
@@ -462,6 +463,93 @@ Notas:
 - La relación con `inventario_items` valida `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Debe tener RLS por `user_id`.
 - Permite que futuras cargas reconozcan variantes de nombres sin inventar productos.
+
+## Equipo y remuneraciones
+
+El módulo Equipo separa el costo del trabajo de los retiros o distribuciones por propiedad.
+
+### `team_members`
+
+Columnas usadas:
+
+- `id`
+- `user_id`
+- `nombre`
+- `tipo`
+- `rol`
+- `horas_semanales`
+- `remuneracion_objetivo`
+- `cargas_pct`
+- `comision_pct`
+- `participacion_pct`
+- `activo`
+- `created_at`
+- `updated_at`
+
+Dónde se usa:
+
+- Finanzas > Equipo: alta y activación/desactivación de integrantes.
+- Cálculo del costo objetivo mensual: remuneración base, comisión configurada sobre ventas del mes y cargas estimadas.
+- Cálculo de remuneración por trabajo pendiente para dueños.
+
+Notas:
+
+- `tipo` distingue `duenio`, `socio`, `empleado` y `colaborador`.
+- La participación societaria no se interpreta como sueldo.
+- Un trigger evita que la participación societaria total del usuario supere 100%.
+- Debe tener RLS por `user_id`.
+
+### `team_settings`
+
+Columnas usadas:
+
+- `user_id`
+- `reserva_minima`
+- `max_pago_duenio_pct`
+- `created_at`
+- `updated_at`
+
+Dónde se usa:
+
+- Finanzas > Equipo: configura una reserva de caja y el porcentaje máximo de caja disponible para una sugerencia de pago adicional al dueño.
+
+Notas:
+
+- La sugerencia nunca reemplaza obligaciones laborales ni contables.
+- Debe tener RLS por `user_id`.
+
+### `team_payments`
+
+Columnas usadas:
+
+- `id`
+- `user_id`
+- `team_member_id`
+- `fecha`
+- `monto`
+- `tipo`
+- `medio_pago`
+- `notas`
+- `movimiento_financiero_id`
+- `created_at`
+
+Dónde se usa:
+
+- Finanzas > Equipo: historial mensual de pagos.
+- `record_team_payment(...)`: crea el pago y su egreso financiero en una sola transacción.
+
+Notas:
+
+- Los pagos por trabajo se separan de `retiro_duenio` y `distribucion_utilidad`.
+- Los retiros y distribuciones solo corresponden a dueños o socios.
+- Debe tener RLS por `user_id`.
+
+## RPC transaccionales
+
+- `confirm_bot_action(uuid)`: confirma acciones críticas del Asesor IA sin dejar ventas o stock parciales.
+- `confirm_import_batch(uuid)`: confirma batches de importación de manera atómica.
+- `create_inventory_item(...)`: crea item, alias y stock inicial como una operación.
+- `record_team_payment(...)`: crea pago de equipo y egreso financiero juntos.
 
 ## Vistas preparadas
 

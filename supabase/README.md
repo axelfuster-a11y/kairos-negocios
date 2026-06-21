@@ -60,17 +60,62 @@ La migración también:
 - Las relaciones desde `stock_movements`, `venta_items` e `inventory_aliases` hacia inventario usan `(inventory_item_id, user_id)` para evitar referencias cruzadas entre usuarios.
 - Crea `v_finanzas_unificadas`, que une `transacciones` legacy con `movimientos_financieros`.
 - Crea `v_inventario_unificado`, que expone `inventario_items` con `fuente = 'importado'`.
-- Crea `confirm_bot_action(action_id uuid)` como placeholder seguro: valida usuario y estado, pero todavía no ejecuta acciones.
+- Crea una versión inicial segura de `confirm_bot_action(action_id uuid)`, reemplazada por la implementación transaccional de la migración `003`.
+
+### `migrations/003_confirm_bot_action_rpc.sql`
+
+Convierte la confirmación del Asesor IA en una operación transaccional dentro de PostgreSQL.
+
+- Confirma `crear_producto`, `venta_stock`, `gasto`, `reposicion` y `ajuste_stock`.
+- Valida `auth.uid()`, propiedad de la acción, estado `preview`, stock fresco y duplicados.
+- Crea ventas, items, movimientos financieros y movimientos de stock como una sola operación.
+- Marca `bot_actions` como `confirmed` o `failed` y devuelve `result_data`.
+- Una reposición sin costo informado actualiza stock, pero no inventa un egreso de valor cero.
+
+### `migrations/004_team_compensation.sql`
+
+Agrega el módulo Equipo y remuneraciones:
+
+- `team_members`: dueños, socios, empleados y colaboradores, con rol, dedicación, remuneración objetivo y comisión opcional.
+- `team_settings`: reserva mínima y límite prudente para sugerir pagos adicionales al dueño.
+- `team_payments`: historial de sueldos, honorarios, bonos, comisiones, retiros y distribuciones.
+- `record_team_payment(...)`: registra de forma atómica el pago y su egreso en `movimientos_financieros`.
+
+El modelo separa tres conceptos:
+
+- remuneración por trabajar;
+- costo del personal;
+- retiro o distribución por ser propietario.
+
+Los retiros y distribuciones solo pueden asignarse a integrantes de tipo `duenio` o `socio`.
+La interfaz estima la comisión configurada usando las ventas confirmadas del mes y la muestra dentro del costo objetivo, no como retiro de utilidades.
+
+### `migrations/005_confirm_import_batch_rpc.sql`
+
+Confirma una carga preparada por `Carga inteligente` dentro de una transacción.
+
+- Valida propiedad, estado del batch y filas válidas.
+- Inserta movimientos o inventario, alias y stock inicial.
+- Bloquea productos duplicados por nombre normalizado.
+- Si una fila falla, revierte la carga y marca el batch como `failed`.
+
+### `migrations/006_create_inventory_item_rpc.sql`
+
+Crea manualmente un producto, su alias y su movimiento de stock inicial como una sola operación.
+
+- Valida valores no negativos.
+- Evita duplicados exactos normalizados.
+- Calcula costo, ganancias, márgenes, estado y acción recomendada.
 
 ## Cómo aplicar en Supabase SQL Editor
 
 1. Abrir el proyecto de Supabase.
 2. Entrar a SQL Editor.
 3. Crear una nueva query.
-4. Ejecutar primero `001_import_base.sql` si todavía no fue aplicado.
-5. Ejecutar después `002_core_business_os.sql`.
-6. Verificar que las tablas existan en el schema `public`.
-7. Confirmar que RLS esté activado y que las policies por `user_id` estén creadas.
+4. Ejecutar las migraciones en orden: `001`, `002`, `003`, `004`, `005` y `006`.
+5. Verificar que las tablas existan en el schema `public`.
+6. Confirmar que RLS esté activado y que las policies por `user_id` estén creadas.
+7. Verificar las RPC: `confirm_bot_action`, `record_team_payment`, `confirm_import_batch` y `create_inventory_item`.
 
 ## Pruebas SQL recomendadas para `002_core_business_os.sql`
 
@@ -82,10 +127,14 @@ La migración también:
 - Revisar que exista `inventario_items_id_user_id_unique`.
 - Intentar crear una fila hija con `inventory_item_id` de otro usuario debe fallar por FK compuesta.
 - Consultar `v_finanzas_unificadas` con un usuario autenticado y validar que respete RLS por las tablas base.
-- Crear una fila `bot_actions` en estado `preview` y llamar `confirm_bot_action(id)` para validar que devuelve error controlado `not_implemented`.
+- Crear una fila `bot_actions` en estado `preview` y validar cada acción soportada con datos de prueba.
+- Confirmar que una acción fallida no deje ventas, movimientos o cambios de stock parciales.
+- Registrar un pago de equipo y verificar que se creen juntos `team_payments` y `movimientos_financieros`.
+- Confirmar una importación con una fila inválida y verificar que el batch quede `failed` sin datos parciales.
 
 ## Pendientes deliberados
 
 - `v_inventario_unificado` todavía no une `productos` legacy porque el schema legacy tiene una forma distinta y conviene mapearlo con cuidado.
-- `confirm_bot_action` todavía no ejecuta ventas, movimientos de stock ni cambios de inventario.
-- El frontend todavía no usa las tablas `ventas`, `venta_items`, `stock_movements`, `bot_actions` ni `inventory_aliases`.
+- Las tablas legacy `productos` y `transacciones` siguen disponibles y no se eliminan.
+- El frontend unifica su lectura financiera, pero no intenta deduplicar automáticamente registros históricos iguales porque dos movimientos legítimos pueden compartir fecha, descripción y monto.
+- Las recomendaciones de remuneración son orientativas; no reemplazan una liquidación laboral, societaria o impositiva.
