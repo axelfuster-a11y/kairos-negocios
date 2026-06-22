@@ -78,6 +78,23 @@ select option{background:var(--sur2)}
 .dashboard-secondary{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
 .dashboard-link{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;padding:5px;text-decoration:underline;text-underline-offset:4px}
 .dashboard-link:hover{color:var(--gold2)}
+.guided-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.guided-card{background:var(--sur);border:1px solid var(--bor);border-radius:9px;padding:18px;text-align:left;color:var(--txt);font-family:'Outfit',sans-serif;min-height:150px;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;transition:border-color .2s,background .2s}
+.guided-card:hover,.guided-card:focus-visible{border-color:rgba(201,168,76,.55);background:#1b1b21;outline:none}
+.guided-question{font-size:13px;color:var(--txt2);margin-bottom:10px}
+.guided-answer{font-size:18px;font-weight:600;line-height:1.35;margin-bottom:7px}
+.guided-number{font-size:13px;color:var(--txt2);line-height:1.5}
+.guided-link{margin-top:auto;padding-top:14px;color:var(--gold);font-size:13px;font-weight:600}
+.guided-menu{display:grid;gap:10px;margin-bottom:20px}
+.guided-menu-btn{width:100%;min-height:72px;background:var(--sur);border:1px solid var(--bor);border-radius:9px;padding:14px 16px;color:var(--txt);font-family:'Outfit',sans-serif;text-align:left;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:13px;cursor:pointer}
+.guided-menu-btn:hover,.guided-menu-btn:focus-visible{border-color:rgba(201,168,76,.5);outline:none}
+.guided-menu-icon{width:42px;height:42px;border-radius:8px;background:var(--sur2);display:grid;place-items:center;color:var(--gold);font-size:18px}
+.guided-menu-copy strong{display:block;font-size:15px;margin-bottom:3px}.guided-menu-copy span{display:block;color:var(--txt2);font-size:13px;line-height:1.4}
+.guided-chevron{color:var(--gold);font-size:18px}
+.advanced-wrap{display:none}.advanced-wrap.on{display:block}
+.advanced-toggle{margin-bottom:20px}
+.coming-list{display:grid;gap:10px}.coming-row{display:flex;gap:14px;align-items:center;padding:15px 0;border-bottom:1px solid var(--bor)}
+.coming-row:last-child{border-bottom:0}.coming-row strong{display:block;font-size:15px}.coming-row span{font-size:13px;color:var(--txt2)}
 .section-tabs{display:flex;gap:6px;overflow-x:auto;margin:-8px 0 20px;padding:4px;background:var(--bg2);border:1px solid var(--bor);border-radius:10px;width:max-content;max-width:100%}
 .section-tab{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;padding:8px 13px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .section-tab.on{background:var(--sur2);color:var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.25)}
@@ -232,6 +249,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 }
 @media(max-width:600px){
   .g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}
+  .guided-grid{grid-template-columns:1fr}.guided-card{min-height:138px}.guided-answer{font-size:17px}
   .topbar{padding:0 14px}.topbar-user{display:none}.topbar-biz{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .section-tabs{width:100%;max-width:none;flex-wrap:wrap;overflow:visible}
   .section-tab{flex:1 1 calc(33.333% - 6px);padding:8px 9px}
@@ -338,15 +356,15 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   </div>
   <div class="app-body">
     <nav class="sidebar">
-      <div class="ns-title">General</div>
-      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">⊞</span><span>Dashboard</span></div>
-      <div class="ns-title">Operaciones</div>
+      <div class="ns-title">Principal</div>
+      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">⌂</span><span>Inicio</span></div>
       <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico">💰</span><span>Finanzas</span></div>
       <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico">📦</span><span>Productos</span></div>
-      <div class="ni" data-p="leads" onclick="go('leads',this)"><span class="ni-ico">👥</span><span>Clientes & Leads</span></div>
-      <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">📥</span><span>Carga inteligente</span></div>
+      <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico">◎</span><span>Personas</span></div>
+      <div class="ni" data-p="org" onclick="go('org',this)"><span class="ni-ico">✓</span><span>Organización</span></div>
       <details class="sidebar-more">
         <summary>Más herramientas</summary>
+        <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">⇧</span><span>Importaciones</span></div>
         <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico">🏗</span><span>Mi Negocio</span></div>
         <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">📣</span><span>Publicidad</span></div>
         <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">📅</span><span>Contenido</span></div>
@@ -360,6 +378,18 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="ph"><div class="pt" id="dash-title">Kairós</div><div class="ps">Resumen de tu negocio</div></div>
+        <div class="guided-grid" aria-label="Respuestas principales del negocio">
+          <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Cómo está el dinero?</span><span class="guided-answer" id="home-cash-answer">Calculando...</span><span class="guided-number" id="home-cash-number">Ingresos y egresos del mes</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Las ventas dejan ganancia?</span><span class="guided-answer" id="home-sales-answer">Calculando...</span><span class="guided-number" id="home-sales-number">Ganancia de ventas</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="goPage('prod')"><span class="guided-question">¿Qué necesita atención?</span><span class="guided-answer" id="home-alert-answer">Revisando el negocio...</span><span class="guided-number" id="home-alert-number">Alertas y stock</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="openAIWithBusinessSummary()"><span class="guided-question">¿Qué conviene hacer ahora?</span><span class="guided-answer" id="home-next-answer">Te voy a orientar con tus datos.</span><span class="guided-number">El Asesor prepara la próxima acción y pide confirmación.</span><span class="guided-link">Preguntarle al Asesor →</span></button>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
+          <div class="dashboard-secondary"><button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button><button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button></div>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('home-advanced',this)">Ver información detallada</button>
+        <div class="advanced-wrap" id="home-advanced">
         <div class="section-tabs" role="tablist" aria-label="Vistas del inicio">
           <button class="section-tab on" id="dash-tab-summary-btn" onclick="switchDashboardTab('summary')">Resumen principal</button>
           <button class="section-tab" id="dash-tab-imported-btn" onclick="switchDashboardTab('imported')">Carga inteligente</button>
@@ -376,13 +406,6 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="stat"><div class="sl">Gastos fijos a cubrir <button class="info-dot" data-info="Suma de gastos fijos mensuales. Es una referencia de cobertura, no el punto de equilibrio contable completo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
           <div class="stat"><div class="sl">Leads activos <button class="info-dot" data-info="Contactos comerciales que todavía no llegaron al estado Cliente." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-leads" style="color:var(--blue)">0</div><div class="sn" id="d-cli">—</div></div>
           <div class="stat"><div class="sl">Alertas <button class="info-dot" data-info="Cuenta caja negativa, gastos fijos sin cubrir, productos con stock crítico, pérdida o datos incompletos y movimientos sin monto." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
-        </div>
-        <div class="dashboard-actions">
-          <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
-          <div class="dashboard-secondary">
-            <button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button>
-            <button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button>
-          </div>
         </div>
         <div class="g2">
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
@@ -402,6 +425,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="g2">
           <div class="card"><div class="card-t">Stock importado</div><div class="g2"><div class="mrow"><div class="mlbl">Valor a costo <button class="info-dot" data-info="Stock actual multiplicado por el costo total de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-costo">$0</div></div><div class="mrow"><div class="mlbl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-venta">$0</div></div></div></div>
           <div class="card"><div class="card-t">Estado de stock importado</div><div id="id-stock-breakdown"></div></div>
+        </div>
         </div>
         </div>
       </div>
@@ -443,6 +467,15 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- FINANZAS -->
       <div class="page" id="page-fin">
         <div class="ph"><div class="pt">Finanzas</div><div class="ps">Entendé qué entra, qué sale y dónde se registra cada dato.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto entró y salió?</strong><span>Ingresos, egresos y resultado de caja.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">↗</span><span class="guided-menu-copy"><strong>¿Mis ventas dejan ganancia?</strong><span>Lo vendido menos el costo de los productos.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('movements')"><span class="guided-menu-icon">○</span><span class="guided-menu-copy"><strong>¿Qué tengo que cobrar o pagar?</strong><span>Revisá y registrá movimientos pendientes.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('fixed')"><span class="guided-menu-icon">≡</span><span class="guided-menu-copy"><strong>¿Cuáles son mis gastos?</strong><span>Gastos fijos y movimientos operativos.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('team')"><span class="guided-menu-icon">◎</span><span class="guided-menu-copy"><strong>¿Cuánto cuesta el equipo?</strong><span>Pago por trabajar, sueldos y retiros separados.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('fin-advanced',this)">Abrir vista avanzada</button>
+        <div class="advanced-wrap" id="fin-advanced">
         <div class="section-tabs" role="tablist" aria-label="Secciones de Finanzas">
           <button class="section-tab on" id="fin-tab-summary-btn" onclick="switchFinanceTab('summary')">Resumen</button>
           <button class="section-tab" id="fin-tab-movements-btn" onclick="switchFinanceTab('movements')">Movimientos</button>
@@ -582,11 +615,21 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <div class="tw"><table><thead><tr><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Monto</th><th>Medio</th><th>Nota</th></tr></thead><tbody id="team-payments-tb"><tr><td colspan="6"><div class="empty"><div class="empty-i">💸</div>Sin pagos registrados</div></td></tr></tbody></table></div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- PRODUCTOS -->
       <div class="page" id="page-prod">
-        <div class="ph"><div class="pt">Productos & Servicios</div><div class="ps">Tu catálogo con motor de costos y precios.</div></div>
+        <div class="ph"><div class="pt">Productos</div><div class="ps">Stock, costos y precios explicados con claridad.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">□</span><span class="guided-menu-copy"><strong>¿Qué productos tengo?</strong><span>Inventario, variantes, colores y medidas.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto cuestan y a cuánto los vendo?</strong><span>Costo total, precio y ganancia por unidad.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">!</span><span class="guided-menu-copy"><strong>¿Qué se está terminando?</strong><span>Productos agotados o cerca del stock mínimo.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="openProductAIHelp()"><span class="guided-menu-icon">+</span><span class="guided-menu-copy"><strong>¿Qué necesito comprar?</strong><span>Pedile al Asesor que prepare una reposición.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('carga')"><span class="guided-menu-icon">↥</span><span class="guided-menu-copy"><strong>Agregar o actualizar productos</strong><span>Carga manual o asistida por IA.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('prod-advanced',this)">Abrir inventario y motor de costos</button>
+        <div class="advanced-wrap" id="prod-advanced">
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">Motor de costos</div><div class="ctxt">Ingresá el costo y Kairós calcula automáticamente el <strong>precio mínimo rentable</strong>, el <strong>precio sugerido</strong> y el <strong>margen real</strong>. Todos los porcentajes son configurables.</div></div></div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
@@ -677,6 +720,31 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
         </div>
         </div>
+        </div>
+      </div>
+
+      <!-- PERSONAS -->
+      <div class="page" id="page-people">
+        <div class="ph"><div class="pt">Personas</div><div class="ps">Clientes, personas interesadas y quienes trabajan en el negocio.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="goPage('leads')"><span class="guided-menu-icon">◎</span><span class="guided-menu-copy"><strong>¿Quiénes son mis clientes?</strong><span>Clientes confirmados y su recorrido comercial.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goPage('leads')"><span class="guided-menu-icon">☆</span><span class="guided-menu-copy"><strong>¿Quién está interesado?</strong><span>Leads, consultas y seguimientos pendientes.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goFinanceDetail('team')"><span class="guided-menu-icon">♙</span><span class="guided-menu-copy"><strong>¿Quién trabaja en el negocio?</strong><span>Dueños, socios, empleados, roles y dedicación.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goFinanceDetail('team')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto corresponde pagar?</strong><span>Sueldos, honorarios, comisiones y retiros separados.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+      </div>
+
+      <!-- ORGANIZACION -->
+      <div class="page" id="page-org">
+        <div class="ph"><div class="pt">Organización</div><div class="ps">Una vista simple de lo que requiere atención diaria.</div></div>
+        <div class="concept"><div class="ci">i</div><div><div class="clbl">Próximamente</div><div class="ctxt">Esta sección es una demostración visual. Todavía no guarda tareas, pedidos, entregas ni vencimientos.</div></div></div>
+        <div class="card"><div class="coming-list">
+          <div class="coming-row"><span class="guided-menu-icon">✓</span><div><strong>¿Qué tengo que hacer hoy?</strong><span>Tareas y prioridades del día.</span></div></div>
+          <div class="coming-row"><span class="guided-menu-icon">□</span><div><strong>¿Qué pedidos están pendientes?</strong><span>Compras y pedidos de clientes por completar.</span></div></div>
+          <div class="coming-row"><span class="guided-menu-icon">→</span><div><strong>¿Qué tengo que entregar?</strong><span>Entregas próximas y su estado.</span></div></div>
+          <div class="coming-row"><span class="guided-menu-icon">◷</span><div><strong>¿Qué vence pronto?</strong><span>Cobros, pagos y recordatorios.</span></div></div>
+          <div class="coming-row"><span class="guided-menu-icon">◎</span><div><strong>¿Quién se encarga?</strong><span>Responsables por tarea.</span></div></div>
+        </div></div>
       </div>
 
       <!-- LEADS -->
@@ -938,8 +1006,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico">⌂</span><span>Inicio</span></button>
     <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Finanzas</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico">□</span><span>Productos</span></button>
-    <button class="mobile-ni" data-p="leads" onclick="go('leads',this)"><span class="mobile-ni-ico">○</span><span>Clientes</span></button>
-    <button class="mobile-ni" onclick="openAI()"><span class="mobile-ni-ico">✦</span><span>IA</span></button>
+    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico">○</span><span>Personas</span></button>
+    <button class="mobile-ni" data-p="org" onclick="go('org',this)"><span class="mobile-ni-ico">✓</span><span>Organización</span></button>
   </nav>
   <button class="chat-fab" type="button" onclick="openAI()" aria-label="Abrir Asesor IA" title="Abrir Asesor IA">✦</button>
 </div>
@@ -1227,6 +1295,42 @@ function switchFinanceTab(tab) {
   switchSectionTab('fin', tab, ['summary', 'movements', 'imported', 'fixed', 'team'])
   if (tab === 'imported') loadImportedData()
   if (tab === 'team') loadTeamData()
+}
+
+function toggleAdvanced(id, button) {
+  const section = document.getElementById(id)
+  if (!section) return
+  const open = section.classList.toggle('on')
+  if (button) button.textContent = open ? 'Ocultar vista avanzada' : button.dataset.closedLabel || 'Abrir vista avanzada'
+}
+
+function openAdvanced(id) {
+  document.getElementById(id)?.classList.add('on')
+}
+
+function showFinanceQuestion(tab) {
+  openAdvanced('fin-advanced')
+  switchFinanceTab(tab)
+  document.getElementById(`fin-tab-${tab}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function goFinanceDetail(tab) {
+  goPage('fin')
+  showFinanceQuestion(tab)
+}
+
+function showProductQuestion(tab) {
+  openAdvanced('prod-advanced')
+  switchProductTab(tab)
+  document.getElementById(tab === 'carga' ? 'prod-tab-carga-pane' : 'prod-tab-inv-pane')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function openAIWithBusinessSummary() {
+  openAI()
+  const input = document.getElementById('ai-inp')
+  input.value = '¿Cómo está mi negocio y qué me conviene hacer ahora?'
+  input.focus()
+  input.setSelectionRange(0, input.value.length)
 }
 
 function toggleInfo(event, button) {
@@ -2328,6 +2432,14 @@ async function renderDash() {
     { ok: operationalProducts + legacyProducts > 0, ico: operationalProducts + legacyProducts ? '✅' : '📦', txt: operationalProducts ? `${operationalProducts} producto(s) en inventario` : legacyProducts ? `${legacyProducts} producto(s) históricos` : 'Cargá tus productos', p: 'prod' },
   ]
   document.getElementById('d-est').innerHTML = items.map(i => `<div class="mrow" style="${!i.ok ? 'cursor:pointer' : ''}" ${!i.ok ? `onclick="goPage('${i.p}')"` : ''}><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--txt)'}">${i.txt}</span></div>${!i.ok ? '<span style="color:var(--gold);font-size:12px">→</span>' : ''}</div>`).join('')
+  S('home-cash-answer', !ing && !egr ? 'Todavía no hay movimientos con monto válido.' : gan >= 0 ? 'Este mes entró más dinero del que salió.' : 'Este mes salió más dinero del que entró.')
+  S('home-cash-number', `Entró ${money(ing)} · Salió ${money(egr)} · Resultado ${money(gan)}`)
+  S('home-sales-answer', !sales.count ? 'Todavía no hay ventas confirmadas para calcularlo.' : sales.profit >= 0 ? 'Tus ventas dejan ganancia.' : 'Tus ventas están dejando pérdida.')
+  S('home-sales-number', sales.count ? `${money(sales.profit)} de ganancia · De cada $100 quedan $${fmtDec(sales.margin)}` : 'Registrá una venta para conocer la rentabilidad.')
+  const attentionCount = redCount + lossProducts + incompleteProducts
+  S('home-alert-answer', attentionCount ? `${attentionCount} producto${attentionCount === 1 ? '' : 's'} necesita${attentionCount === 1 ? '' : 'n'} atención.` : 'No hay alertas críticas de productos.')
+  S('home-alert-number', redCount ? `${redCount} con stock crítico` : incompleteProducts ? `${incompleteProducts} con datos incompletos` : 'Inventario sin alertas críticas')
+  S('home-next-answer', gan < 0 ? 'Revisá los egresos antes de asumir un gasto nuevo.' : redCount ? 'Priorizá reponer los productos con stock crítico.' : !sales.count ? 'Registrá una venta para empezar a medir rentabilidad.' : 'Revisá las alertas y seguí registrando movimientos.')
 }
 
 // ══════════════════════════════════════
