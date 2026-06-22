@@ -112,7 +112,7 @@ Crea manualmente un producto, su alias y su movimiento de stock inicial como una
 1. Abrir el proyecto de Supabase.
 2. Entrar a SQL Editor.
 3. Crear una nueva query.
-4. Ejecutar las migraciones en orden: `001`, `002`, `003`, `004`, `005` y `006`.
+4. Ejecutar las migraciones en orden: `001`, `002`, `003`, `004`, `005`, `006` y `007`.
 5. Verificar que las tablas existan en el schema `public`.
 6. Confirmar que RLS esté activado y que las policies por `user_id` estén creadas.
 7. Verificar las RPC: `confirm_bot_action`, `record_team_payment`, `confirm_import_batch` y `create_inventory_item`.
@@ -138,3 +138,13 @@ Crea manualmente un producto, su alias y su movimiento de stock inicial como una
 - Las tablas legacy `productos` y `transacciones` siguen disponibles y no se eliminan.
 - El frontend unifica su lectura financiera, pero no intenta deduplicar automáticamente registros históricos iguales porque dos movimientos legítimos pueden compartir fecha, descripción y monto.
 - Las recomendaciones de remuneración son orientativas; no reemplazan una liquidación laboral, societaria o impositiva.
+
+### `migrations/007_organization_calendar.sql`
+
+Activa Organización con una agenda propia:
+
+- `organization_items`: tareas, pedidos, entregas, vencimientos, cobros, pagos y recordatorios con fecha, prioridad, responsable y estado.
+- RLS y cuatro policies por `user_id`.
+- Índices por usuario, fecha, estado y tipo.
+
+Los montos agendados son informativos. No crean ingresos ni egresos automáticamente porque “previsto” y “pagado/cobrado” son conceptos distintos.

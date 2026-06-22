@@ -113,6 +113,23 @@ select option{background:var(--sur2)}
 .profile-stat span{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px}
 .ai-entry-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:14px 16px}
 .ai-entry-card p{font-size:12px;color:var(--txt2);line-height:1.5}
+.attention-note{display:none;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:11px 13px;border:1px solid rgba(240,173,78,.45);background:rgba(240,173,78,.08);border-radius:8px;color:var(--yel);font-size:12px}
+.attention-note.on{display:flex}
+.attention-row td{background:rgba(240,173,78,.08);border-top-color:rgba(240,173,78,.28);border-bottom-color:rgba(240,173,78,.28)}
+.attention-row td:first-child{box-shadow:inset 3px 0 0 var(--yel)}
+.annual-grid{display:grid;grid-template-columns:repeat(12,minmax(48px,1fr));gap:7px;align-items:end;min-height:190px;margin-top:14px}
+.annual-month{display:flex;flex-direction:column;justify-content:flex-end;gap:5px;min-width:0}
+.annual-bars{height:125px;display:flex;align-items:flex-end;justify-content:center;gap:3px;border-bottom:1px solid var(--bor)}
+.annual-bar{width:10px;min-height:2px;border-radius:3px 3px 0 0}
+.annual-label{text-align:center;font-size:10px;color:var(--txt3)}
+.org-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.org-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--bor)}
+.org-item:last-child{border-bottom:0}
+.org-date{width:54px;text-align:center;padding:7px 4px;border:1px solid var(--bor);border-radius:7px;background:var(--bg2)}
+.org-date strong{display:block;font-size:17px;color:var(--gold)}.org-date span{font-size:9px;color:var(--txt3);text-transform:uppercase}
+.org-item.done{opacity:.58}.org-item.done .org-copy strong{text-decoration:line-through}
+.org-copy strong{display:block;font-size:13px}.org-copy span{display:block;font-size:11px;color:var(--txt3);margin-top:3px}
+@media(max-width:760px){.annual-grid{grid-template-columns:repeat(6,1fr);row-gap:14px}.annual-bars{height:92px}.org-item{grid-template-columns:auto minmax(0,1fr)}.org-item-actions{grid-column:2}}
 .mobile-nav{display:none}
 .chat-fab{position:fixed;right:24px;bottom:24px;width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,76,.45);background:linear-gradient(135deg,#c9a84c,#e8c87a);color:#0c0c0e;font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700;cursor:pointer;z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.45),0 4px 18px rgba(201,168,76,.28);transition:transform .2s,box-shadow .2s}
 .chat-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 6px 22px rgba(201,168,76,.38)}
@@ -381,7 +398,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="guided-grid" aria-label="Respuestas principales del negocio">
           <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Cómo está el dinero?</span><span class="guided-answer" id="home-cash-answer">Calculando...</span><span class="guided-number" id="home-cash-number">Ingresos y egresos del mes</span><span class="guided-link">Ver detalles →</span></button>
           <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Las ventas dejan ganancia?</span><span class="guided-answer" id="home-sales-answer">Calculando...</span><span class="guided-number" id="home-sales-number">Ganancia de ventas</span><span class="guided-link">Ver detalles →</span></button>
-          <button class="guided-card" onclick="goPage('prod')"><span class="guided-question">¿Qué necesita atención?</span><span class="guided-answer" id="home-alert-answer">Revisando el negocio...</span><span class="guided-number" id="home-alert-number">Alertas y stock</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="goPage('prod');showProductQuestion('inv','low')"><span class="guided-question">¿Qué necesita atención?</span><span class="guided-answer" id="home-alert-answer">Revisando el negocio...</span><span class="guided-number" id="home-alert-number">Alertas y stock</span><span class="guided-link">Ver detalles →</span></button>
           <button class="guided-card" onclick="openAIWithBusinessSummary()"><span class="guided-question">¿Qué conviene hacer ahora?</span><span class="guided-answer" id="home-next-answer">Te voy a orientar con tus datos.</span><span class="guided-number">El Asesor prepara la próxima acción y pide confirmación.</span><span class="guided-link">Preguntarle al Asesor →</span></button>
         </div>
         <div class="dashboard-actions">
@@ -410,6 +427,19 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="g2">
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
           <div class="card"><div class="card-t">🎯 Estado del negocio</div><div id="d-est"></div></div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><div class="card-t" style="margin-bottom:4px">Cómo fue el año</div><div style="font-size:12px;color:var(--txt3)">Ingresos y egresos registrados mes por mes. No mezcla años ni inventa meses sin datos.</div></div>
+            <div class="field" style="margin:0;min-width:110px"><label>Año</label><select id="annual-year" onchange="renderAnnualSummary()"></select></div>
+          </div>
+          <div class="g4" style="margin:16px 0">
+            <div class="stat"><div class="sl">Ingresos anuales <button class="info-dot" data-info="Suma de todos los ingresos registrados durante el año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-income" style="color:var(--green)">$0</div></div>
+            <div class="stat"><div class="sl">Egresos anuales <button class="info-dot" data-info="Suma de todos los egresos registrados durante el año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-expense" style="color:var(--red)">$0</div></div>
+            <div class="stat"><div class="sl">Resultado anual <button class="info-dot" data-info="Ingresos anuales menos egresos anuales. Es resultado de caja, no ganancia contable completa." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-balance">$0</div></div>
+            <div class="stat"><div class="sl">Mejor mes <button class="info-dot" data-info="Mes con el resultado de caja más alto dentro del año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-best" style="color:var(--gold)">—</div></div>
+          </div>
+          <div class="annual-grid" id="annual-grid"></div>
         </div>
         </div>
         <div class="tab-pane" id="dash-tab-imported">
@@ -622,9 +652,9 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <div class="page" id="page-prod">
         <div class="ph"><div class="pt">Productos</div><div class="ps">Stock, costos y precios explicados con claridad.</div></div>
         <div class="guided-menu">
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">□</span><span class="guided-menu-copy"><strong>¿Qué productos tengo?</strong><span>Inventario, variantes, colores y medidas.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto cuestan y a cuánto los vendo?</strong><span>Costo total, precio y ganancia por unidad.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv')"><span class="guided-menu-icon">!</span><span class="guided-menu-copy"><strong>¿Qué se está terminando?</strong><span>Productos agotados o cerca del stock mínimo.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','all')"><span class="guided-menu-icon">□</span><span class="guided-menu-copy"><strong>¿Qué productos tengo?</strong><span>Inventario, variantes, colores y medidas.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','pricing')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto cuestan y a cuánto los vendo?</strong><span>Costo total, precio y ganancia por unidad.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','low')"><span class="guided-menu-icon">!</span><span class="guided-menu-copy"><strong>¿Qué se está terminando?</strong><span>Productos agotados o cerca del stock mínimo.</span></span><span class="guided-chevron">›</span></button>
           <button class="guided-menu-btn" onclick="openProductAIHelp()"><span class="guided-menu-icon">+</span><span class="guided-menu-copy"><strong>¿Qué necesito comprar?</strong><span>Pedile al Asesor que prepare una reposición.</span></span><span class="guided-chevron">›</span></button>
           <button class="guided-menu-btn" onclick="showProductQuestion('carga')"><span class="guided-menu-icon">↥</span><span class="guided-menu-copy"><strong>Agregar o actualizar productos</strong><span>Carga manual o asistida por IA.</span></span><span class="guided-chevron">›</span></button>
         </div>
@@ -712,6 +742,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="stat"><div class="sl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta local o web." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-venta">$0</div></div>
           <div class="stat"><div class="sl">Estado del stock <button class="info-dot" data-info="Cantidad de productos en rojo, amarillo y verde según stock actual y stock mínimo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
         </div>
+        <div class="stat" style="margin-bottom:14px"><div class="sl">Costo estimado de reposición <button class="info-dot" data-info="Unidades faltantes para volver al stock mínimo, multiplicadas por el costo total unitario. Solo suma productos con datos suficientes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-reorder-cost" style="color:var(--yel)">$0</div><div class="sn" id="ip-reorder-note">Sin faltantes calculables</div></div>
+        <div class="attention-note" id="inventory-filter-note"><span id="inventory-filter-text"></span><button class="btn btn-ghost btn-sm" onclick="clearInventoryFilter()">Ver todo</button></div>
         <div class="card">
           <div class="card-t">Inventario importado</div>
           <div class="tw" style="max-height:420px;overflow-y:auto">
@@ -737,14 +769,37 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- ORGANIZACION -->
       <div class="page" id="page-org">
         <div class="ph"><div class="pt">Organización</div><div class="ps">Una vista simple de lo que requiere atención diaria.</div></div>
-        <div class="concept"><div class="ci">i</div><div><div class="clbl">Próximamente</div><div class="ctxt">Esta sección es una demostración visual. Todavía no guarda tareas, pedidos, entregas ni vencimientos.</div></div></div>
-        <div class="card"><div class="coming-list">
-          <div class="coming-row"><span class="guided-menu-icon">✓</span><div><strong>¿Qué tengo que hacer hoy?</strong><span>Tareas y prioridades del día.</span></div></div>
-          <div class="coming-row"><span class="guided-menu-icon">□</span><div><strong>¿Qué pedidos están pendientes?</strong><span>Compras y pedidos de clientes por completar.</span></div></div>
-          <div class="coming-row"><span class="guided-menu-icon">→</span><div><strong>¿Qué tengo que entregar?</strong><span>Entregas próximas y su estado.</span></div></div>
-          <div class="coming-row"><span class="guided-menu-icon">◷</span><div><strong>¿Qué vence pronto?</strong><span>Cobros, pagos y recordatorios.</span></div></div>
-          <div class="coming-row"><span class="guided-menu-icon">◎</span><div><strong>¿Quién se encarga?</strong><span>Responsables por tarea.</span></div></div>
-        </div></div>
+        <div id="org-state"></div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Para hoy <button class="info-dot" data-info="Pendientes cuya fecha es hoy o ya venció." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-today" style="color:var(--yel)">0</div></div>
+          <div class="stat"><div class="sl">Próximos 7 días <button class="info-dot" data-info="Tareas, entregas, cobros y pagos pendientes con fecha durante la próxima semana." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-week" style="color:var(--blue)">0</div></div>
+          <div class="stat"><div class="sl">Pendientes <button class="info-dot" data-info="Todos los elementos que todavía no están completados ni cancelados." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-pending">0</div></div>
+          <div class="stat"><div class="sl">Monto agendado <button class="info-dot" data-info="Suma orientativa de cobros y pagos pendientes que tienen monto cargado. No modifica Finanzas hasta que registres el movimiento." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-amount" style="color:var(--gold)">$0</div></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-t">Agregar al calendario</div>
+            <div class="field"><label>Qué hay que hacer *</label><input id="org-title" type="text" placeholder="Entregar pedido, pagar proveedor..."></div>
+            <div class="g2">
+              <div class="field"><label>Tipo</label><select id="org-type"><option value="tarea">Tarea</option><option value="pedido">Pedido</option><option value="entrega">Entrega</option><option value="vencimiento">Vencimiento</option><option value="cobro">Cobro</option><option value="pago">Pago</option><option value="recordatorio">Recordatorio</option></select></div>
+              <div class="field"><label>Fecha *</label><input id="org-date" type="date"></div>
+              <div class="field"><label>Prioridad</label><select id="org-priority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+              <div class="field"><label>Responsable</label><input id="org-owner" type="text" placeholder="Yo, administración..."></div>
+              <div class="field"><label>Monto opcional ($)</label><input id="org-amount-input" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div class="field"><label>Notas</label><textarea id="org-notes" placeholder="Detalle breve"></textarea></div>
+            <button class="btn btn-gold btn-full" id="org-add-btn" onclick="addOrganizationItem()">Agregar</button>
+          </div>
+          <div class="card">
+            <div class="card-t">Calendario y pendientes</div>
+            <div class="org-filters">
+              <div class="field" style="margin:0"><label>Mes</label><input id="org-month" type="month" onchange="renderOrganization()"></div>
+              <div class="field" style="margin:0"><label>Ver</label><select id="org-status-filter" onchange="renderOrganization()"><option value="pending">Pendientes</option><option value="all">Todos</option><option value="done">Completados</option></select></div>
+              <button class="btn btn-ghost btn-sm" onclick="setOrganizationCurrentMonth()">Mes actual</button>
+            </div>
+            <div id="org-list"><div class="empty"><div class="empty-i">✓</div>Sin pendientes para este período</div></div>
+          </div>
+        </div>
       </div>
 
       <!-- LEADS -->
@@ -1230,6 +1285,8 @@ async function enterApp() {
   document.getElementById('profile-btn').textContent = String(CU.email || '?').slice(0, 1).toUpperCase()
   document.getElementById('tx-f').value = today()
   document.getElementById('team-payment-date').value = today()
+  document.getElementById('org-date').value = today()
+  document.getElementById('org-month').value = today().slice(0, 7)
   setDashTitle()
   await renderAll()
   const biz = await getBiz()
@@ -1275,6 +1332,7 @@ function go(page, el) {
   if (page === 'dash') switchDashboardTab('summary')
   if (page === 'fin') switchFinanceTab('summary')
   if (page === 'prod') switchProductTab('inv')
+  if (page === 'org') loadOrganizationData()
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
@@ -1319,10 +1377,17 @@ function goFinanceDetail(tab) {
   showFinanceQuestion(tab)
 }
 
-function showProductQuestion(tab) {
+function showProductQuestion(tab, filter = 'all') {
+  inventoryViewFilter = filter
   openAdvanced('prod-advanced')
   switchProductTab(tab)
+  if (tab === 'inv') renderImportedInventory()
   document.getElementById(tab === 'carga' ? 'prod-tab-carga-pane' : 'prod-tab-inv-pane')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function clearInventoryFilter() {
+  inventoryViewFilter = 'all'
+  renderImportedInventory()
 }
 
 function openAIWithBusinessSummary() {
@@ -1882,7 +1947,7 @@ async function loadTeamData() {
     teamData.available = false
     setTeamControlsDisabled(true)
     if (state) {
-      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Módulo pendiente de activar</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Aplicá la migración 004_team_compensation.sql en Supabase para usar Equipo y remuneraciones.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div></div></div>`
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Equipo todavía no está activado en esta base</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Los controles están bloqueados para no perder datos. Aplicá <strong>supabase/migrations/004_team_compensation.sql</strong> en Supabase SQL Editor; después volvé a esta pestaña y tocá Reintentar.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadTeamData()">Reintentar</button></div></div>`
     }
     if (isTeamSchemaMissing(firstError)) console.warn('[Kairós] Equipo pendiente de migración 004')
     else console.error('[Kairós] loadTeamData:', firstError)
@@ -2038,6 +2103,151 @@ async function recordTeamPayment() {
   await Promise.all([loadTeamData(), renderDash(), renderFin(), renderMet(), loadImportedData()])
   switchFinanceTab('team')
   toast('Pago registrado como egreso')
+}
+
+// ══════════════════════════════════════
+// ORGANIZACIÓN Y CALENDARIO
+// ══════════════════════════════════════
+let organizationData = []
+let organizationAvailable = true
+
+function isOrganizationSchemaMissing(error) {
+  const message = String(error?.message || '')
+  return error?.code === 'PGRST205' || message.includes('organization_items')
+}
+
+function setOrganizationControlsDisabled(disabled) {
+  ;['org-title', 'org-type', 'org-date', 'org-priority', 'org-owner', 'org-amount-input', 'org-notes', 'org-add-btn']
+    .forEach(id => { const control = document.getElementById(id); if (control) control.disabled = disabled })
+}
+
+async function loadOrganizationData() {
+  if (!CU) return
+  const state = document.getElementById('org-state')
+  if (state) state.innerHTML = '<div class="empty" style="padding:14px">Cargando organización...</div>'
+  const { data, error } = await sb.from('organization_items').select('*').eq('user_id', CU.id).order('fecha', { ascending: true }).order('created_at', { ascending: true }).limit(1000)
+  if (error) {
+    organizationAvailable = false
+    organizationData = []
+    setOrganizationControlsDisabled(true)
+    if (state) {
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Calendario pendiente de activar</div><div class="ctxt">${isOrganizationSchemaMissing(error) ? 'Aplicá <strong>supabase/migrations/007_organization_calendar.sql</strong> en Supabase SQL Editor. Hasta entonces esta pantalla queda en modo seguro y no intenta guardar.' : escapeHTML(error.message || 'No se pudo cargar Organización.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadOrganizationData()">Reintentar</button></div></div>`
+    }
+    if (!isOrganizationSchemaMissing(error)) console.error('[Kairós] loadOrganizationData:', error)
+    renderOrganization()
+    return
+  }
+  organizationAvailable = true
+  organizationData = data || []
+  setOrganizationControlsDisabled(false)
+  if (state) state.innerHTML = ''
+  renderOrganization()
+}
+
+function organizationDateParts(date) {
+  if (!date) return { day: '—', month: 'Sin fecha' }
+  const value = new Date(`${date}T12:00:00`)
+  return {
+    day: String(value.getDate()).padStart(2, '0'),
+    month: value.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '')
+  }
+}
+
+function organizationTypeLabel(type) {
+  return ({ tarea: 'Tarea', pedido: 'Pedido', entrega: 'Entrega', vencimiento: 'Vencimiento', cobro: 'Cobro', pago: 'Pago', recordatorio: 'Recordatorio' })[type] || type
+}
+
+function renderOrganization() {
+  const todayKey = today()
+  const weekEnd = new Date()
+  weekEnd.setDate(weekEnd.getDate() + 7)
+  const weekEndKey = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, '0')}-${String(weekEnd.getDate()).padStart(2, '0')}`
+  const pending = organizationData.filter(item => !['completado', 'cancelado'].includes(item.estado))
+  const dueToday = pending.filter(item => item.fecha <= todayKey)
+  const nextWeek = pending.filter(item => item.fecha > todayKey && item.fecha <= weekEndKey)
+  const amount = pending.filter(item => ['cobro', 'pago'].includes(item.tipo)).reduce((sum, item) => sum + (Number(item.monto) || 0), 0)
+  S('org-today', dueToday.length)
+  S('org-week', nextWeek.length)
+  S('org-pending', pending.length)
+  S('org-amount', money(amount))
+
+  const selectedMonth = V('org-month') || todayKey.slice(0, 7)
+  const statusFilter = V('org-status-filter') || 'pending'
+  const rows = organizationData.filter(item => {
+    const monthMatches = String(item.fecha || '').slice(0, 7) === selectedMonth
+    const statusMatches = statusFilter === 'all'
+      || (statusFilter === 'pending' && !['completado', 'cancelado'].includes(item.estado))
+      || (statusFilter === 'done' && item.estado === 'completado')
+    return monthMatches && statusMatches
+  })
+  const list = document.getElementById('org-list')
+  if (!list) return
+  list.innerHTML = !rows.length
+    ? '<div class="empty"><div class="empty-i">✓</div>Sin elementos para este período</div>'
+    : rows.map(item => {
+      const date = organizationDateParts(item.fecha)
+      const done = item.estado === 'completado'
+      const late = !done && item.fecha < todayKey
+      const priorityBadge = item.prioridad === 'urgente' || late ? 'br' : item.prioridad === 'alta' ? 'by' : 'bb'
+      return `<div class="org-item ${done ? 'done' : ''}">
+        <div class="org-date"><strong>${date.day}</strong><span>${escapeHTML(date.month)}</span></div>
+        <div class="org-copy">
+          <strong>${escapeHTML(item.titulo)}</strong>
+          <span>${escapeHTML(organizationTypeLabel(item.tipo))} · <span class="badge ${priorityBadge}">${late ? 'vencido' : escapeHTML(item.prioridad)}</span>${item.responsable ? ` · ${escapeHTML(item.responsable)}` : ''}${Number(item.monto) > 0 ? ` · ${money(item.monto)}` : ''}</span>
+          ${item.notas ? `<span>${escapeHTML(item.notas)}</span>` : ''}
+        </div>
+        <div class="org-item-actions" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleOrganizationItem('${item.id}',${done ? 'false' : 'true'})">${done ? 'Reabrir' : 'Completar'}</button>
+          <button class="btn btn-del" onclick="deleteOrganizationItem('${item.id}')">Eliminar</button>
+        </div>
+      </div>`
+    }).join('')
+}
+
+function setOrganizationCurrentMonth() {
+  const month = document.getElementById('org-month')
+  if (month) month.value = today().slice(0, 7)
+  renderOrganization()
+}
+
+async function addOrganizationItem() {
+  if (!organizationAvailable) { toastErr('Primero activá la migración 007 de Organización'); return }
+  const title = V('org-title').trim()
+  const date = V('org-date')
+  const amount = numOrDefault('org-amount-input')
+  if (!title) { toastErr('Indicá qué hay que hacer'); return }
+  if (!date) { toastErr('Elegí una fecha'); return }
+  if (amount < 0) { toastErr('El monto no puede ser negativo'); return }
+  const { error } = await sb.from('organization_items').insert({
+    user_id: CU.id,
+    titulo: title,
+    tipo: V('org-type'),
+    prioridad: V('org-priority'),
+    fecha: date,
+    responsable: V('org-owner').trim() || null,
+    monto: amount,
+    notas: V('org-notes').trim() || null
+  })
+  if (handleSupaError(error, 'addOrganizationItem')) return
+  ;['org-title', 'org-owner', 'org-amount-input', 'org-notes'].forEach(id => { document.getElementById(id).value = '' })
+  document.getElementById('org-month').value = date.slice(0, 7)
+  await loadOrganizationData()
+  toast('Agregado al calendario')
+}
+
+async function toggleOrganizationItem(id, completed) {
+  const { error } = await sb.from('organization_items').update({ estado: completed ? 'completado' : 'pendiente' }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'toggleOrganizationItem')) return
+  await loadOrganizationData()
+  toast(completed ? 'Marcado como completado' : 'Pendiente reabierto')
+}
+
+async function deleteOrganizationItem(id) {
+  if (!confirm('¿Eliminar este elemento del calendario?')) return
+  const { error } = await sb.from('organization_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteOrganizationItem')) return
+  await loadOrganizationData()
+  toast('Elemento eliminado')
 }
 
 // ══════════════════════════════════════
@@ -2440,6 +2650,50 @@ async function renderDash() {
   S('home-alert-answer', attentionCount ? `${attentionCount} producto${attentionCount === 1 ? '' : 's'} necesita${attentionCount === 1 ? '' : 'n'} atención.` : 'No hay alertas críticas de productos.')
   S('home-alert-number', redCount ? `${redCount} con stock crítico` : incompleteProducts ? `${incompleteProducts} con datos incompletos` : 'Inventario sin alertas críticas')
   S('home-next-answer', gan < 0 ? 'Revisá los egresos antes de asumir un gasto nuevo.' : redCount ? 'Priorizá reponer los productos con stock crítico.' : !sales.count ? 'Registrá una venta para empezar a medir rentabilidad.' : 'Revisá las alertas y seguí registrando movimientos.')
+  renderAnnualSummary(finance.all)
+}
+
+function renderAnnualSummary(financeRows = null) {
+  const rows = financeRows || unifiedFinanceCache?.all || []
+  const selector = document.getElementById('annual-year')
+  const currentYear = new Date().getFullYear()
+  const years = [...new Set(rows.map(financeDateKey).filter(Boolean).map(date => Number(String(date).slice(0, 4))).filter(Boolean).concat(currentYear))].sort((a, b) => b - a)
+  const previous = Number(selector?.value) || currentYear
+  if (selector) {
+    selector.innerHTML = years.map(year => `<option value="${year}">${year}</option>`).join('')
+    selector.value = String(years.includes(previous) ? previous : currentYear)
+  }
+  const selectedYear = Number(selector?.value) || currentYear
+  const months = Array.from({ length: 12 }, (_, index) => ({ index, ingresos: 0, egresos: 0, balance: 0 }))
+  rows.forEach(row => {
+    const key = financeDateKey(row)
+    if (!key || Number(String(key).slice(0, 4)) !== selectedYear || !movementHasAmount(row)) return
+    const monthIndex = Number(String(key).slice(5, 7)) - 1
+    if (monthIndex < 0 || monthIndex > 11) return
+    if (row.tipo === 'ingreso') months[monthIndex].ingresos += Number(row.monto) || 0
+    if (row.tipo === 'egreso') months[monthIndex].egresos += Number(row.monto) || 0
+  })
+  months.forEach(month => { month.balance = month.ingresos - month.egresos })
+  const income = months.reduce((sum, month) => sum + month.ingresos, 0)
+  const expense = months.reduce((sum, month) => sum + month.egresos, 0)
+  const balance = income - expense
+  const activeMonths = months.filter(month => month.ingresos || month.egresos)
+  const best = activeMonths.sort((a, b) => b.balance - a.balance)[0]
+  const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  S('annual-income', money(income))
+  S('annual-expense', money(expense))
+  S('annual-balance', money(balance))
+  S('annual-best', best ? `${names[best.index]} · ${money(best.balance)}` : 'Sin datos')
+  const balanceEl = document.getElementById('annual-balance')
+  if (balanceEl) balanceEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)'
+  const maxValue = Math.max(1, ...months.flatMap(month => [month.ingresos, month.egresos]))
+  const grid = document.getElementById('annual-grid')
+  if (grid) {
+    grid.innerHTML = months.map(month => `<div class="annual-month" title="${names[month.index]}: ingresos ${money(month.ingresos)}, egresos ${money(month.egresos)}, resultado ${money(month.balance)}">
+      <div class="annual-bars"><div class="annual-bar" style="height:${Math.max(2, month.ingresos / maxValue * 100)}%;background:var(--green)"></div><div class="annual-bar" style="height:${Math.max(2, month.egresos / maxValue * 100)}%;background:var(--red)"></div></div>
+      <div class="annual-label">${names[month.index]}</div>
+    </div>`).join('')
+  }
 }
 
 // ══════════════════════════════════════
@@ -2449,6 +2703,7 @@ let importedData = { movements: [], movementsMonth: [], inventory: [], inventory
 importedData.botActions = []
 importedData.inventorySaleIds = new Set()
 let importedLoadPromise = null
+let inventoryViewFilter = 'all'
 
 function money(n) { return '$' + fmt(Number(n) || 0) }
 function importDate(v) { return v ? String(v).slice(0, 10) : '—' }
@@ -2462,6 +2717,21 @@ function stockTotals(items) {
     amarillo: list.filter(p => p.estado_stock === 'amarillo').length,
     verde: list.filter(p => p.estado_stock === 'verde').length
   }
+}
+
+function inventoryNeedsReorder(item) {
+  const stock = Number(item.stock_actual)
+  const minimum = Number(item.stock_minimo)
+  return Number.isFinite(stock) && Number.isFinite(minimum) && (item.estado_stock === 'rojo' || item.estado_stock === 'amarillo' || stock <= minimum)
+}
+
+function inventoryHasPricingAlert(item) {
+  return Number(item.costo_total ?? item.costo_unitario) <= 0 || Number(item.precio_venta_local || item.precio_venta_web) <= 0 || Number(item.margen_local_pct) < 25
+}
+
+function inventoryReorderCost(item) {
+  const missing = Math.max(0, (Number(item.stock_minimo) || 0) - (Number(item.stock_actual) || 0))
+  return missing * (Number(item.costo_total ?? item.costo_unitario) || 0)
 }
 function movementTotals(items) {
   const list = items || []
@@ -2589,17 +2859,38 @@ function renderImportedMovements() {
 }
 
 function renderImportedInventory() {
-  const rows = importedData.inventoryLatest || []
-  const totals = stockTotals(importedData.inventory)
+  const allRows = importedData.inventory || []
+  const filtered = inventoryViewFilter === 'low'
+    ? allRows.filter(inventoryNeedsReorder)
+    : inventoryViewFilter === 'pricing'
+      ? allRows.filter(inventoryHasPricingAlert)
+      : allRows
+  const rows = filtered.slice(0, 50)
+  const totals = stockTotals(allRows)
   S('ip-cant', totals.count); S('ip-costo', money(totals.costo)); S('ip-venta', money(totals.venta)); S('ip-est', `${totals.rojo} / ${totals.amarillo} / ${totals.verde}`)
+  const reorderItems = allRows.filter(inventoryNeedsReorder)
+  const reorderCost = reorderItems.reduce((sum, item) => sum + inventoryReorderCost(item), 0)
+  S('ip-reorder-cost', money(reorderCost))
+  S('ip-reorder-note', reorderItems.length ? `${reorderItems.length} producto${reorderItems.length === 1 ? '' : 's'} por debajo o cerca del mínimo` : 'Sin faltantes calculables')
+  const filterNote = document.getElementById('inventory-filter-note')
+  const filterText = document.getElementById('inventory-filter-text')
+  if (filterNote && filterText) {
+    const labels = {
+      low: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con stock bajo o agotado. Están marcados en amarillo.`,
+      pricing: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con precio, costo o margen para revisar.`
+    }
+    filterNote.classList.toggle('on', inventoryViewFilter !== 'all')
+    filterText.textContent = labels[inventoryViewFilter] || ''
+  }
   const badge = { rojo: 'br', amarillo: 'by', verde: 'bg', sin_datos: 'bb' }
   const tb = document.getElementById('imp-inv-tb')
   if (!tb) return
   tb.innerHTML = !rows.length
-    ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr>'
+    ? `<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>${inventoryViewFilter === 'all' ? 'Sin inventario importado' : 'No hay productos que coincidan con este filtro'}</div></td></tr>`
     : rows.map(p => {
       const hasSales = importedData.inventorySaleIds?.has(p.id)
-      return `<tr>
+      const highlighted = inventoryViewFilter === 'low' ? inventoryNeedsReorder(p) : inventoryViewFilter === 'pricing' ? inventoryHasPricingAlert(p) : false
+      return `<tr class="${highlighted ? 'attention-row' : ''}">
         <td><strong>${escapeHTML(p.producto || '—')}</strong></td>
         <td>${escapeHTML(p.categoria || '—')}</td>
         <td>${escapeHTML(p.color || '—')}</td>

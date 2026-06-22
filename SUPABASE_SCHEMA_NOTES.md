@@ -584,3 +584,34 @@ Notas:
 - Expone `inventario_items` con `fuente = 'importado'`.
 - No incluye todavía `productos` legacy porque el mapeo puede ser riesgoso y conviene resolverlo en una fase dedicada.
 - Se crea como `security_invoker` para respetar RLS de la tabla base.
+
+## Organización y calendario
+
+### `organization_items`
+
+Columnas usadas:
+
+- `id`
+- `user_id`
+- `titulo`
+- `tipo`
+- `estado`
+- `prioridad`
+- `fecha`
+- `responsable`
+- `monto`
+- `notas`
+- `created_at`
+- `updated_at`
+
+Dónde se usa:
+
+- Organización: calendario mensual de tareas, pedidos, entregas, vencimientos, cobros, pagos y recordatorios.
+- Resumen de pendientes vencidos, próximos siete días y montos agendados.
+
+Notas:
+
+- Un cobro o pago agendado no modifica Finanzas. El movimiento financiero se registra recién cuando ocurre, para no duplicar caja prevista y caja real.
+- `monto` es opcional a nivel de interfaz y se guarda como `0` cuando no corresponde.
+- Debe tener RLS por `user_id`.
+- La crea `supabase/migrations/007_organization_calendar.sql`.
