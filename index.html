@@ -116,6 +116,34 @@ select option{background:var(--sur2)}
 .resource-meter span{display:block;width:0;height:100%;background:var(--gold);transition:width .4s ease}
 .resource-meter.good span{background:var(--green)}.resource-meter.warn span{background:var(--yel)}.resource-meter.bad span{background:var(--red)}
 .resource-link{font-size:10px;color:var(--gold);margin-top:8px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.business-console{background:#12171b;border:1px solid #343b40;border-radius:8px;overflow:hidden}
+.console-balance{display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px;padding:22px 24px;border-bottom:1px solid #343b40}
+.console-label{font-size:13px;color:var(--txt2)}.console-value{font-size:38px;font-weight:700;line-height:1.1;margin-top:4px}
+.console-trend{font-size:12px;color:var(--txt2);margin-top:7px}.console-trend.good{color:var(--green)}.console-trend.bad{color:var(--red)}
+.console-emblem{width:72px;height:72px;border:1px solid #596066;border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:27px;position:relative}
+.console-emblem::after{content:'';position:absolute;right:3px;bottom:8px;width:10px;height:10px;border-radius:50%;background:var(--green);border:3px solid #12171b}
+.console-resources{padding:0 24px}
+.console-row{width:100%;display:grid;grid-template-columns:48px 125px 1fr 48px;align-items:center;gap:14px;padding:14px 0;border:0;border-bottom:1px solid #343b40;background:transparent;color:var(--txt);font-family:'Outfit',sans-serif;text-align:left;cursor:pointer}
+.console-row:last-child{border-bottom:0}.console-row:hover .console-name{color:var(--gold)}
+.console-row .resource-icon{width:42px;height:42px;border-radius:50%;background:transparent;border-color:#596066}
+.console-name{font-size:14px;font-weight:600}.console-state{display:block;font-size:11px;font-weight:400;margin-top:2px;color:var(--txt2)}
+.console-state.good,.console-percent.good{color:var(--green)}.console-state.warn,.console-percent.warn{color:var(--yel)}.console-state.bad,.console-percent.bad{color:var(--red)}
+.console-row .resource-meter{margin:0;height:8px;background:#3a3f43;border:0}.console-percent{text-align:right;font-size:13px;color:var(--txt2)}
+.console-results{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #343b40}
+.console-result{display:flex;align-items:center;gap:12px;padding:16px 24px}.console-result+ .console-result{border-left:1px solid #343b40}
+.console-result .resource-icon{border-radius:50%;background:transparent;border-color:#596066}
+.console-result small{display:block;color:var(--txt2);font-size:11px}.console-result strong{display:block;font-size:17px;margin-top:2px}
+.attention-panel{background:#12171b;border:1px solid #343b40;border-radius:8px;overflow:hidden}
+.attention-panel .panel-heading{padding:14px 16px;margin:0;border-bottom:1px solid #343b40}
+.attention-panel .mission-list{gap:0}.attention-panel .mission-row{border:0;border-bottom:1px solid #343b40;border-radius:0;background:transparent;padding:13px 16px}
+.attention-panel .mission-row:last-child{border-bottom:0}.attention-panel .mission-mark{border-radius:50%;background:transparent;border:1px solid currentColor}
+.coverage-panel{background:#12171b;border:1px solid #343b40;border-radius:8px;padding:16px}
+.coverage-top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:10px}
+.coverage-percent{font-size:30px;font-weight:700;color:var(--green)}.coverage-copy{text-align:right;font-size:12px;color:var(--txt2)}
+.coverage-panel .resource-meter{height:9px;margin:0;background:#3a3f43;border:0}
+.command-action-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.command-action-bar .dashboard-primary{grid-column:1/-1}
+.command-secondary-btn{justify-content:center;background:#151a1e;border:1px solid #3a4248;color:var(--gold);padding:12px}
 .command-lower{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.8fr);gap:10px}
 .mission-panel,.action-panel{background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:16px}
 .panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
@@ -317,6 +345,11 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   .guided-grid{grid-template-columns:1fr}.guided-card{min-height:138px}.guided-answer{font-size:17px}
   .command-head{align-items:flex-start;flex-direction:column;padding:15px}.command-state{width:100%;min-width:0}
   .command-title{font-size:24px}.resource-grid{grid-template-columns:1fr}.resource-card{min-height:156px}
+  .console-balance{padding:18px}.console-value{font-size:34px}.console-emblem{width:62px;height:62px}
+  .console-resources{padding:0 18px}.console-row{grid-template-columns:42px 92px 1fr 38px;gap:9px;padding:13px 0}
+  .console-row .resource-icon{width:38px;height:38px}.console-name{font-size:13px}.console-percent{font-size:12px}
+  .console-results{grid-template-columns:1fr}.console-result{padding:14px 18px}.console-result+ .console-result{border-left:0;border-top:1px solid #343b40}
+  .coverage-top{align-items:flex-start;flex-direction:column}.coverage-copy{text-align:left}
   .guided-menu{grid-template-columns:1fr}.guided-menu-btn{min-height:78px}
   .mission-row{grid-template-columns:26px 1fr}.mission-xp{grid-column:2}
   .topbar{padding:0 14px}.topbar-user{display:none}.topbar-biz{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -459,40 +492,47 @@ tr:hover td{background:rgba(255,255,255,0.015)}
               <strong id="command-status">Calculando...</strong>
             </div>
           </div>
-          <div class="resource-grid">
-            <button class="resource-card" onclick="goFinanceDetail('summary')">
-              <span class="resource-top"><span class="resource-icon">$</span><span class="resource-code">Caja · mes</span></span>
-              <span class="resource-question">¿Cómo está el dinero?</span><span class="resource-answer" id="home-cash-answer">Calculando...</span><span class="resource-number" id="home-cash-number">Ingresos y egresos del mes</span>
-              <span class="resource-meter" id="home-cash-meter"><span></span></span><span class="resource-link">Abrir Finanzas →</span>
-            </button>
-            <button class="resource-card" onclick="goFinanceDetail('summary')">
-              <span class="resource-top"><span class="resource-icon">↗</span><span class="resource-code">Rentabilidad</span></span>
-              <span class="resource-question">¿Las ventas dejan ganancia?</span><span class="resource-answer" id="home-sales-answer">Calculando...</span><span class="resource-number" id="home-sales-number">Ganancia de ventas</span>
-              <span class="resource-meter" id="home-sales-meter"><span></span></span><span class="resource-link">Ver resultado →</span>
-            </button>
-            <button class="resource-card" onclick="goPage('prod');showProductQuestion('inv','low')">
-              <span class="resource-top"><span class="resource-icon">!</span><span class="resource-code">Inventario</span></span>
-              <span class="resource-question">¿Qué necesita atención?</span><span class="resource-answer" id="home-alert-answer">Revisando el negocio...</span><span class="resource-number" id="home-alert-number">Alertas y stock</span>
-              <span class="resource-meter" id="home-stock-meter"><span></span></span><span class="resource-link">Revisar inventario →</span>
-            </button>
-            <button class="resource-card" onclick="openAIWithBusinessSummary()">
-              <span class="resource-top"><span class="resource-icon">✦</span><span class="resource-code">Asesor</span></span>
-              <span class="resource-question">¿Qué conviene hacer ahora?</span><span class="resource-answer" id="home-next-answer">Te voy a orientar con tus datos.</span><span class="resource-number">El Asesor usa tus datos y pide confirmación antes de actuar.</span>
-              <span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span><span class="resource-link">Abrir Asesor IA →</span>
-            </button>
+          <div class="business-console">
+            <div class="console-balance">
+              <div><div class="console-label">Resultado de caja del mes</div><div class="console-value" id="command-cash-value">$0</div><div class="console-trend" id="command-cash-trend">Ingresos menos egresos registrados</div></div>
+              <div class="console-emblem">$</div>
+            </div>
+            <div class="console-resources">
+              <button class="console-row" onclick="goFinanceDetail('summary')">
+                <span class="resource-icon">$</span><span class="console-name">Dinero<span class="console-state" id="cash-state">Calculando</span></span>
+                <span class="resource-meter" id="home-cash-meter"><span></span></span><span class="console-percent" id="cash-percent">0%</span>
+              </button>
+              <button class="console-row" onclick="goPage('prod');showProductQuestion('inv','low')">
+                <span class="resource-icon">□</span><span class="console-name">Stock<span class="console-state" id="stock-state">Calculando</span></span>
+                <span class="resource-meter" id="home-stock-meter"><span></span></span><span class="console-percent" id="stock-percent">0%</span>
+              </button>
+              <button class="console-row" onclick="goFinanceDetail('summary')">
+                <span class="resource-icon">↗</span><span class="console-name">Ventas<span class="console-state" id="sales-state">Calculando</span></span>
+                <span class="resource-meter" id="home-sales-meter"><span></span></span><span class="console-percent" id="sales-percent">0%</span>
+              </button>
+              <button class="console-row" onclick="openAIWithBusinessSummary()">
+                <span class="resource-icon">✦</span><span class="console-name">Próximo paso<span class="console-state good">Asesor disponible</span></span>
+                <span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span><span class="console-percent good">Listo</span>
+              </button>
+            </div>
+            <div class="console-results">
+              <div class="console-result"><span class="resource-icon">▥</span><span><small>Ganancia de ventas</small><strong id="console-sales-profit">$0</strong></span></div>
+              <div class="console-result"><span class="resource-icon">%</span><span><small>De cada $100 vendidos quedan</small><strong id="console-sales-margin">$0</strong></span></div>
+            </div>
+            <div style="display:none"><span id="home-cash-answer"></span><span id="home-cash-number"></span><span id="home-sales-answer"></span><span id="home-sales-number"></span><span id="home-alert-answer"></span><span id="home-alert-number"></span><span id="home-next-answer"></span></div>
           </div>
-          <div class="command-lower">
-            <div class="mission-panel">
+          <div class="attention-panel">
               <div class="panel-heading"><strong>Prioridades activas</strong><span id="mission-count">Preparando lista</span></div>
               <div class="mission-list" id="home-missions"><div class="mission-row"><span class="mission-mark">···</span><span><strong>Analizando tu negocio</strong><small>Un momento, estamos ordenando los próximos pasos.</small></span></div></div>
-            </div>
-            <div class="action-panel">
-              <div class="mode-label">Acción rápida</div>
-              <div class="dashboard-actions">
-                <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
-                <div class="dashboard-secondary"><button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button><button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button></div>
-              </div>
-            </div>
+          </div>
+          <div class="coverage-panel">
+            <div class="coverage-top"><div><div class="mode-label">Cobertura de gastos fijos</div><div class="coverage-percent" id="coverage-percent">0%</div></div><div class="coverage-copy" id="coverage-copy">Cargá gastos fijos para medir cuánto cubren los ingresos del mes.</div></div>
+            <div class="resource-meter good" id="coverage-meter"><span></span></div>
+          </div>
+          <div class="command-action-bar">
+            <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
+            <button class="btn command-secondary-btn" onclick="startDashboardAction('gasto')">Anotar gasto</button>
+            <button class="btn command-secondary-btn" onclick="startDashboardAction('producto')">Agregar producto</button>
           </div>
         </div>
         <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('home-advanced',this)">Ver información detallada</button>
@@ -2810,6 +2850,29 @@ async function renderDash() {
   setCommandMeter('home-cash-meter', cashHealth, gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
   setCommandMeter('home-sales-meter', salesHealth, !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
   setCommandMeter('home-stock-meter', stockHealth, redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
+  S('command-cash-value', money(gan))
+  const cashTrend = document.getElementById('command-cash-trend')
+  if (cashTrend) {
+    cashTrend.textContent = !ing && !egr ? 'Todavía no hay movimientos con monto válido' : `Entró ${money(ing)} · Salió ${money(egr)}`
+    cashTrend.className = `console-trend ${gan > 0 ? 'good' : gan < 0 ? 'bad' : ''}`.trim()
+  }
+  const setConsoleState = (prefix, percent, label, state) => {
+    S(`${prefix}-percent`, `${Math.round(Math.max(0, Math.min(100, percent)))}%`)
+    S(`${prefix}-state`, label)
+    const stateNode = document.getElementById(`${prefix}-state`)
+    const percentNode = document.getElementById(`${prefix}-percent`)
+    if (stateNode) stateNode.className = `console-state ${state}`
+    if (percentNode) percentNode.className = `console-percent ${state}`
+  }
+  setConsoleState('cash', cashHealth, !ing && !egr ? 'Sin datos' : gan < 0 ? 'Atención' : 'Sano', gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
+  setConsoleState('stock', stockHealth, !inventory.length ? 'Sin inventario' : redCount ? 'Atención' : incompleteProducts ? 'Revisar datos' : 'Sano', redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
+  setConsoleState('sales', salesHealth, !sales.count ? 'Sin ventas' : sales.margin < 0 ? 'Con pérdida' : sales.margin < 25 ? 'Margen bajo' : 'Bien', !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
+  S('console-sales-profit', money(sales.profit))
+  S('console-sales-margin', sales.count ? money(sales.margin) : '$0')
+  const coverage = breakEven > 0 ? Math.min(100, ing / breakEven * 100) : 0
+  S('coverage-percent', `${Math.round(coverage)}%`)
+  S('coverage-copy', breakEven > 0 ? `${money(Math.min(ing, breakEven))} de ${money(breakEven)} cubiertos con ingresos del mes` : 'Cargá gastos fijos para medir cuánto cubren los ingresos del mes.')
+  setCommandMeter('coverage-meter', coverage, breakEven <= 0 ? 'warn' : coverage >= 100 ? 'good' : coverage >= 60 ? 'warn' : 'bad')
   const stateEl = document.getElementById('command-state')
   const critical = gan < 0 || redCount > 0 || lossProducts > 0
   const attention = !critical && (incompleteProducts > 0 || !sales.count || (breakEven > 0 && ing < breakEven))
