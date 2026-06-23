@@ -1339,6 +1339,7 @@ function go(page, el) {
   if (!target) return
   target.classList.add('on')
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
+  if (page === 'leads') document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
   if (page === 'dash') switchDashboardTab('summary')
   if (page === 'fin') switchFinanceTab('summary')
   if (page === 'prod') switchProductTab('inv')
@@ -3158,7 +3159,7 @@ function renderAIRecentActions() {
   if (!el) return
   const rows = (importedData.botActions || []).filter(a => a.status !== 'preview').slice(0, 4)
   if (!rows.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">Todavia no hay acciones confirmadas.</div>'
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">Todavía no hay acciones confirmadas.</div>'
     return
   }
   const badge = { confirmed: 'bg', failed: 'br', cancelled: 'bb' }
@@ -3185,7 +3186,8 @@ function renderSystemState() {
   if (!el) return
   const actions = importedData.botActions || []
   const last = actions[0]
-  const recentErrors = actions.filter(a => a.status === 'failed').length
+  const recentLimit = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  const recentErrors = actions.filter(a => a.status === 'failed' && new Date(a.created_at || 0).getTime() >= recentLimit).length
   const advisorBlocked = !!last && last.status === 'failed' && /todavia no ejecuta|could not find the function public\.confirm_bot_action/i.test(String(last.error || ''))
   const items = [
     { ok: !importedData.error, label: 'Supabase conectado', value: importedData.error ? 'Error al cargar datos' : 'OK' },
@@ -3546,7 +3548,7 @@ function botActionPage(actionType) {
 
 function botActionTitle(actionType) {
   const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
-  return map[actionType] || 'Accion operativa'
+  return map[actionType] || 'Acción operativa'
 }
 
 function botActionNotes(preview) {
@@ -3905,7 +3907,7 @@ function cancelAIBotAction() {
   if (box) {
     const div = document.createElement('div')
     div.className = 'ai-msg ai-thnk'
-    div.textContent = 'Accion cancelada. No se guardo nada.'
+    div.textContent = 'Acción cancelada. No se guardó nada.'
     box.appendChild(div)
     box.scrollTop = box.scrollHeight
   }
@@ -3936,20 +3938,20 @@ async function confirmBotAction(surface = botActionSurface) {
     }
     botActionPreview = null
     botActionSurface = 'import'
-    btn.disabled = true; btn.textContent = 'Accion confirmada'
+    btn.disabled = true; btn.textContent = 'Acción confirmada'
     invalidateUnifiedFinances()
     invalidateSalesSummary()
     await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
-      appendAIMessage('Accion confirmada. Actualice los datos y te llevo a la seccion correspondiente.', 'bot')
+      appendAIMessage('Acción confirmada. Actualicé los datos y te llevo a la sección correspondiente.', 'bot')
       goPage(botActionPage(actionType))
       closeAI()
     } else {
       document.getElementById('im-bot-preview-card').style.display = 'none'
     }
-    toast('Accion confirmada')
+    toast('Acción confirmada')
   } catch (e) {
     const friendly = friendlyBotError(e)
     await sb.from('bot_actions').update({ status: 'failed', error: friendly }).eq('id', action.id).eq('user_id', CU.id)
@@ -4018,6 +4020,30 @@ function appendAIMessage(text, type = 'bot') {
   return div
 }
 
+function advisorFallbackReply(message) {
+  const text = normalizeText(message)
+  const finance = unifiedFinanceCache?.totals || { ingresos: 0, egresos: 0, balance: 0 }
+  const stock = stockTotals(importedData.inventory || [])
+  if (/\bmargen\b/.test(text)) {
+    return '**Margen de venta** es el porcentaje del precio que queda después de descontar el costo del producto. Fórmula: `(precio - costo) / precio × 100`. No es lo mismo que caja ni contempla automáticamente todos los gastos fijos.'
+  }
+  if (/ganancia|rentabilidad/.test(text)) {
+    return '**Ganancia de ventas** es lo vendido menos el costo de los productos vendidos. Para saber si el negocio completo es rentable también hay que considerar personal, alquiler, impuestos y otros gastos.'
+  }
+  if (/punto de equilibrio|gastos fijos/.test(text)) {
+    return 'Kairós usa los gastos fijos cargados como referencia mensual de cobertura. Cuando los ingresos superan esa referencia, los gastos fijos están cubiertos; todavía hay que revisar costos variables y costo del equipo.'
+  }
+  if (/stock|inventario|reponer/.test(text)) {
+    return stock.count
+      ? `Tenés **${stock.count} productos** en el inventario: ${stock.rojo} en rojo, ${stock.amarillo} en amarillo y ${stock.verde} en verde. Abrí Productos → “¿Qué se está terminando?” para revisar los que requieren reposición.`
+      : 'Todavía no hay productos en el inventario nuevo. Podés crear uno desde Productos o escribir: “agregá producto toalla azul stock 10 costo 5000 precio 10000”.'
+  }
+  if (/como esta|como va|resumen|estado del negocio/.test(text)) {
+    return `Este mes entraron **${money(finance.ingresos)}**, salieron **${money(finance.egresos)}** y el resultado de caja es **${money(finance.balance)}**. El inventario tiene ${stock.count} productos y ${stock.rojo + stock.amarillo} requieren atención de stock.`
+  }
+  return 'El asesor online no respondió, así que activé el modo de respaldo. Puedo explicarte margen, ganancia, gastos fijos, stock o darte un resumen del negocio. Las acciones operativas como ventas, gastos y reposiciones siguen funcionando con preview y confirmación.'
+}
+
 async function sendAI() {
   const inp = document.getElementById('ai-inp')
   const msg = inp.value.trim(); if (!msg) return
@@ -4055,8 +4081,11 @@ async function sendAI() {
     loadDiv.remove()
 
     if (error) {
-      appendAIMessage('Error al conectar con el asesor. Intentá de nuevo.', 'think')
-      console.error('[Kairós] AI error:', error)
+      const fallback = advisorFallbackReply(msg)
+      aiH.push({ role: 'assistant', content: fallback })
+      if (aiH.length > 20) aiH = aiH.slice(-20)
+      appendAIMessage(fallback, 'bot')
+      console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', error)
       return
     }
 
@@ -4068,8 +4097,8 @@ async function sendAI() {
 
   } catch (e) {
     loadDiv.remove()
-    appendAIMessage('Error de conexión. Intentá de nuevo.', 'think')
-    console.error('[Kairós] AI catch:', e)
+    appendAIMessage(advisorFallbackReply(msg), 'bot')
+    console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', e)
   }
 }
 
