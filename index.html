@@ -78,6 +78,23 @@ select option{background:var(--sur2)}
 .dashboard-secondary{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
 .dashboard-link{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;padding:5px;text-decoration:underline;text-underline-offset:4px}
 .dashboard-link:hover{color:var(--gold2)}
+.guided-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.guided-card{background:var(--sur);border:1px solid var(--bor);border-radius:9px;padding:18px;text-align:left;color:var(--txt);font-family:'Outfit',sans-serif;min-height:150px;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;transition:border-color .2s,background .2s}
+.guided-card:hover,.guided-card:focus-visible{border-color:rgba(201,168,76,.55);background:#1b1b21;outline:none}
+.guided-question{font-size:13px;color:var(--txt2);margin-bottom:10px}
+.guided-answer{font-size:18px;font-weight:600;line-height:1.35;margin-bottom:7px}
+.guided-number{font-size:13px;color:var(--txt2);line-height:1.5}
+.guided-link{margin-top:auto;padding-top:14px;color:var(--gold);font-size:13px;font-weight:600}
+.guided-menu{display:grid;gap:10px;margin-bottom:20px}
+.guided-menu-btn{width:100%;min-height:72px;background:var(--sur);border:1px solid var(--bor);border-radius:9px;padding:14px 16px;color:var(--txt);font-family:'Outfit',sans-serif;text-align:left;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:13px;cursor:pointer}
+.guided-menu-btn:hover,.guided-menu-btn:focus-visible{border-color:rgba(201,168,76,.5);outline:none}
+.guided-menu-icon{width:42px;height:42px;border-radius:8px;background:var(--sur2);display:grid;place-items:center;color:var(--gold);font-size:18px}
+.guided-menu-copy strong{display:block;font-size:15px;margin-bottom:3px}.guided-menu-copy span{display:block;color:var(--txt2);font-size:13px;line-height:1.4}
+.guided-chevron{color:var(--gold);font-size:18px}
+.advanced-wrap{display:none}.advanced-wrap.on{display:block}
+.advanced-toggle{margin-bottom:20px}
+.coming-list{display:grid;gap:10px}.coming-row{display:flex;gap:14px;align-items:center;padding:15px 0;border-bottom:1px solid var(--bor)}
+.coming-row:last-child{border-bottom:0}.coming-row strong{display:block;font-size:15px}.coming-row span{font-size:13px;color:var(--txt2)}
 .section-tabs{display:flex;gap:6px;overflow-x:auto;margin:-8px 0 20px;padding:4px;background:var(--bg2);border:1px solid var(--bor);border-radius:10px;width:max-content;max-width:100%}
 .section-tab{border:0;background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;padding:8px 13px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .section-tab.on{background:var(--sur2);color:var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.25)}
@@ -96,6 +113,23 @@ select option{background:var(--sur2)}
 .profile-stat span{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px}
 .ai-entry-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:14px 16px}
 .ai-entry-card p{font-size:12px;color:var(--txt2);line-height:1.5}
+.attention-note{display:none;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:11px 13px;border:1px solid rgba(240,173,78,.45);background:rgba(240,173,78,.08);border-radius:8px;color:var(--yel);font-size:12px}
+.attention-note.on{display:flex}
+.attention-row td{background:rgba(240,173,78,.08);border-top-color:rgba(240,173,78,.28);border-bottom-color:rgba(240,173,78,.28)}
+.attention-row td:first-child{box-shadow:inset 3px 0 0 var(--yel)}
+.annual-grid{display:grid;grid-template-columns:repeat(12,minmax(48px,1fr));gap:7px;align-items:end;min-height:190px;margin-top:14px}
+.annual-month{display:flex;flex-direction:column;justify-content:flex-end;gap:5px;min-width:0}
+.annual-bars{height:125px;display:flex;align-items:flex-end;justify-content:center;gap:3px;border-bottom:1px solid var(--bor)}
+.annual-bar{width:10px;min-height:2px;border-radius:3px 3px 0 0}
+.annual-label{text-align:center;font-size:10px;color:var(--txt3)}
+.org-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.org-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--bor)}
+.org-item:last-child{border-bottom:0}
+.org-date{width:54px;text-align:center;padding:7px 4px;border:1px solid var(--bor);border-radius:7px;background:var(--bg2)}
+.org-date strong{display:block;font-size:17px;color:var(--gold)}.org-date span{font-size:9px;color:var(--txt3);text-transform:uppercase}
+.org-item.done{opacity:.58}.org-item.done .org-copy strong{text-decoration:line-through}
+.org-copy strong{display:block;font-size:13px}.org-copy span{display:block;font-size:11px;color:var(--txt3);margin-top:3px}
+@media(max-width:760px){.annual-grid{grid-template-columns:repeat(6,1fr);row-gap:14px}.annual-bars{height:92px}.org-item{grid-template-columns:auto minmax(0,1fr)}.org-item-actions{grid-column:2}}
 .mobile-nav{display:none}
 .chat-fab{position:fixed;right:24px;bottom:24px;width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,76,.45);background:linear-gradient(135deg,#c9a84c,#e8c87a);color:#0c0c0e;font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700;cursor:pointer;z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.45),0 4px 18px rgba(201,168,76,.28);transition:transform .2s,box-shadow .2s}
 .chat-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 6px 22px rgba(201,168,76,.38)}
@@ -232,7 +266,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 }
 @media(max-width:600px){
   .g2,.g3,.g4{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}.ai-panel{width:100%}.auth-card{padding:32px 24px}
+  .guided-grid{grid-template-columns:1fr}.guided-card{min-height:138px}.guided-answer{font-size:17px}
   .topbar{padding:0 14px}.topbar-user{display:none}.topbar-biz{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .section-tabs{width:100%;max-width:none;flex-wrap:wrap;overflow:visible}
+  .section-tab{flex:1 1 calc(33.333% - 6px);padding:8px 9px}
   .ai-history{max-height:150px}
   .profile-summary{grid-template-columns:1fr}
   .ai-entry-card{align-items:flex-start;flex-direction:column}
@@ -336,15 +373,15 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   </div>
   <div class="app-body">
     <nav class="sidebar">
-      <div class="ns-title">General</div>
-      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">⊞</span><span>Dashboard</span></div>
-      <div class="ns-title">Operaciones</div>
+      <div class="ns-title">Principal</div>
+      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">⌂</span><span>Inicio</span></div>
       <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico">💰</span><span>Finanzas</span></div>
       <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico">📦</span><span>Productos</span></div>
-      <div class="ni" data-p="leads" onclick="go('leads',this)"><span class="ni-ico">👥</span><span>Clientes & Leads</span></div>
-      <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">📥</span><span>Carga inteligente</span></div>
+      <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico">◎</span><span>Personas</span></div>
+      <div class="ni" data-p="org" onclick="go('org',this)"><span class="ni-ico">✓</span><span>Organización</span></div>
       <details class="sidebar-more">
         <summary>Más herramientas</summary>
+        <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">⇧</span><span>Importaciones</span></div>
         <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico">🏗</span><span>Mi Negocio</span></div>
         <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">📣</span><span>Publicidad</span></div>
         <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">📅</span><span>Contenido</span></div>
@@ -358,6 +395,18 @@ tr:hover td{background:rgba(255,255,255,0.015)}
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="ph"><div class="pt" id="dash-title">Kairós</div><div class="ps">Resumen de tu negocio</div></div>
+        <div class="guided-grid" aria-label="Respuestas principales del negocio">
+          <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Cómo está el dinero?</span><span class="guided-answer" id="home-cash-answer">Calculando...</span><span class="guided-number" id="home-cash-number">Ingresos y egresos del mes</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="goFinanceDetail('summary')"><span class="guided-question">¿Las ventas dejan ganancia?</span><span class="guided-answer" id="home-sales-answer">Calculando...</span><span class="guided-number" id="home-sales-number">Ganancia de ventas</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="goPage('prod');showProductQuestion('inv','low')"><span class="guided-question">¿Qué necesita atención?</span><span class="guided-answer" id="home-alert-answer">Revisando el negocio...</span><span class="guided-number" id="home-alert-number">Alertas y stock</span><span class="guided-link">Ver detalles →</span></button>
+          <button class="guided-card" onclick="openAIWithBusinessSummary()"><span class="guided-question">¿Qué conviene hacer ahora?</span><span class="guided-answer" id="home-next-answer">Te voy a orientar con tus datos.</span><span class="guided-number">El Asesor prepara la próxima acción y pide confirmación.</span><span class="guided-link">Preguntarle al Asesor →</span></button>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
+          <div class="dashboard-secondary"><button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button><button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button></div>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('home-advanced',this)">Ver información detallada</button>
+        <div class="advanced-wrap" id="home-advanced">
         <div class="section-tabs" role="tablist" aria-label="Vistas del inicio">
           <button class="section-tab on" id="dash-tab-summary-btn" onclick="switchDashboardTab('summary')">Resumen principal</button>
           <button class="section-tab" id="dash-tab-imported-btn" onclick="switchDashboardTab('imported')">Carga inteligente</button>
@@ -366,23 +415,31 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="g4" style="margin-bottom:20px">
           <div class="stat"><div class="sl">Ingresos del mes <button class="info-dot" data-info="Suma automática de ingresos históricos, manuales, importados y creados por el Asesor IA durante el mes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-ing" style="color:var(--green)">$0</div><div class="sn" id="d-ing-n">—</div></div>
           <div class="stat"><div class="sl">Egresos del mes <button class="info-dot" data-info="Suma automática de todos los egresos registrados durante el mes, sin sumar gastos fijos por segunda vez." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-egr" style="color:var(--red)">$0</div><div class="sn" id="d-egr-n">—</div></div>
-          <div class="stat"><div class="sl">Ganancia neta <button class="info-dot" data-info="Ingresos menos egresos del mes. Si es negativa, salió más dinero del que entró." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-gan" style="color:var(--gold)">$0</div><div class="sn" id="d-mar">Margen: —</div></div>
+          <div class="stat"><div class="sl">Resultado de caja <button class="info-dot" data-info="Ingresos menos egresos efectivamente registrados durante el mes. No equivale a ganancia contable." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-gan" style="color:var(--gold)">$0</div><div class="sn" id="d-mar">Sobre ingresos: —</div></div>
+          <div class="stat"><div class="sl">Ganancia de ventas <button class="info-dot" data-info="Total vendido menos el costo de los productos vendidos en ventas confirmadas." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-sales-profit" style="color:var(--gold)">$0</div><div class="sn" id="d-sales-count">0 ventas</div></div>
+        </div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Margen de ventas <button class="info-dot" data-info="Ganancia de ventas dividida por el total vendido. Mide rentabilidad de producto, no caja." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-sales-margin" style="color:var(--green)">0%</div><div class="sn">Sobre ventas confirmadas</div></div>
+          <div class="stat"><div class="sl">Gastos fijos a cubrir <button class="info-dot" data-info="Suma de gastos fijos mensuales. Es una referencia de cobertura, no el punto de equilibrio contable completo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
           <div class="stat"><div class="sl">Leads activos <button class="info-dot" data-info="Contactos comerciales que todavía no llegaron al estado Cliente." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-leads" style="color:var(--blue)">0</div><div class="sn" id="d-cli">—</div></div>
-        </div>
-        <div class="g2" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Punto de equilibrio <button class="info-dot" data-info="Total de gastos fijos mensuales. Se compara con los ingresos para mostrar cuánto falta o cuánto se superó." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-eq" style="color:var(--blue)">$0</div><div class="sn" id="d-eq-note">Sin gastos fijos cargados</div></div>
-          <div class="stat"><div class="sl">Alertas <button class="info-dot" data-info="Suma de leads pendientes y productos importados con stock en rojo que requieren atención." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
-        </div>
-        <div class="dashboard-actions">
-          <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
-          <div class="dashboard-secondary">
-            <button class="dashboard-link" onclick="startDashboardAction('gasto')">Anotar gasto</button>
-            <button class="dashboard-link" onclick="startDashboardAction('producto')">Agregar producto</button>
-          </div>
+          <div class="stat"><div class="sl">Alertas <button class="info-dot" data-info="Cuenta caja negativa, gastos fijos sin cubrir, productos con stock crítico, pérdida o datos incompletos y movimientos sin monto." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="d-alerts" style="color:var(--yel)">0</div><div class="sn" id="d-alerts-note">Sin alertas críticas</div></div>
         </div>
         <div class="g2">
           <div class="card"><div class="card-t">💬 Últimos movimientos</div><div id="d-tx"><div class="empty"><div class="empty-i">💸</div>Sin movimientos aún</div></div></div>
           <div class="card"><div class="card-t">🎯 Estado del negocio</div><div id="d-est"></div></div>
+        </div>
+        <div class="card" style="margin-top:20px">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><div class="card-t" style="margin-bottom:4px">Cómo fue el año</div><div style="font-size:12px;color:var(--txt3)">Ingresos y egresos registrados mes por mes. No mezcla años ni inventa meses sin datos.</div></div>
+            <div class="field" style="margin:0;min-width:110px"><label>Año</label><select id="annual-year" onchange="renderAnnualSummary()"></select></div>
+          </div>
+          <div class="g4" style="margin:16px 0">
+            <div class="stat"><div class="sl">Ingresos anuales <button class="info-dot" data-info="Suma de todos los ingresos registrados durante el año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-income" style="color:var(--green)">$0</div></div>
+            <div class="stat"><div class="sl">Egresos anuales <button class="info-dot" data-info="Suma de todos los egresos registrados durante el año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-expense" style="color:var(--red)">$0</div></div>
+            <div class="stat"><div class="sl">Resultado anual <button class="info-dot" data-info="Ingresos anuales menos egresos anuales. Es resultado de caja, no ganancia contable completa." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-balance">$0</div></div>
+            <div class="stat"><div class="sl">Mejor mes <button class="info-dot" data-info="Mes con el resultado de caja más alto dentro del año seleccionado." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="annual-best" style="color:var(--gold)">—</div></div>
+          </div>
+          <div class="annual-grid" id="annual-grid"></div>
         </div>
         </div>
         <div class="tab-pane" id="dash-tab-imported">
@@ -398,6 +455,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         <div class="g2">
           <div class="card"><div class="card-t">Stock importado</div><div class="g2"><div class="mrow"><div class="mlbl">Valor a costo <button class="info-dot" data-info="Stock actual multiplicado por el costo total de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-costo">$0</div></div><div class="mrow"><div class="mlbl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="mval" id="id-stock-venta">$0</div></div></div></div>
           <div class="card"><div class="card-t">Estado de stock importado</div><div id="id-stock-breakdown"></div></div>
+        </div>
         </div>
         </div>
       </div>
@@ -438,20 +496,34 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 
       <!-- FINANZAS -->
       <div class="page" id="page-fin">
-        <div class="ph"><div class="pt">Plata</div><div class="ps">Entendé qué entra, qué sale y dónde se registra cada dato.</div></div>
-        <div class="section-tabs" role="tablist" aria-label="Secciones de Plata">
+        <div class="ph"><div class="pt">Finanzas</div><div class="ps">Entendé qué entra, qué sale y dónde se registra cada dato.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto entró y salió?</strong><span>Ingresos, egresos y resultado de caja.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">↗</span><span class="guided-menu-copy"><strong>¿Mis ventas dejan ganancia?</strong><span>Lo vendido menos el costo de los productos.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('movements')"><span class="guided-menu-icon">○</span><span class="guided-menu-copy"><strong>¿Qué tengo que cobrar o pagar?</strong><span>Revisá y registrá movimientos pendientes.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('fixed')"><span class="guided-menu-icon">≡</span><span class="guided-menu-copy"><strong>¿Cuáles son mis gastos?</strong><span>Gastos fijos y movimientos operativos.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showFinanceQuestion('team')"><span class="guided-menu-icon">◎</span><span class="guided-menu-copy"><strong>¿Cuánto cuesta el equipo?</strong><span>Pago por trabajar, sueldos y retiros separados.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('fin-advanced',this)">Abrir vista avanzada</button>
+        <div class="advanced-wrap" id="fin-advanced">
+        <div class="section-tabs" role="tablist" aria-label="Secciones de Finanzas">
           <button class="section-tab on" id="fin-tab-summary-btn" onclick="switchFinanceTab('summary')">Resumen</button>
           <button class="section-tab" id="fin-tab-movements-btn" onclick="switchFinanceTab('movements')">Movimientos</button>
           <button class="section-tab" id="fin-tab-imported-btn" onclick="switchFinanceTab('imported')">Operativos</button>
           <button class="section-tab" id="fin-tab-fixed-btn" onclick="switchFinanceTab('fixed')">Gastos fijos</button>
+          <button class="section-tab" id="fin-tab-team-btn" onclick="switchFinanceTab('team')">Equipo</button>
         </div>
         <div class="tab-pane on" id="fin-tab-summary">
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Los 3 números clave</div><div class="ctxt"><strong>Ingresos</strong> = todo lo que entra. <strong>Egresos</strong> = todo lo que sale. <strong>Ganancia neta</strong> = lo que realmente te queda.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Caja y rentabilidad</div><div class="ctxt"><strong>Resultado de caja</strong> = ingresos cobrados menos egresos pagados. <strong>Ganancia de ventas</strong> = ventas menos costo vendido. Son dos preguntas distintas y Kairós las muestra por separado.</div></div></div>
         <div class="g4" style="margin-bottom:20px">
           <div class="stat"><div class="sl">Ingresos del mes <button class="info-dot" data-info="Suma unificada de ingresos históricos, manuales, importados y del Asesor IA." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-ing" style="color:var(--green)">$0</div><div class="sn" id="f-ing-n">0 registros</div></div>
           <div class="stat"><div class="sl">Egresos del mes <button class="info-dot" data-info="Suma unificada de todos los egresos efectivamente registrados en el mes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-egr" style="color:var(--red)">$0</div><div class="sn" id="f-egr-n">0 registros</div></div>
-          <div class="stat"><div class="sl">Ganancia neta <button class="info-dot" data-info="Ingresos del mes menos egresos del mes. El margen muestra qué porcentaje de los ingresos queda como ganancia." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-gan" style="color:var(--gold)">$0</div><div class="sn" id="f-mar">Margen: 0%</div></div>
-          <div class="stat"><div class="sl">Punto de equilibrio <button class="info-dot" data-info="Suma de tus gastos fijos mensuales. La barra compara los ingresos del mes contra ese total." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-eq" style="color:var(--blue)">$0</div><div class="sn">Total gastos fijos</div><div class="pbar"><div class="pbar-f" id="f-eq-b" style="width:0%"></div></div></div>
+          <div class="stat"><div class="sl">Resultado de caja <button class="info-dot" data-info="Ingresos cobrados menos egresos pagados durante el mes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-gan" style="color:var(--gold)">$0</div><div class="sn" id="f-mar">Sobre ingresos: 0%</div></div>
+          <div class="stat"><div class="sl">Gastos fijos a cubrir <button class="info-dot" data-info="Suma de gastos fijos mensuales. La barra muestra cuánto cubren los ingresos actuales." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-eq" style="color:var(--blue)">$0</div><div class="sn">Referencia mensual</div><div class="pbar"><div class="pbar-f" id="f-eq-b" style="width:0%"></div></div></div>
+        </div>
+        <div class="g2" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Ganancia de ventas <button class="info-dot" data-info="Total de ventas confirmadas menos costo de los productos vendidos." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-sales-profit" style="color:var(--gold)">$0</div><div class="sn" id="f-sales-count">0 ventas</div></div>
+          <div class="stat"><div class="sl">Margen de ventas <button class="info-dot" data-info="Ganancia de ventas dividida por el total vendido." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="f-sales-margin" style="color:var(--green)">0%</div><div class="sn">Rentabilidad de producto</div></div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-gold" onclick="switchFinanceTab('movements');document.getElementById('tx-d').focus()">Registrar movimiento</button>
@@ -497,7 +569,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
         </div>
         </div>
         <div class="tab-pane" id="fin-tab-fixed">
-        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Gastos fijos mensuales</div><div class="ctxt">Cargá únicamente gastos que se repiten todos los meses. Se usan para calcular tu punto de equilibrio, pero no se descuentan como egreso hasta que registres el pago. Así no se cuentan dos veces.</div></div></div>
+        <div class="concept"><div class="ci">✦</div><div><div class="clbl">Gastos fijos mensuales</div><div class="ctxt">Cargá únicamente gastos que se repiten todos los meses. Se usan como referencia de cobertura mensual, pero no se descuentan como egreso hasta que registres el pago. Así no se cuentan dos veces.</div></div></div>
         <div class="g2">
           <div class="card">
             <div class="card-t">🔒 Agregar gasto fijo</div>
@@ -512,11 +584,82 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           </div>
         </div>
         </div>
+        <div class="tab-pane" id="fin-tab-team">
+          <div class="concept"><div class="ci">✦</div><div><div class="clbl">Equipo y remuneraciones</div><div class="ctxt">El trabajo del dueño también tiene valor. Separá <strong>pago por trabajar</strong>, <strong>costo de empleados</strong> y <strong>retiros por ser propietario</strong>. Las recomendaciones son orientativas y no reemplazan liquidación laboral o contable.</div></div></div>
+          <div id="team-state"></div>
+          <div class="g4" style="margin-bottom:20px">
+            <div class="stat"><div class="sl">Personas activas <button class="info-dot" data-info="Dueños, socios, empleados y colaboradores marcados como activos." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="team-count" style="color:var(--blue)">0</div></div>
+            <div class="stat"><div class="sl">Costo objetivo mensual <button class="info-dot" data-info="Remuneración base, comisión estimada sobre ventas y cargas de todas las personas activas." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="team-target">$0</div></div>
+            <div class="stat"><div class="sl">Trabajo pagado este mes <button class="info-dot" data-info="Sueldos, honorarios, bonos y comisiones registrados durante el mes. No incluye retiros por propiedad." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="team-paid" style="color:var(--red)">$0</div></div>
+            <div class="stat"><div class="sl">Trabajo del dueño pendiente <button class="info-dot" data-info="Remuneración objetivo del dueño menos los pagos por su trabajo registrados este mes. Los retiros por propiedad se muestran aparte." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="team-owner-gap" style="color:var(--yel)">$0</div></div>
+          </div>
+          <div class="g2" style="margin-bottom:20px">
+            <div class="card">
+              <div class="card-t">Capacidad orientativa</div>
+              <div class="mrow"><div class="mlbl">Resultado de caja actual</div><div class="mval" id="team-cash-result">$0</div></div>
+              <div class="mrow"><div class="mlbl">Reserva mínima deseada</div><div class="mval" id="team-reserve-view">$0</div></div>
+              <div class="mrow"><div class="mlbl">Pago adicional sugerido al dueño</div><div class="mval" id="team-owner-suggested" style="color:var(--gold)">$0</div></div>
+              <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-top:10px">Solo se sugiere un pago si queda caja positiva después de la reserva. Empleados y obligaciones laborales no deben depender de esta sugerencia.</div>
+            </div>
+            <div class="card">
+              <div class="card-t">Configuración prudente</div>
+              <div class="field"><label>Reserva mínima de caja ($)</label><input type="number" id="team-reserve" min="0" placeholder="0"></div>
+              <div class="field"><label>Máximo de caja disponible para pago del dueño (%)</label><input type="number" id="team-owner-cap" min="0" max="100" placeholder="50"></div>
+              <button class="btn btn-gold btn-full" onclick="saveTeamSettings()">Guardar configuración</button>
+            </div>
+          </div>
+          <div class="g2" style="margin-bottom:20px">
+            <div class="card">
+              <div class="card-t">Agregar integrante</div>
+              <div class="field"><label>Nombre *</label><input type="text" id="team-name" placeholder="Nombre y apellido"></div>
+              <div class="g2">
+                <div class="field"><label>Tipo</label><select id="team-type"><option value="duenio">Dueño/a</option><option value="socio">Socio/a</option><option value="empleado">Empleado/a</option><option value="colaborador">Colaborador/a</option></select></div>
+                <div class="field"><label>Rol</label><input type="text" id="team-role" placeholder="Ventas, administración..."></div>
+                <div class="field"><label>Horas semanales</label><input type="number" id="team-hours" min="0" step="0.5" placeholder="0"></div>
+                <div class="field"><label>Remuneración objetivo mensual ($)</label><input type="number" id="team-target-input" min="0" placeholder="0"></div>
+                <div class="field"><label>Cargas/costos adicionales estimados (%)</label><input type="number" id="team-loads" min="0" max="200" placeholder="0"></div>
+                <div class="field"><label>Comisión (%)</label><input type="number" id="team-commission" min="0" max="100" placeholder="0"></div>
+                <div class="field"><label>Participación societaria (%)</label><input type="number" id="team-ownership" min="0" max="100" placeholder="0"></div>
+              </div>
+              <button class="btn btn-gold btn-full" onclick="addTeamMember()">Agregar al equipo</button>
+            </div>
+            <div class="card">
+              <div class="card-t">Registrar pago</div>
+              <div class="field"><label>Integrante</label><select id="team-payment-member" onchange="syncTeamPaymentTypes()"><option value="">Seleccioná...</option></select></div>
+              <div class="g2">
+                <div class="field"><label>Tipo de pago</label><select id="team-payment-type"><option value="sueldo">Sueldo</option><option value="honorario">Honorario</option><option value="bono">Bono</option><option value="comision">Comisión</option><option value="retiro_duenio">Retiro del dueño</option><option value="distribucion_utilidad">Distribución de utilidad</option><option value="otro">Otro</option></select></div>
+                <div class="field"><label>Monto ($)</label><input type="number" id="team-payment-amount" min="0" placeholder="0"></div>
+                <div class="field"><label>Fecha</label><input type="date" id="team-payment-date"></div>
+                <div class="field"><label>Medio de pago</label><input type="text" id="team-payment-method" placeholder="transferencia, efectivo..."></div>
+              </div>
+              <div class="field"><label>Nota</label><input type="text" id="team-payment-notes" placeholder="Período o detalle"></div>
+              <button class="btn btn-gold btn-full" onclick="recordTeamPayment()">Registrar pago y egreso</button>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-t">Integrantes</div>
+            <div class="tw"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Rol</th><th>Horas</th><th>Comisión</th><th>Participación</th><th>Objetivo trabajo</th><th>Costo estimado</th><th>Pagado mes</th><th>Pendiente</th><th></th></tr></thead><tbody id="team-members-tb"><tr><td colspan="11"><div class="empty"><div class="empty-i">👥</div>Sin integrantes</div></td></tr></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-t">Pagos recientes</div>
+            <div class="tw"><table><thead><tr><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Monto</th><th>Medio</th><th>Nota</th></tr></thead><tbody id="team-payments-tb"><tr><td colspan="6"><div class="empty"><div class="empty-i">💸</div>Sin pagos registrados</div></td></tr></tbody></table></div>
+          </div>
+        </div>
+        </div>
       </div>
 
       <!-- PRODUCTOS -->
       <div class="page" id="page-prod">
-        <div class="ph"><div class="pt">Productos & Servicios</div><div class="ps">Tu catálogo con motor de costos y precios.</div></div>
+        <div class="ph"><div class="pt">Productos</div><div class="ps">Stock, costos y precios explicados con claridad.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','all')"><span class="guided-menu-icon">□</span><span class="guided-menu-copy"><strong>¿Qué productos tengo?</strong><span>Inventario, variantes, colores y medidas.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','pricing')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto cuestan y a cuánto los vendo?</strong><span>Costo total, precio y ganancia por unidad.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('inv','low')"><span class="guided-menu-icon">!</span><span class="guided-menu-copy"><strong>¿Qué se está terminando?</strong><span>Productos agotados o cerca del stock mínimo.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="openProductAIHelp()"><span class="guided-menu-icon">+</span><span class="guided-menu-copy"><strong>¿Qué necesito comprar?</strong><span>Pedile al Asesor que prepare una reposición.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="showProductQuestion('carga')"><span class="guided-menu-icon">↥</span><span class="guided-menu-copy"><strong>Agregar o actualizar productos</strong><span>Carga manual o asistida por IA.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('prod-advanced',this)">Abrir inventario y motor de costos</button>
+        <div class="advanced-wrap" id="prod-advanced">
         <div class="concept"><div class="ci">✦</div><div><div class="clbl">Motor de costos</div><div class="ctxt">Ingresá el costo y Kairós calcula automáticamente el <strong>precio mínimo rentable</strong>, el <strong>precio sugerido</strong> y el <strong>margen real</strong>. Todos los porcentajes son configurables.</div></div></div>
 
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
@@ -599,6 +742,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
           <div class="stat"><div class="sl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta local o web." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-venta">$0</div></div>
           <div class="stat"><div class="sl">Estado del stock <button class="info-dot" data-info="Cantidad de productos en rojo, amarillo y verde según stock actual y stock mínimo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
         </div>
+        <div class="stat" style="margin-bottom:14px"><div class="sl">Costo estimado de reposición <button class="info-dot" data-info="Unidades faltantes para volver al stock mínimo, multiplicadas por el costo total unitario. Solo suma productos con datos suficientes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-reorder-cost" style="color:var(--yel)">$0</div><div class="sn" id="ip-reorder-note">Sin faltantes calculables</div></div>
+        <div class="attention-note" id="inventory-filter-note"><span id="inventory-filter-text"></span><button class="btn btn-ghost btn-sm" onclick="clearInventoryFilter()">Ver todo</button></div>
         <div class="card">
           <div class="card-t">Inventario importado</div>
           <div class="tw" style="max-height:420px;overflow-y:auto">
@@ -606,6 +751,54 @@ tr:hover td{background:rgba(255,255,255,0.015)}
             <tbody id="imp-inv-tb"><tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr></tbody></table>
           </div>
         </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- PERSONAS -->
+      <div class="page" id="page-people">
+        <div class="ph"><div class="pt">Personas</div><div class="ps">Clientes, personas interesadas y quienes trabajan en el negocio.</div></div>
+        <div class="guided-menu">
+          <button class="guided-menu-btn" onclick="goPage('leads')"><span class="guided-menu-icon">◎</span><span class="guided-menu-copy"><strong>¿Quiénes son mis clientes?</strong><span>Clientes confirmados y su recorrido comercial.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goPage('leads')"><span class="guided-menu-icon">☆</span><span class="guided-menu-copy"><strong>¿Quién está interesado?</strong><span>Leads, consultas y seguimientos pendientes.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goFinanceDetail('team')"><span class="guided-menu-icon">♙</span><span class="guided-menu-copy"><strong>¿Quién trabaja en el negocio?</strong><span>Dueños, socios, empleados, roles y dedicación.</span></span><span class="guided-chevron">›</span></button>
+          <button class="guided-menu-btn" onclick="goFinanceDetail('team')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>¿Cuánto corresponde pagar?</strong><span>Sueldos, honorarios, comisiones y retiros separados.</span></span><span class="guided-chevron">›</span></button>
+        </div>
+      </div>
+
+      <!-- ORGANIZACION -->
+      <div class="page" id="page-org">
+        <div class="ph"><div class="pt">Organización</div><div class="ps">Una vista simple de lo que requiere atención diaria.</div></div>
+        <div id="org-state"></div>
+        <div class="g4" style="margin-bottom:20px">
+          <div class="stat"><div class="sl">Para hoy <button class="info-dot" data-info="Pendientes cuya fecha es hoy o ya venció." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-today" style="color:var(--yel)">0</div></div>
+          <div class="stat"><div class="sl">Próximos 7 días <button class="info-dot" data-info="Tareas, entregas, cobros y pagos pendientes con fecha durante la próxima semana." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-week" style="color:var(--blue)">0</div></div>
+          <div class="stat"><div class="sl">Pendientes <button class="info-dot" data-info="Todos los elementos que todavía no están completados ni cancelados." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-pending">0</div></div>
+          <div class="stat"><div class="sl">Monto agendado <button class="info-dot" data-info="Suma orientativa de cobros y pagos pendientes que tienen monto cargado. No modifica Finanzas hasta que registres el movimiento." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="org-amount" style="color:var(--gold)">$0</div></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-t">Agregar al calendario</div>
+            <div class="field"><label>Qué hay que hacer *</label><input id="org-title" type="text" placeholder="Entregar pedido, pagar proveedor..."></div>
+            <div class="g2">
+              <div class="field"><label>Tipo</label><select id="org-type"><option value="tarea">Tarea</option><option value="pedido">Pedido</option><option value="entrega">Entrega</option><option value="vencimiento">Vencimiento</option><option value="cobro">Cobro</option><option value="pago">Pago</option><option value="recordatorio">Recordatorio</option></select></div>
+              <div class="field"><label>Fecha *</label><input id="org-date" type="date"></div>
+              <div class="field"><label>Prioridad</label><select id="org-priority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+              <div class="field"><label>Responsable</label><input id="org-owner" type="text" placeholder="Yo, administración..."></div>
+              <div class="field"><label>Monto opcional ($)</label><input id="org-amount-input" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div class="field"><label>Notas</label><textarea id="org-notes" placeholder="Detalle breve"></textarea></div>
+            <button class="btn btn-gold btn-full" id="org-add-btn" onclick="addOrganizationItem()">Agregar</button>
+          </div>
+          <div class="card">
+            <div class="card-t">Calendario y pendientes</div>
+            <div class="org-filters">
+              <div class="field" style="margin:0"><label>Mes</label><input id="org-month" type="month" onchange="renderOrganization()"></div>
+              <div class="field" style="margin:0"><label>Ver</label><select id="org-status-filter" onchange="renderOrganization()"><option value="pending">Pendientes</option><option value="all">Todos</option><option value="done">Completados</option></select></div>
+              <button class="btn btn-ghost btn-sm" onclick="setOrganizationCurrentMonth()">Mes actual</button>
+            </div>
+            <div id="org-list"><div class="empty"><div class="empty-i">✓</div>Sin pendientes para este período</div></div>
+          </div>
         </div>
       </div>
 
@@ -866,10 +1059,10 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   </div>
   <nav class="mobile-nav" aria-label="Navegación principal">
     <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico">⌂</span><span>Inicio</span></button>
-    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Plata</span></button>
+    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Finanzas</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico">□</span><span>Productos</span></button>
-    <button class="mobile-ni" data-p="leads" onclick="go('leads',this)"><span class="mobile-ni-ico">○</span><span>Clientes</span></button>
-    <button class="mobile-ni" onclick="openAI()"><span class="mobile-ni-ico">✦</span><span>IA</span></button>
+    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico">○</span><span>Personas</span></button>
+    <button class="mobile-ni" data-p="org" onclick="go('org',this)"><span class="mobile-ni-ico">✓</span><span>Organización</span></button>
   </nav>
   <button class="chat-fab" type="button" onclick="openAI()" aria-label="Abrir Asesor IA" title="Abrir Asesor IA">✦</button>
 </div>
@@ -1091,6 +1284,9 @@ async function enterApp() {
   document.getElementById('tb-user').textContent = CU.email
   document.getElementById('profile-btn').textContent = String(CU.email || '?').slice(0, 1).toUpperCase()
   document.getElementById('tx-f').value = today()
+  document.getElementById('team-payment-date').value = today()
+  document.getElementById('org-date').value = today()
+  document.getElementById('org-month').value = today().slice(0, 7)
   setDashTitle()
   await renderAll()
   const biz = await getBiz()
@@ -1136,6 +1332,7 @@ function go(page, el) {
   if (page === 'dash') switchDashboardTab('summary')
   if (page === 'fin') switchFinanceTab('summary')
   if (page === 'prod') switchProductTab('inv')
+  if (page === 'org') loadOrganizationData()
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
 function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
@@ -1153,8 +1350,52 @@ function switchDashboardTab(tab) {
 }
 
 function switchFinanceTab(tab) {
-  switchSectionTab('fin', tab, ['summary', 'movements', 'imported', 'fixed'])
+  switchSectionTab('fin', tab, ['summary', 'movements', 'imported', 'fixed', 'team'])
   if (tab === 'imported') loadImportedData()
+  if (tab === 'team') loadTeamData()
+}
+
+function toggleAdvanced(id, button) {
+  const section = document.getElementById(id)
+  if (!section) return
+  const open = section.classList.toggle('on')
+  if (button) button.textContent = open ? 'Ocultar vista avanzada' : button.dataset.closedLabel || 'Abrir vista avanzada'
+}
+
+function openAdvanced(id) {
+  document.getElementById(id)?.classList.add('on')
+}
+
+function showFinanceQuestion(tab) {
+  openAdvanced('fin-advanced')
+  switchFinanceTab(tab)
+  document.getElementById(`fin-tab-${tab}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function goFinanceDetail(tab) {
+  goPage('fin')
+  showFinanceQuestion(tab)
+}
+
+function showProductQuestion(tab, filter = 'all') {
+  inventoryViewFilter = filter
+  openAdvanced('prod-advanced')
+  switchProductTab(tab)
+  if (tab === 'inv') renderImportedInventory()
+  document.getElementById(tab === 'carga' ? 'prod-tab-carga-pane' : 'prod-tab-inv-pane')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function clearInventoryFilter() {
+  inventoryViewFilter = 'all'
+  renderImportedInventory()
+}
+
+function openAIWithBusinessSummary() {
+  openAI()
+  const input = document.getElementById('ai-inp')
+  input.value = '¿Cómo está mi negocio y qué me conviene hacer ahora?'
+  input.focus()
+  input.setSelectionRange(0, input.value.length)
 }
 
 function toggleInfo(event, button) {
@@ -1409,10 +1650,17 @@ function calcCosto() {
 // ══════════════════════════════════════
 let unifiedFinanceCache = null
 let unifiedFinancePromise = null
+let salesSummaryCache = null
+let salesSummaryPromise = null
 
 function invalidateUnifiedFinances() {
   unifiedFinanceCache = null
   unifiedFinancePromise = null
+}
+
+function invalidateSalesSummary() {
+  salesSummaryCache = null
+  salesSummaryPromise = null
 }
 
 function financeDateKey(row) {
@@ -1435,6 +1683,15 @@ function normalizeOperationalMovement(row) {
     fuente: row.origen === 'manual' ? 'manual' : row.origen === 'bot' ? 'Asesor IA' : row.origen || 'Carga inteligente',
     sourceTable: 'movimientos_financieros'
   }
+}
+
+function movementHasAmount(row) {
+  return Number(row?.monto) > 0
+}
+
+function movementAmountText(row) {
+  if (!movementHasAmount(row)) return 'Sin monto'
+  return `${row.tipo === 'ingreso' ? '+' : '-'}$${fmt(row.monto)}`
 }
 
 async function loadUnifiedFinances(force = false) {
@@ -1473,6 +1730,39 @@ async function loadUnifiedFinances(force = false) {
     return await unifiedFinancePromise
   } finally {
     unifiedFinancePromise = null
+  }
+}
+
+async function loadSalesSummary(force = false) {
+  if (!force && salesSummaryCache) return salesSummaryCache
+  if (!force && salesSummaryPromise) return salesSummaryPromise
+  salesSummaryPromise = (async () => {
+    const { m, y } = getMes()
+    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+    const { data, error } = await sb.from('ventas').select('id,fecha,total,costo_total,ganancia,created_at').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+    if (error) throw error
+    const sales = (data || []).filter(sale => {
+      const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
+      return key && key >= monthStart && key < monthEnd
+    })
+    const total = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
+    const cost = sales.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
+    const profit = sales.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
+    salesSummaryCache = {
+      sales,
+      count: sales.length,
+      total,
+      cost,
+      profit,
+      margin: total > 0 ? (profit / total) * 100 : 0
+    }
+    return salesSummaryCache
+  })()
+  try {
+    return await salesSummaryPromise
+  } finally {
+    salesSummaryPromise = null
   }
 }
 
@@ -1531,8 +1821,9 @@ async function delGF(id) {
 }
 
 async function renderFin() {
-  const [finance, fixedResult] = await Promise.all([
+  const [finance, sales, fixedResult] = await Promise.all([
     loadUnifiedFinances(),
+    loadSalesSummary(),
     sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
   ])
   if (fixedResult.error) console.error('[Kairós] renderFin gastos fijos:', fixedResult.error)
@@ -1541,10 +1832,15 @@ async function renderFin() {
   const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
   const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const tf = allGF.reduce((a, b) => a + (Number(b.mon) || 0), 0)
-  S('f-ing', '$' + fmt(ing)); S('f-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros unificados')
-  S('f-egr', '$' + fmt(egr)); S('f-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros unificados')
+  S('f-ing', '$' + fmt(ing)); S('f-ing-n', all.filter(t => t.tipo === 'ingreso' && movementHasAmount(t)).length + ' registros con monto')
+  S('f-egr', '$' + fmt(egr)); S('f-egr-n', all.filter(t => t.tipo === 'egreso' && movementHasAmount(t)).length + ' registros con monto')
   S('f-gan', '$' + fmt(gan)); document.getElementById('f-gan').style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'
-  S('f-mar', 'Margen: ' + mar + '%'); S('f-eq', '$' + fmt(tf))
+  S('f-mar', 'Sobre ingresos: ' + mar + '%'); S('f-eq', '$' + fmt(tf))
+  S('f-sales-profit', money(sales.profit))
+  S('f-sales-count', `${sales.count} venta${sales.count === 1 ? '' : 's'} · ${money(sales.total)} vendido`)
+  S('f-sales-margin', fmtDec(sales.margin) + '%')
+  document.getElementById('f-sales-profit').style.color = sales.profit >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('f-sales-margin').style.color = sales.margin >= 25 ? 'var(--green)' : sales.margin >= 0 ? 'var(--yel)' : 'var(--red)'
   const pct = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
   const bar = document.getElementById('f-eq-b'); bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--yel)' : 'var(--red)'
   document.getElementById('tx-tb').innerHTML = !finance.recent.length
@@ -1553,7 +1849,7 @@ async function renderFin() {
         <td>${escapeHTML(t.descripcion)}</td>
         <td>${escapeHTML(t.categoria || 'sin_categoria')}</td>
         <td><span class="badge ${t.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(t.tipo)}</span></td>
-        <td style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">$${fmt(t.monto)}</td>
+        <td style="font-weight:600;color:${movementHasAmount(t) ? (t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)') : 'var(--yel)'}">${movementHasAmount(t) ? '$' + fmt(t.monto) : 'Sin monto'}</td>
         <td style="color:var(--txt3)">${escapeHTML(financeDateKey(t) || '—')}</td>
         <td><span class="badge bb">${escapeHTML(t.fuente)}</span></td>
         <td><button class="btn btn-del" onclick="deleteUnifiedMovement('${t.sourceTable}','${t.id}')">✕</button></td>
@@ -1562,6 +1858,396 @@ async function renderFin() {
     ? '<div class="empty" style="padding:20px"><div class="empty-i">📌</div>Sin gastos fijos</div>'
     : allGF.map(g => `<div class="mrow"><div class="mlbl">${escapeHTML(g.nom)}</div><div style="display:flex;align-items:center;gap:10px"><div class="mval" style="color:var(--red)">$${fmt(g.mon)}</div><button class="btn btn-del" onclick="delGF('${g.id}')">✕</button></div></div>`).join('')
   S('gf-tot', '$' + fmt(tf))
+}
+
+// ══════════════════════════════════════
+// EQUIPO Y REMUNERACIONES
+// ══════════════════════════════════════
+let teamData = { members: [], payments: [], settings: { reserva_minima: 0, max_pago_duenio_pct: 50 }, available: true }
+
+function teamTypeLabel(type) {
+  const labels = { duenio: 'Dueño/a', socio: 'Socio/a', empleado: 'Empleado/a', colaborador: 'Colaborador/a' }
+  return labels[type] || type || '—'
+}
+
+function teamPaymentLabel(type) {
+  const labels = {
+    sueldo: 'Sueldo',
+    honorario: 'Honorario',
+    bono: 'Bono',
+    comision: 'Comisión',
+    retiro_duenio: 'Retiro del dueño',
+    distribucion_utilidad: 'Distribución de utilidad',
+    otro: 'Otro'
+  }
+  return labels[type] || type || '—'
+}
+
+function syncTeamPaymentTypes() {
+  const select = document.getElementById('team-payment-type')
+  if (!select) return
+  const member = teamData.members.find(item => item.id === V('team-payment-member'))
+  const isOwner = member && ['duenio', 'socio'].includes(member.tipo)
+  const current = select.value
+  const options = [
+    ['sueldo', 'Sueldo'],
+    ['honorario', 'Honorario'],
+    ['bono', 'Bono'],
+    ['comision', 'Comisión'],
+    ['otro', 'Otro']
+  ]
+  if (isOwner) {
+    options.push(['retiro_duenio', 'Retiro del dueño'])
+    options.push(['distribucion_utilidad', 'Distribución de utilidad'])
+  }
+  select.innerHTML = options.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')
+  if (options.some(([value]) => value === current)) select.value = current
+}
+
+function isTeamSchemaMissing(error) {
+  const message = String(error?.message || '')
+  return error?.code === 'PGRST205' || message.includes('team_members') || message.includes('team_payments') || message.includes('team_settings')
+}
+
+function setTeamControlsDisabled(disabled) {
+  document.querySelectorAll('#fin-tab-team input, #fin-tab-team select, #fin-tab-team button:not(.info-dot)')
+    .forEach(control => { control.disabled = disabled })
+}
+
+function teamWorkPayments(memberId) {
+  return teamData.payments
+    .filter(p => p.team_member_id === memberId && !['retiro_duenio', 'distribucion_utilidad'].includes(p.tipo))
+    .reduce((sum, p) => sum + (Number(p.monto) || 0), 0)
+}
+
+function teamMemberWorkTarget(member, salesTotal = 0) {
+  const target = Number(member.remuneracion_objetivo) || 0
+  const commission = Math.max(0, Number(salesTotal) || 0) * ((Number(member.comision_pct) || 0) / 100)
+  return target + commission
+}
+
+function teamMemberEstimatedCost(member, salesTotal = 0) {
+  return teamMemberWorkTarget(member, salesTotal) * (1 + (Number(member.cargas_pct) || 0) / 100)
+}
+
+async function loadTeamData() {
+  if (!CU) return
+  const state = document.getElementById('team-state')
+  if (state) state.innerHTML = '<div class="empty" style="padding:14px">Cargando equipo...</div>'
+  const { m, y } = getMes()
+  const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const [membersResult, paymentsResult, settingsResult] = await Promise.all([
+    sb.from('team_members').select('*').eq('user_id', CU.id).order('activo', { ascending: false }).order('created_at', { ascending: true }),
+    sb.from('team_payments').select('*').eq('user_id', CU.id).gte('fecha', monthStart).lt('fecha', monthEnd).order('fecha', { ascending: false }).limit(200),
+    sb.from('team_settings').select('*').eq('user_id', CU.id).maybeSingle()
+  ])
+  const firstError = membersResult.error || paymentsResult.error || settingsResult.error
+  if (firstError) {
+    teamData.available = false
+    setTeamControlsDisabled(true)
+    if (state) {
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Equipo todavía no está activado en esta base</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Los controles están bloqueados para no perder datos. Aplicá <strong>supabase/migrations/004_team_compensation.sql</strong> en Supabase SQL Editor; después volvé a esta pestaña y tocá Reintentar.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadTeamData()">Reintentar</button></div></div>`
+    }
+    if (isTeamSchemaMissing(firstError)) console.warn('[Kairós] Equipo pendiente de migración 004')
+    else console.error('[Kairós] loadTeamData:', firstError)
+    return
+  }
+  teamData.available = true
+  setTeamControlsDisabled(false)
+  teamData.members = membersResult.data || []
+  teamData.payments = paymentsResult.data || []
+  teamData.settings = settingsResult.data || { reserva_minima: 0, max_pago_duenio_pct: 50 }
+  if (state) state.innerHTML = ''
+  await renderTeamData()
+}
+
+async function renderTeamData() {
+  const active = teamData.members.filter(m => m.activo)
+  const [finance, sales] = await Promise.all([loadUnifiedFinances(), loadSalesSummary()])
+  const totalTarget = active.reduce((sum, member) => sum + teamMemberEstimatedCost(member, sales.total), 0)
+  const totalPaid = teamData.payments
+    .filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
+    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0)
+  const owners = active.filter(member => member.tipo === 'duenio')
+  const ownerGap = owners.reduce((sum, owner) => {
+    const pending = Math.max(0, teamMemberWorkTarget(owner, sales.total) - teamWorkPayments(owner.id))
+    return sum + pending
+  }, 0)
+  const cashResult = finance.totals.balance
+  const reserve = Number(teamData.settings.reserva_minima) || 0
+  const cap = (Number(teamData.settings.max_pago_duenio_pct) || 0) / 100
+  const cashAvailable = Math.max(0, cashResult - reserve)
+  const ownerSuggested = Math.min(ownerGap, cashAvailable * cap)
+
+  S('team-count', active.length)
+  S('team-target', money(totalTarget))
+  S('team-paid', money(totalPaid))
+  S('team-owner-gap', money(ownerGap))
+  S('team-cash-result', money(cashResult))
+  S('team-reserve-view', money(reserve))
+  S('team-owner-suggested', money(ownerSuggested))
+  document.getElementById('team-cash-result').style.color = cashResult >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('team-reserve').value = reserve
+  document.getElementById('team-owner-cap').value = Number(teamData.settings.max_pago_duenio_pct) || 0
+
+  const memberSelect = document.getElementById('team-payment-member')
+  memberSelect.innerHTML = '<option value="">Seleccioná...</option>' + active.map(member => `<option value="${member.id}">${escapeHTML(member.nombre)} · ${escapeHTML(teamTypeLabel(member.tipo))}</option>`).join('')
+  syncTeamPaymentTypes()
+
+  const membersTable = document.getElementById('team-members-tb')
+  membersTable.innerHTML = !teamData.members.length
+    ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">👥</div>Sin integrantes</div></td></tr>'
+    : teamData.members.map(member => {
+      const paid = teamWorkPayments(member.id)
+      const target = teamMemberWorkTarget(member, sales.total)
+      const pending = Math.max(0, target - paid)
+      return `<tr style="${member.activo ? '' : 'opacity:.5'}">
+        <td><strong>${escapeHTML(member.nombre)}</strong></td>
+        <td>${escapeHTML(teamTypeLabel(member.tipo))}</td>
+        <td>${escapeHTML(member.rol || '—')}</td>
+        <td>${fmtDec(Number(member.horas_semanales) || 0)}</td>
+        <td>${fmtDec(Number(member.comision_pct) || 0)}%</td>
+        <td>${fmtDec(Number(member.participacion_pct) || 0)}%</td>
+        <td>${money(target)}</td>
+        <td>${money(teamMemberEstimatedCost(member, sales.total))}</td>
+        <td>${money(paid)}</td>
+        <td style="color:${pending > 0 ? 'var(--yel)' : 'var(--green)'}">${money(pending)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="toggleTeamMember('${member.id}',${member.activo ? 'false' : 'true'})">${member.activo ? 'Desactivar' : 'Activar'}</button></td>
+      </tr>`
+    }).join('')
+
+  const memberById = new Map(teamData.members.map(member => [member.id, member]))
+  document.getElementById('team-payments-tb').innerHTML = !teamData.payments.length
+    ? '<tr><td colspan="6"><div class="empty"><div class="empty-i">💸</div>Sin pagos registrados</div></td></tr>'
+    : teamData.payments.map(payment => `<tr>
+        <td>${escapeHTML(payment.fecha || '—')}</td>
+        <td>${escapeHTML(memberById.get(payment.team_member_id)?.nombre || '—')}</td>
+        <td>${escapeHTML(teamPaymentLabel(payment.tipo))}</td>
+        <td style="color:var(--red);font-weight:600">${money(payment.monto)}</td>
+        <td>${escapeHTML(payment.medio_pago || '—')}</td>
+        <td>${escapeHTML(payment.notas || '—')}</td>
+      </tr>`).join('')
+}
+
+async function addTeamMember() {
+  const nombre = V('team-name').trim()
+  if (!nombre) { toastErr('Ingresá el nombre del integrante'); return }
+  const payload = {
+    user_id: CU.id,
+    nombre,
+    tipo: V('team-type'),
+    rol: V('team-role').trim() || null,
+    horas_semanales: numOrDefault('team-hours'),
+    remuneracion_objetivo: numOrDefault('team-target-input'),
+    cargas_pct: numOrDefault('team-loads'),
+    comision_pct: numOrDefault('team-commission'),
+    participacion_pct: numOrDefault('team-ownership')
+  }
+  if ([payload.horas_semanales, payload.remuneracion_objetivo, payload.cargas_pct, payload.comision_pct, payload.participacion_pct].some(value => value < 0)) {
+    toastErr('Los valores no pueden ser negativos')
+    return
+  }
+  const currentOwnership = teamData.members.reduce((sum, member) => sum + (Number(member.participacion_pct) || 0), 0)
+  if (currentOwnership + payload.participacion_pct > 100) {
+    toastErr(`La participación societaria total no puede superar 100%. Ya cargaste ${fmtDec(currentOwnership)}%.`)
+    return
+  }
+  const { error } = await sb.from('team_members').insert(payload)
+  if (handleSupaError(error, 'addTeamMember')) return
+  ;['team-name', 'team-role', 'team-hours', 'team-target-input', 'team-loads', 'team-commission', 'team-ownership'].forEach(id => { document.getElementById(id).value = '' })
+  await loadTeamData()
+  toast('Integrante agregado')
+}
+
+async function toggleTeamMember(id, activo) {
+  const { error } = await sb.from('team_members').update({ activo }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'toggleTeamMember')) return
+  await loadTeamData()
+  toast(activo ? 'Integrante activado' : 'Integrante desactivado')
+}
+
+async function saveTeamSettings() {
+  const reserva = numOrDefault('team-reserve')
+  const cap = numOrDefault('team-owner-cap', 50)
+  if (reserva < 0 || cap < 0 || cap > 100) { toastErr('Revisá la reserva y el porcentaje máximo'); return }
+  const { error } = await sb.from('team_settings').upsert({
+    user_id: CU.id,
+    reserva_minima: reserva,
+    max_pago_duenio_pct: cap
+  }, { onConflict: 'user_id' })
+  if (handleSupaError(error, 'saveTeamSettings')) return
+  await loadTeamData()
+  toast('Configuración guardada')
+}
+
+async function recordTeamPayment() {
+  const memberId = V('team-payment-member')
+  const amount = numOrDefault('team-payment-amount')
+  if (!memberId) { toastErr('Seleccioná una persona'); return }
+  if (amount <= 0) { toastErr('El monto debe ser mayor a cero'); return }
+  const { data, error } = await sb.rpc('record_team_payment', {
+    member_id: memberId,
+    payment_amount: amount,
+    payment_type: V('team-payment-type'),
+    payment_date: V('team-payment-date') || today(),
+    payment_method: V('team-payment-method').trim() || null,
+    payment_notes: V('team-payment-notes').trim() || null
+  })
+  if (handleSupaError(error, 'recordTeamPayment')) return
+  if (!data?.ok) { toastErr(data?.error || 'No se pudo registrar el pago'); return }
+  document.getElementById('team-payment-amount').value = ''
+  document.getElementById('team-payment-method').value = ''
+  document.getElementById('team-payment-notes').value = ''
+  invalidateUnifiedFinances()
+  await Promise.all([loadTeamData(), renderDash(), renderFin(), renderMet(), loadImportedData()])
+  switchFinanceTab('team')
+  toast('Pago registrado como egreso')
+}
+
+// ══════════════════════════════════════
+// ORGANIZACIÓN Y CALENDARIO
+// ══════════════════════════════════════
+let organizationData = []
+let organizationAvailable = true
+
+function isOrganizationSchemaMissing(error) {
+  const message = String(error?.message || '')
+  return error?.code === 'PGRST205' || message.includes('organization_items')
+}
+
+function setOrganizationControlsDisabled(disabled) {
+  ;['org-title', 'org-type', 'org-date', 'org-priority', 'org-owner', 'org-amount-input', 'org-notes', 'org-add-btn']
+    .forEach(id => { const control = document.getElementById(id); if (control) control.disabled = disabled })
+}
+
+async function loadOrganizationData() {
+  if (!CU) return
+  const state = document.getElementById('org-state')
+  if (state) state.innerHTML = '<div class="empty" style="padding:14px">Cargando organización...</div>'
+  const { data, error } = await sb.from('organization_items').select('*').eq('user_id', CU.id).order('fecha', { ascending: true }).order('created_at', { ascending: true }).limit(1000)
+  if (error) {
+    organizationAvailable = false
+    organizationData = []
+    setOrganizationControlsDisabled(true)
+    if (state) {
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Calendario pendiente de activar</div><div class="ctxt">${isOrganizationSchemaMissing(error) ? 'Aplicá <strong>supabase/migrations/007_organization_calendar.sql</strong> en Supabase SQL Editor. Hasta entonces esta pantalla queda en modo seguro y no intenta guardar.' : escapeHTML(error.message || 'No se pudo cargar Organización.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadOrganizationData()">Reintentar</button></div></div>`
+    }
+    if (!isOrganizationSchemaMissing(error)) console.error('[Kairós] loadOrganizationData:', error)
+    renderOrganization()
+    return
+  }
+  organizationAvailable = true
+  organizationData = data || []
+  setOrganizationControlsDisabled(false)
+  if (state) state.innerHTML = ''
+  renderOrganization()
+}
+
+function organizationDateParts(date) {
+  if (!date) return { day: '—', month: 'Sin fecha' }
+  const value = new Date(`${date}T12:00:00`)
+  return {
+    day: String(value.getDate()).padStart(2, '0'),
+    month: value.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '')
+  }
+}
+
+function organizationTypeLabel(type) {
+  return ({ tarea: 'Tarea', pedido: 'Pedido', entrega: 'Entrega', vencimiento: 'Vencimiento', cobro: 'Cobro', pago: 'Pago', recordatorio: 'Recordatorio' })[type] || type
+}
+
+function renderOrganization() {
+  const todayKey = today()
+  const weekEnd = new Date()
+  weekEnd.setDate(weekEnd.getDate() + 7)
+  const weekEndKey = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, '0')}-${String(weekEnd.getDate()).padStart(2, '0')}`
+  const pending = organizationData.filter(item => !['completado', 'cancelado'].includes(item.estado))
+  const dueToday = pending.filter(item => item.fecha <= todayKey)
+  const nextWeek = pending.filter(item => item.fecha > todayKey && item.fecha <= weekEndKey)
+  const amount = pending.filter(item => ['cobro', 'pago'].includes(item.tipo)).reduce((sum, item) => sum + (Number(item.monto) || 0), 0)
+  S('org-today', dueToday.length)
+  S('org-week', nextWeek.length)
+  S('org-pending', pending.length)
+  S('org-amount', money(amount))
+
+  const selectedMonth = V('org-month') || todayKey.slice(0, 7)
+  const statusFilter = V('org-status-filter') || 'pending'
+  const rows = organizationData.filter(item => {
+    const monthMatches = String(item.fecha || '').slice(0, 7) === selectedMonth
+    const statusMatches = statusFilter === 'all'
+      || (statusFilter === 'pending' && !['completado', 'cancelado'].includes(item.estado))
+      || (statusFilter === 'done' && item.estado === 'completado')
+    return monthMatches && statusMatches
+  })
+  const list = document.getElementById('org-list')
+  if (!list) return
+  list.innerHTML = !rows.length
+    ? '<div class="empty"><div class="empty-i">✓</div>Sin elementos para este período</div>'
+    : rows.map(item => {
+      const date = organizationDateParts(item.fecha)
+      const done = item.estado === 'completado'
+      const late = !done && item.fecha < todayKey
+      const priorityBadge = item.prioridad === 'urgente' || late ? 'br' : item.prioridad === 'alta' ? 'by' : 'bb'
+      return `<div class="org-item ${done ? 'done' : ''}">
+        <div class="org-date"><strong>${date.day}</strong><span>${escapeHTML(date.month)}</span></div>
+        <div class="org-copy">
+          <strong>${escapeHTML(item.titulo)}</strong>
+          <span>${escapeHTML(organizationTypeLabel(item.tipo))} · <span class="badge ${priorityBadge}">${late ? 'vencido' : escapeHTML(item.prioridad)}</span>${item.responsable ? ` · ${escapeHTML(item.responsable)}` : ''}${Number(item.monto) > 0 ? ` · ${money(item.monto)}` : ''}</span>
+          ${item.notas ? `<span>${escapeHTML(item.notas)}</span>` : ''}
+        </div>
+        <div class="org-item-actions" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleOrganizationItem('${item.id}',${done ? 'false' : 'true'})">${done ? 'Reabrir' : 'Completar'}</button>
+          <button class="btn btn-del" onclick="deleteOrganizationItem('${item.id}')">Eliminar</button>
+        </div>
+      </div>`
+    }).join('')
+}
+
+function setOrganizationCurrentMonth() {
+  const month = document.getElementById('org-month')
+  if (month) month.value = today().slice(0, 7)
+  renderOrganization()
+}
+
+async function addOrganizationItem() {
+  if (!organizationAvailable) { toastErr('Primero activá la migración 007 de Organización'); return }
+  const title = V('org-title').trim()
+  const date = V('org-date')
+  const amount = numOrDefault('org-amount-input')
+  if (!title) { toastErr('Indicá qué hay que hacer'); return }
+  if (!date) { toastErr('Elegí una fecha'); return }
+  if (amount < 0) { toastErr('El monto no puede ser negativo'); return }
+  const { error } = await sb.from('organization_items').insert({
+    user_id: CU.id,
+    titulo: title,
+    tipo: V('org-type'),
+    prioridad: V('org-priority'),
+    fecha: date,
+    responsable: V('org-owner').trim() || null,
+    monto: amount,
+    notas: V('org-notes').trim() || null
+  })
+  if (handleSupaError(error, 'addOrganizationItem')) return
+  ;['org-title', 'org-owner', 'org-amount-input', 'org-notes'].forEach(id => { document.getElementById(id).value = '' })
+  document.getElementById('org-month').value = date.slice(0, 7)
+  await loadOrganizationData()
+  toast('Agregado al calendario')
+}
+
+async function toggleOrganizationItem(id, completed) {
+  const { error } = await sb.from('organization_items').update({ estado: completed ? 'completado' : 'pendiente' }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'toggleOrganizationItem')) return
+  await loadOrganizationData()
+  toast(completed ? 'Marcado como completado' : 'Pendiente reabierto')
+}
+
+async function deleteOrganizationItem(id) {
+  if (!confirm('¿Eliminar este elemento del calendario?')) return
+  const { error } = await sb.from('organization_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteOrganizationItem')) return
+  await loadOrganizationData()
+  toast('Elemento eliminado')
 }
 
 // ══════════════════════════════════════
@@ -1582,62 +2268,20 @@ async function addProd() {
   const stockMin = Math.max(0, Math.trunc(numOrDefault('p-min')))
   const costoTotal = calc ? Number(calc.costoBase) : co
   const costoExtra = Math.max(0, costoTotal - co)
-  const ganancia = pr - costoTotal
-  const margen = pr > 0 ? (ganancia / pr) * 100 : 0
-  let itemId = null
-  try {
-    const { data: item, error: itemError } = await sb.from('inventario_items').insert({
-      user_id: CU.id,
-      producto: n,
-      categoria: V('p-c').trim() || null,
-      stock_actual: stock,
-      stock_minimo: stockMin,
-      costo_unitario: co,
-      costo_extra: costoExtra,
-      costo_total: costoTotal,
-      precio_venta_local: pr,
-      precio_venta_web: 0,
-      ganancia_local: ganancia,
-      margen_local_pct: margen,
-      ganancia_web: -costoTotal,
-      margen_web_pct: 0,
-      estado_stock: stockState(stock, stockMin),
-      accion_recomendada: inventoryAction(stock, stockMin, costoTotal, pr),
-      notas: V('p-d').trim() || null,
-      origen: 'manual'
-    }).select('id').single()
-    if (itemError) throw itemError
-    itemId = item.id
-    const { error: aliasError } = await sb.from('inventory_aliases').insert({
-      user_id: CU.id,
-      inventory_item_id: itemId,
-      alias: n,
-      normalized_alias: normalizeAliasText(n)
-    })
-    if (aliasError) throw aliasError
-    if (stock > 0) {
-      const { error: stockError } = await sb.from('stock_movements').insert({
-        user_id: CU.id,
-        inventory_item_id: itemId,
-        tipo: 'inicial',
-        cantidad: stock,
-        stock_antes: 0,
-        stock_despues: stock,
-        motivo: 'Carga manual desde Productos',
-        origen: 'manual',
-        raw_data: { producto: n }
-      })
-      if (stockError) throw stockError
-    }
-  } catch (error) {
-    if (itemId) {
-      await sb.from('inventory_aliases').delete().eq('inventory_item_id', itemId).eq('user_id', CU.id)
-      await sb.from('stock_movements').delete().eq('inventory_item_id', itemId).eq('user_id', CU.id)
-      await sb.from('inventario_items').delete().eq('id', itemId).eq('user_id', CU.id)
-    }
-    handleSupaError(error, 'addProd')
-    return
-  }
+  const { data, error } = await sb.rpc('create_inventory_item', {
+    product_name: n,
+    product_category: V('p-c').trim() || null,
+    product_notes: V('p-d').trim() || null,
+    current_stock: stock,
+    minimum_stock: stockMin,
+    unit_cost: co,
+    extra_cost: costoExtra,
+    local_price: pr,
+    web_price: 0,
+    source_name: 'manual'
+  })
+  if (handleSupaError(error, 'addProd')) return
+  if (!data?.ok) { toastErr(data?.error || 'No se pudo crear el producto'); return }
   ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
   document.getElementById('p-cost-result').style.display = 'none'
   document.getElementById('p-cost-alert').style.display = 'none'
@@ -1883,24 +2527,18 @@ async function renderMet() {
   const { m, y } = getMes()
   const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
   const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-  const [finance, campResult, salesResult] = await Promise.all([
+  const [finance, campResult, salesSummary] = await Promise.all([
     loadUnifiedFinances(),
     sb.from('campanas').select('*').eq('user_id', CU.id),
-    sb.from('ventas').select('id,fecha,total,created_at').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+    loadSalesSummary()
   ])
   if (campResult.error) console.error('[Kairós] renderMet campañas:', campResult.error)
-  if (salesResult.error) console.error('[Kairós] renderMet ventas:', salesResult.error)
   const all = finance.month
   const cs = campResult.data || []
-  const sales = (salesResult.data || []).filter(sale => {
-    const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
-    return key && key >= mesStart && key < mesEnd
-  })
   const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
   const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const iT = all.filter(t => t.tipo === 'ingreso')
-  const salesTotal = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
-  S('m-cli', sales.length); S('m-tick', sales.length > 0 ? '$' + fmt(Math.round(salesTotal / sales.length)) : '$0')
+  S('m-cli', salesSummary.count); S('m-tick', salesSummary.count > 0 ? '$' + fmt(Math.round(salesSummary.total / salesSummary.count)) : '$0')
   const cats = {}; iT.forEach(t => {
     const category = t.categoria || 'sin_categoria'
     cats[category] = (cats[category] || 0) + Number(t.monto || 0)
@@ -1928,19 +2566,20 @@ async function renderDash() {
    * Metricas del negocio:
    * - Ingresos y egresos unifican transacciones historicas y movimientos
    *   operativos, usando fecha o created_at cuando la fecha falta.
-   * - Ganancia neta = ingresos - egresos.
-   * - Margen = ganancia neta / ingresos * 100, solo cuando hay ingresos.
-   * - El punto de equilibrio usa la suma de gastos_fijos.mon y se compara con
-   *   los ingresos del mes en Finanzas.
+   * - Resultado de caja = ingresos cobrados - egresos pagados.
+   * - Ganancia de ventas = importe vendido - costo de los productos vendidos.
+   * - Gastos fijos a cubrir usa la suma de gastos_fijos.mon y se compara con
+   *   los ingresos del mes. No se presenta como punto de equilibrio contable.
    * - La pestaña Carga inteligente mantiene el desglose por fuente.
    * - Leads activos son los contactos que todavia no llegaron a cliente.
    * - El bloque importado cuenta como alertas los inventario_items en rojo.
    */
-  const [finance, leadResult, prodResult, inventoryResult, fixedResult, biz] = await Promise.all([
+  const [finance, sales, leadResult, prodResult, inventoryResult, fixedResult, biz] = await Promise.all([
     loadUnifiedFinances(),
+    loadSalesSummary(),
     sb.from('leads').select('*').eq('user_id', CU.id),
     sb.from('productos').select('id').eq('user_id', CU.id),
-    sb.from('inventario_items').select('id,estado_stock').eq('user_id', CU.id),
+    sb.from('inventario_items').select('id,estado_stock,costo_total,precio_venta_local,margen_local_pct').eq('user_id', CU.id),
     sb.from('gastos_fijos').select('mon').eq('user_id', CU.id),
     getBiz()
   ])
@@ -1961,29 +2600,100 @@ async function renderDash() {
   const breakEven = (fixedCosts || []).reduce((sum, item) => sum + (Number(item.mon) || 0), 0)
   const activeLeads = ls.filter(l => l.estado !== 'cliente').length
   const redCount = inventory.filter(item => item.estado_stock === 'rojo').length
-  S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso').length + ' registros de todas las fuentes')
-  S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso').length + ' registros de todas las fuentes')
+  S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso' && movementHasAmount(t)).length + ' registros con monto')
+  S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso' && movementHasAmount(t)).length + ' registros con monto')
   const gEl = document.getElementById('d-gan'); gEl.textContent = '$' + fmt(gan); gEl.style.color = gan >= 0 ? 'var(--gold)' : 'var(--red)'
-  S('d-mar', 'Margen: ' + mar + '%')
+  S('d-mar', 'Sobre ingresos: ' + mar + '%')
+  S('d-sales-profit', money(sales.profit))
+  S('d-sales-count', `${sales.count} venta${sales.count === 1 ? '' : 's'} · ${money(sales.total)} vendido`)
+  S('d-sales-margin', fmtDec(sales.margin) + '%')
+  document.getElementById('d-sales-profit').style.color = sales.profit >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('d-sales-margin').style.color = sales.margin >= 25 ? 'var(--green)' : sales.margin >= 0 ? 'var(--yel)' : 'var(--red)'
   S('d-leads', activeLeads)
   S('d-cli', ls.filter(l => l.estado === 'cliente').length + ' clientes en pipeline')
   S('d-eq', '$' + fmt(breakEven))
   S('d-eq-note', breakEven <= 0 ? 'Sin gastos fijos cargados' : ing >= breakEven ? `Superado por $${fmt(ing - breakEven)}` : `Faltan $${fmt(breakEven - ing)}`)
-  S('d-alerts', activeLeads + redCount)
-  S('d-alerts-note', `${activeLeads} leads activos · ${redCount} productos en rojo`)
+  const lossProducts = inventory.filter(item => Number(item.precio_venta_local) > 0 && Number(item.margen_local_pct) < 0).length
+  const incompleteProducts = inventory.filter(item => Number(item.costo_total) <= 0 || Number(item.precio_venta_local) <= 0).length
+  const zeroMovements = all.filter(item => !movementHasAmount(item)).length
+  const alertParts = []
+  if (gan < 0) alertParts.push('caja negativa')
+  if (breakEven > 0 && ing < breakEven) alertParts.push('gastos fijos sin cubrir')
+  if (redCount) alertParts.push(`${redCount} stock crítico`)
+  if (lossProducts) alertParts.push(`${lossProducts} con pérdida`)
+  if (incompleteProducts) alertParts.push(`${incompleteProducts} incompletos`)
+  if (zeroMovements) alertParts.push(`${zeroMovements} sin monto`)
+  const alertCount = (gan < 0 ? 1 : 0) + (breakEven > 0 && ing < breakEven ? 1 : 0) + redCount + lossProducts + incompleteProducts + zeroMovements
+  S('d-alerts', alertCount)
+  const alertNote = alertParts.length
+    ? alertParts.slice(0, 3).join(' · ') + (alertParts.length > 3 ? ` · +${alertParts.length - 3} más` : '')
+    : 'Sin alertas críticas'
+  S('d-alerts-note', alertNote)
   const lastTx = finance.recent.slice(0, 5)
   document.getElementById('d-tx').innerHTML = !lastTx.length
-    ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Plata.</div>'
-    : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${escapeHTML(t.categoria)} · ${escapeHTML(financeDateKey(t) || '—')} · ${escapeHTML(t.fuente)}</div></div><div style="font-weight:600;color:${t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${t.tipo === 'ingreso' ? '+' : '-'}$${fmt(t.monto)}</div></div>`).join('')
+    ? '<div class="empty"><div class="empty-i">💸</div>Sin movimientos. Registrá tu primer ingreso en Finanzas.</div>'
+    : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${escapeHTML(t.categoria)} · ${escapeHTML(financeDateKey(t) || '—')} · ${escapeHTML(t.fuente)}</div></div><div style="font-weight:600;color:${movementHasAmount(t) ? (t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)') : 'var(--yel)'}">${movementAmountText(t)}</div></div>`).join('')
   const operationalProducts = inventory.length
   const legacyProducts = prods?.length || 0
   const items = [
     { ok: !!b?.nom, ico: b?.nom ? '✅' : '🏗', txt: b?.nom ? `Negocio: ${escapeHTML(b.nom)}` : 'Completá los datos de tu negocio', p: 'neg' },
-    { ok: !!ing || !!egr, ico: ing || egr ? '✅' : '💰', txt: ing || egr ? `Plata: $${fmt(ing)} ingresados este mes` : 'Registrá tu primer movimiento', p: 'fin' },
+    { ok: !!ing || !!egr, ico: ing || egr ? '✅' : '💰', txt: ing || egr ? `Finanzas: $${fmt(ing)} ingresados este mes` : 'Registrá tu primer movimiento', p: 'fin' },
     { ok: ls.length > 0, ico: ls.length ? '✅' : '👥', txt: ls.length ? `${ls.length} contacto(s) en pipeline` : 'Agregá tu primer lead', p: 'leads' },
     { ok: operationalProducts + legacyProducts > 0, ico: operationalProducts + legacyProducts ? '✅' : '📦', txt: operationalProducts ? `${operationalProducts} producto(s) en inventario` : legacyProducts ? `${legacyProducts} producto(s) históricos` : 'Cargá tus productos', p: 'prod' },
   ]
   document.getElementById('d-est').innerHTML = items.map(i => `<div class="mrow" style="${!i.ok ? 'cursor:pointer' : ''}" ${!i.ok ? `onclick="goPage('${i.p}')"` : ''}><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--txt)'}">${i.txt}</span></div>${!i.ok ? '<span style="color:var(--gold);font-size:12px">→</span>' : ''}</div>`).join('')
+  S('home-cash-answer', !ing && !egr ? 'Todavía no hay movimientos con monto válido.' : gan >= 0 ? 'Este mes entró más dinero del que salió.' : 'Este mes salió más dinero del que entró.')
+  S('home-cash-number', `Entró ${money(ing)} · Salió ${money(egr)} · Resultado ${money(gan)}`)
+  S('home-sales-answer', !sales.count ? 'Todavía no hay ventas confirmadas para calcularlo.' : sales.profit >= 0 ? 'Tus ventas dejan ganancia.' : 'Tus ventas están dejando pérdida.')
+  S('home-sales-number', sales.count ? `${money(sales.profit)} de ganancia · De cada $100 quedan $${fmtDec(sales.margin)}` : 'Registrá una venta para conocer la rentabilidad.')
+  const attentionCount = redCount + lossProducts + incompleteProducts
+  S('home-alert-answer', attentionCount ? `${attentionCount} producto${attentionCount === 1 ? '' : 's'} necesita${attentionCount === 1 ? '' : 'n'} atención.` : 'No hay alertas críticas de productos.')
+  S('home-alert-number', redCount ? `${redCount} con stock crítico` : incompleteProducts ? `${incompleteProducts} con datos incompletos` : 'Inventario sin alertas críticas')
+  S('home-next-answer', gan < 0 ? 'Revisá los egresos antes de asumir un gasto nuevo.' : redCount ? 'Priorizá reponer los productos con stock crítico.' : !sales.count ? 'Registrá una venta para empezar a medir rentabilidad.' : 'Revisá las alertas y seguí registrando movimientos.')
+  renderAnnualSummary(finance.all)
+}
+
+function renderAnnualSummary(financeRows = null) {
+  const rows = financeRows || unifiedFinanceCache?.all || []
+  const selector = document.getElementById('annual-year')
+  const currentYear = new Date().getFullYear()
+  const years = [...new Set(rows.map(financeDateKey).filter(Boolean).map(date => Number(String(date).slice(0, 4))).filter(Boolean).concat(currentYear))].sort((a, b) => b - a)
+  const previous = Number(selector?.value) || currentYear
+  if (selector) {
+    selector.innerHTML = years.map(year => `<option value="${year}">${year}</option>`).join('')
+    selector.value = String(years.includes(previous) ? previous : currentYear)
+  }
+  const selectedYear = Number(selector?.value) || currentYear
+  const months = Array.from({ length: 12 }, (_, index) => ({ index, ingresos: 0, egresos: 0, balance: 0 }))
+  rows.forEach(row => {
+    const key = financeDateKey(row)
+    if (!key || Number(String(key).slice(0, 4)) !== selectedYear || !movementHasAmount(row)) return
+    const monthIndex = Number(String(key).slice(5, 7)) - 1
+    if (monthIndex < 0 || monthIndex > 11) return
+    if (row.tipo === 'ingreso') months[monthIndex].ingresos += Number(row.monto) || 0
+    if (row.tipo === 'egreso') months[monthIndex].egresos += Number(row.monto) || 0
+  })
+  months.forEach(month => { month.balance = month.ingresos - month.egresos })
+  const income = months.reduce((sum, month) => sum + month.ingresos, 0)
+  const expense = months.reduce((sum, month) => sum + month.egresos, 0)
+  const balance = income - expense
+  const activeMonths = months.filter(month => month.ingresos || month.egresos)
+  const best = activeMonths.sort((a, b) => b.balance - a.balance)[0]
+  const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  S('annual-income', money(income))
+  S('annual-expense', money(expense))
+  S('annual-balance', money(balance))
+  S('annual-best', best ? `${names[best.index]} · ${money(best.balance)}` : 'Sin datos')
+  const balanceEl = document.getElementById('annual-balance')
+  if (balanceEl) balanceEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)'
+  const maxValue = Math.max(1, ...months.flatMap(month => [month.ingresos, month.egresos]))
+  const grid = document.getElementById('annual-grid')
+  if (grid) {
+    grid.innerHTML = months.map(month => `<div class="annual-month" title="${names[month.index]}: ingresos ${money(month.ingresos)}, egresos ${money(month.egresos)}, resultado ${money(month.balance)}">
+      <div class="annual-bars"><div class="annual-bar" style="height:${Math.max(2, month.ingresos / maxValue * 100)}%;background:var(--green)"></div><div class="annual-bar" style="height:${Math.max(2, month.egresos / maxValue * 100)}%;background:var(--red)"></div></div>
+      <div class="annual-label">${names[month.index]}</div>
+    </div>`).join('')
+  }
 }
 
 // ══════════════════════════════════════
@@ -1993,6 +2703,7 @@ let importedData = { movements: [], movementsMonth: [], inventory: [], inventory
 importedData.botActions = []
 importedData.inventorySaleIds = new Set()
 let importedLoadPromise = null
+let inventoryViewFilter = 'all'
 
 function money(n) { return '$' + fmt(Number(n) || 0) }
 function importDate(v) { return v ? String(v).slice(0, 10) : '—' }
@@ -2006,6 +2717,21 @@ function stockTotals(items) {
     amarillo: list.filter(p => p.estado_stock === 'amarillo').length,
     verde: list.filter(p => p.estado_stock === 'verde').length
   }
+}
+
+function inventoryNeedsReorder(item) {
+  const stock = Number(item.stock_actual)
+  const minimum = Number(item.stock_minimo)
+  return Number.isFinite(stock) && Number.isFinite(minimum) && (item.estado_stock === 'rojo' || item.estado_stock === 'amarillo' || stock <= minimum)
+}
+
+function inventoryHasPricingAlert(item) {
+  return Number(item.costo_total ?? item.costo_unitario) <= 0 || Number(item.precio_venta_local || item.precio_venta_web) <= 0 || Number(item.margen_local_pct) < 25
+}
+
+function inventoryReorderCost(item) {
+  const missing = Math.max(0, (Number(item.stock_minimo) || 0) - (Number(item.stock_actual) || 0))
+  return missing * (Number(item.costo_total ?? item.costo_unitario) || 0)
 }
 function movementTotals(items) {
   const list = items || []
@@ -2133,17 +2859,38 @@ function renderImportedMovements() {
 }
 
 function renderImportedInventory() {
-  const rows = importedData.inventoryLatest || []
-  const totals = stockTotals(importedData.inventory)
+  const allRows = importedData.inventory || []
+  const filtered = inventoryViewFilter === 'low'
+    ? allRows.filter(inventoryNeedsReorder)
+    : inventoryViewFilter === 'pricing'
+      ? allRows.filter(inventoryHasPricingAlert)
+      : allRows
+  const rows = filtered.slice(0, 50)
+  const totals = stockTotals(allRows)
   S('ip-cant', totals.count); S('ip-costo', money(totals.costo)); S('ip-venta', money(totals.venta)); S('ip-est', `${totals.rojo} / ${totals.amarillo} / ${totals.verde}`)
+  const reorderItems = allRows.filter(inventoryNeedsReorder)
+  const reorderCost = reorderItems.reduce((sum, item) => sum + inventoryReorderCost(item), 0)
+  S('ip-reorder-cost', money(reorderCost))
+  S('ip-reorder-note', reorderItems.length ? `${reorderItems.length} producto${reorderItems.length === 1 ? '' : 's'} por debajo o cerca del mínimo` : 'Sin faltantes calculables')
+  const filterNote = document.getElementById('inventory-filter-note')
+  const filterText = document.getElementById('inventory-filter-text')
+  if (filterNote && filterText) {
+    const labels = {
+      low: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con stock bajo o agotado. Están marcados en amarillo.`,
+      pricing: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con precio, costo o margen para revisar.`
+    }
+    filterNote.classList.toggle('on', inventoryViewFilter !== 'all')
+    filterText.textContent = labels[inventoryViewFilter] || ''
+  }
   const badge = { rojo: 'br', amarillo: 'by', verde: 'bg', sin_datos: 'bb' }
   const tb = document.getElementById('imp-inv-tb')
   if (!tb) return
   tb.innerHTML = !rows.length
-    ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>Sin inventario importado</div></td></tr>'
+    ? `<tr><td colspan="11"><div class="empty"><div class="empty-i">📦</div>${inventoryViewFilter === 'all' ? 'Sin inventario importado' : 'No hay productos que coincidan con este filtro'}</div></td></tr>`
     : rows.map(p => {
       const hasSales = importedData.inventorySaleIds?.has(p.id)
-      return `<tr>
+      const highlighted = inventoryViewFilter === 'low' ? inventoryNeedsReorder(p) : inventoryViewFilter === 'pricing' ? inventoryHasPricingAlert(p) : false
+      return `<tr class="${highlighted ? 'attention-row' : ''}">
         <td><strong>${escapeHTML(p.producto || '—')}</strong></td>
         <td>${escapeHTML(p.categoria || '—')}</td>
         <td>${escapeHTML(p.color || '—')}</td>
@@ -2661,16 +3408,6 @@ async function findInventoryDuplicate(productText) {
   return { exists: false, item: null, ambiguous: false }
 }
 
-async function getFreshInventoryItem(id) {
-  const { data, error } = await sb.from('inventario_items')
-    .select('id,producto,categoria,color,medida,stock_actual,stock_minimo,costo_unitario,costo_extra,costo_total,precio_venta_local,precio_venta_web')
-    .eq('id', id)
-    .eq('user_id', CU.id)
-    .single()
-  if (error || !data) throw new Error('No encontré ese producto. Revisá el nombre o crealo primero.')
-  return data
-}
-
 function stockState(stock, min) {
   if (stock === null || stock === undefined || !Number.isFinite(Number(stock))) return 'sin_datos'
   const s = Number(stock), m = Number(min) || 0
@@ -2684,27 +3421,6 @@ function inventoryAction(stock, min, costo, precio) {
   if (!Number.isFinite(Number(costo)) || !Number.isFinite(Number(precio)) || Number(precio) <= 0) return 'Completar datos para calcular margen'
   const margen = ((Number(precio) - Number(costo)) / Number(precio)) * 100
   return margen >= 25 ? 'Publicar fuerte' : 'Revisar precio o liquidar'
-}
-
-function inventoryPatch(item, nextStock, nextCost = null) {
-  const costoUnit = nextCost !== null && Number.isFinite(Number(nextCost)) ? Number(nextCost) : Number(item.costo_unitario) || 0
-  const extra = Number(item.costo_extra) || 0
-  const costoTotal = costoUnit + extra
-  const precioLocal = Number(item.precio_venta_local) || 0
-  const precioWeb = Number(item.precio_venta_web) || 0
-  const ganLocal = precioLocal ? precioLocal - costoTotal : 0
-  const ganWeb = precioWeb ? precioWeb - costoTotal : 0
-  return {
-    stock_actual: Math.trunc(Number(nextStock)),
-    costo_unitario: costoUnit,
-    costo_total: costoTotal,
-    ganancia_local: ganLocal,
-    margen_local_pct: precioLocal > 0 ? (ganLocal / precioLocal) * 100 : 0,
-    ganancia_web: ganWeb,
-    margen_web_pct: precioWeb > 0 ? (ganWeb / precioWeb) * 100 : 0,
-    estado_stock: stockState(nextStock, item.stock_minimo),
-    accion_recomendada: inventoryAction(nextStock, item.stock_minimo, costoTotal, precioLocal)
-  }
 }
 
 async function buildBotActionPreview(command) {
@@ -3102,18 +3818,14 @@ async function confirmImport() {
   const { error: rowsErr } = await sb.from('import_rows').insert(importPayload)
   if (handleSupaError(rowsErr, 'import_rows')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
 
-  const movs = validRows.filter(r => r.target === 'movimientos_financieros').map(r => r.normalized)
-  const invs = validRows.filter(r => r.target === 'inventario_items').map(r => r.normalized)
-  if (movs.length) {
-    const { error } = await sb.from('movimientos_financieros').insert(movs)
-    if (handleSupaError(error, 'movimientos_financieros')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  const { data: rpcResult, error: rpcErr } = await sb.rpc('confirm_import_batch', { batch_id: batchId })
+  if (handleSupaError(rpcErr, 'confirm_import_batch')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  if (!rpcResult || rpcResult.ok === false || rpcResult.status === 'failed') {
+    toastErr(rpcResult?.error || 'No se pudo confirmar la carga')
+    btn.disabled = false
+    btn.textContent = 'Confirmar carga'
+    return
   }
-  if (invs.length) {
-    const { error } = await sb.from('inventario_items').insert(invs)
-    if (handleSupaError(error, 'inventario_items')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
-  }
-  const { error: doneErr } = await sb.from('import_batches').update({ status: 'confirmed' }).eq('id', batchId).eq('user_id', CU.id)
-  if (handleSupaError(doneErr, 'confirm_import_batch')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
 
   renderImportSummary(validRows)
   importRows = []
@@ -3156,17 +3868,16 @@ async function confirmBotAction(surface = botActionSurface) {
   if (handleSupaError(actionErr, 'bot_actions')) { btn.disabled = false; btn.textContent = 'Confirmar accion'; return }
 
   try {
-    const result = await executeBotAction(botActionPreview, action.id)
-    const { error: doneErr } = await sb.from('bot_actions').update({
-      status: 'confirmed',
-      result_data: result,
-      confirmed_at: new Date().toISOString()
-    }).eq('id', action.id).eq('user_id', CU.id)
-    if (doneErr) throw doneErr
+    const { data: rpcResult, error: rpcErr } = await sb.rpc('confirm_bot_action', { action_id: action.id })
+    if (rpcErr) throw rpcErr
+    if (!rpcResult || rpcResult.ok === false || rpcResult.status === 'failed') {
+      throw new Error(rpcResult?.error || 'No se pudo confirmar la accion')
+    }
     botActionPreview = null
     botActionSurface = 'import'
     btn.disabled = true; btn.textContent = 'Accion confirmada'
     invalidateUnifiedFinances()
+    invalidateSalesSummary()
     await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
@@ -3187,225 +3898,6 @@ async function confirmBotAction(surface = botActionSurface) {
     toastErr(friendly)
     await loadImportedData()
   }
-}
-
-async function executeBotAction(preview, actionId) {
-  if (preview.action_type === 'crear_producto') return executeCreateProductAction(preview, actionId)
-  if (preview.action_type === 'venta_stock') return executeSaleAction(preview, actionId)
-  if (preview.action_type === 'gasto') return executeExpenseAction(preview, actionId)
-  if (preview.action_type === 'reposicion') return executeRestockAction(preview, actionId)
-  if (preview.action_type === 'ajuste_stock') return executeStockAdjustmentAction(preview, actionId)
-  throw new Error('Accion no soportada')
-}
-
-async function executeCreateProductAction(preview, actionId) {
-  const duplicate = await findInventoryDuplicate(preview.producto)
-  if (duplicate.exists) throw new Error('Ese producto ya existe. Usá reposición para sumar stock.')
-  const stock = Math.trunc(Number(preview.stock))
-  const costo = Number(preview.costo)
-  const precio = Number(preview.precio)
-  const ganancia = precio - costo
-  const margen = precio > 0 ? (ganancia / precio) * 100 : 0
-  const itemPayload = {
-    user_id: CU.id,
-    producto: preview.producto,
-    stock_actual: stock,
-    costo_unitario: costo,
-    costo_extra: 0,
-    costo_total: costo,
-    precio_venta_local: precio,
-    ganancia_local: ganancia,
-    margen_local_pct: margen,
-    estado_stock: stockState(stock, 0),
-    accion_recomendada: inventoryAction(stock, 0, costo, precio),
-    origen: 'bot'
-  }
-  const { data: item, error: itemErr } = await sb.from('inventario_items').insert(itemPayload).select('id,stock_actual').single()
-  if (itemErr) throw itemErr
-  const { error: aliasErr } = await sb.from('inventory_aliases').insert({
-    user_id: CU.id,
-    inventory_item_id: item.id,
-    alias: preview.producto,
-    normalized_alias: normalizeAliasText(preview.producto)
-  })
-  if (aliasErr) throw aliasErr
-  if (stock !== 0) {
-    const { error: stockErr } = await sb.from('stock_movements').insert({
-      user_id: CU.id,
-      inventory_item_id: item.id,
-      tipo: 'inicial',
-      cantidad: stock,
-      stock_antes: 0,
-      stock_despues: stock,
-      motivo: 'Producto creado por bot',
-      referencia_tipo: 'bot_action',
-      referencia_id: actionId,
-      origen: 'bot',
-      raw_data: { input_text: preview.input_text }
-    })
-    if (stockErr) throw stockErr
-  }
-  return { inventory_item_id: item.id, stock_actual: stock }
-}
-
-async function executeSaleAction(preview, actionId) {
-  const item = await getFreshInventoryItem(preview.match.item.id)
-  const qty = Math.trunc(Number(preview.cantidad || 1))
-  const price = Number(preview.precio_unitario)
-  if (!Number.isFinite(qty) || qty <= 0) throw new Error('Cantidad invalida')
-  if (!Number.isFinite(price) || price <= 0) throw new Error('Falta el precio de venta. Ejemplo: vendí 2 toalla azul a 10000 cada una.')
-  const before = Math.trunc(Number(item.stock_actual) || 0)
-  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
-  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  if (before < qty) throw new Error('Stock insuficiente al confirmar. Volvé a generar el preview.')
-  const after = before - qty
-  const unitCost = Number(item.costo_total ?? item.costo_unitario) || 0
-  const total = qty * price
-  const costTotal = qty * unitCost
-  const gain = total - costTotal
-  const { data: venta, error: ventaErr } = await sb.from('ventas').insert({
-    user_id: CU.id,
-    fecha: today(),
-    medio_pago: preview.medio_pago || null,
-    total,
-    costo_total: costTotal,
-    ganancia: gain,
-    margen_pct: total > 0 ? (gain / total) * 100 : 0,
-    origen: 'bot',
-    notas: preview.input_text
-  }).select('id').single()
-  if (ventaErr) throw ventaErr
-  const { error: itemErr } = await sb.from('venta_items').insert({
-    user_id: CU.id,
-    venta_id: venta.id,
-    inventory_item_id: item.id,
-    producto_texto: item.producto,
-    cantidad: qty,
-    precio_unitario: price,
-    costo_unitario: unitCost,
-    subtotal: total,
-    ganancia: gain
-  })
-  if (itemErr) throw itemErr
-  const { error: movErr } = await sb.from('movimientos_financieros').insert({
-    user_id: CU.id,
-    fecha: today(),
-    descripcion: 'Venta ' + item.producto,
-    monto: total,
-    tipo: 'ingreso',
-    medio_pago: preview.medio_pago || null,
-    categoria: 'ventas',
-    mes: today().slice(0, 7),
-    origen: 'bot'
-  })
-  if (movErr) throw movErr
-  const { error: stockErr } = await sb.from('stock_movements').insert({
-    user_id: CU.id,
-    inventory_item_id: item.id,
-    tipo: 'venta',
-    cantidad: -qty,
-    stock_antes: before,
-    stock_despues: after,
-    motivo: 'Venta registrada por bot',
-    referencia_tipo: 'venta',
-    referencia_id: venta.id,
-    origen: 'bot',
-    raw_data: { input_text: preview.input_text, bot_action_id: actionId }
-  })
-  if (stockErr) throw stockErr
-  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
-  if (updErr) throw updErr
-  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  return { venta_id: venta.id, inventory_item_id: item.id, stock_antes: before, stock_despues: after, total }
-}
-
-async function executeExpenseAction(preview, actionId) {
-  const { data, error } = await sb.from('movimientos_financieros').insert({
-    user_id: CU.id,
-    fecha: today(),
-    descripcion: preview.descripcion,
-    monto: Number(preview.monto),
-    tipo: 'egreso',
-    medio_pago: preview.medio_pago || null,
-    categoria: 'gastos',
-    mes: today().slice(0, 7),
-    origen: 'bot'
-  }).select('id').single()
-  if (error) throw error
-  return { movimiento_id: data.id, bot_action_id: actionId }
-}
-
-async function executeRestockAction(preview, actionId) {
-  const item = await getFreshInventoryItem(preview.match.item.id)
-  const qty = Math.trunc(Number(preview.cantidad))
-  if (!Number.isFinite(qty) || qty <= 0) throw new Error('Cantidad invalida')
-  const before = Math.trunc(Number(item.stock_actual) || 0)
-  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
-  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  const after = before + qty
-  const unitCost = Number.isFinite(Number(preview.costo_unitario)) ? Number(preview.costo_unitario) : null
-  let movimientoId = null
-  if (unitCost !== null) {
-    const { data: mov, error: movErr } = await sb.from('movimientos_financieros').insert({
-      user_id: CU.id,
-      fecha: today(),
-      descripcion: 'Compra ' + item.producto,
-      monto: qty * unitCost,
-      tipo: 'egreso',
-      medio_pago: preview.medio_pago || null,
-      categoria: 'compras',
-      mes: today().slice(0, 7),
-      origen: 'bot'
-    }).select('id').single()
-    if (movErr) throw movErr
-    movimientoId = mov.id
-  }
-  const { error: stockErr } = await sb.from('stock_movements').insert({
-    user_id: CU.id,
-    inventory_item_id: item.id,
-    tipo: 'compra',
-    cantidad: qty,
-    stock_antes: before,
-    stock_despues: after,
-    motivo: 'Reposicion registrada por bot',
-    referencia_tipo: movimientoId ? 'movimiento_financiero' : 'bot_action',
-    referencia_id: movimientoId || actionId,
-    origen: 'bot',
-    raw_data: { input_text: preview.input_text, bot_action_id: actionId }
-  })
-  if (stockErr) throw stockErr
-  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after, unitCost)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
-  if (updErr) throw updErr
-  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  return { inventory_item_id: item.id, movimiento_id: movimientoId, stock_antes: before, stock_despues: after }
-}
-
-async function executeStockAdjustmentAction(preview, actionId) {
-  const item = await getFreshInventoryItem(preview.match.item.id)
-  const before = Math.trunc(Number(item.stock_actual) || 0)
-  const after = Math.trunc(Number(preview.stock_final))
-  if (!Number.isFinite(after) || after < 0) throw new Error('Stock final invalido')
-  const previewStock = Math.trunc(Number(preview.match.item.stock_actual) || 0)
-  if (before !== previewStock) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  const delta = after - before
-  const { error: stockErr } = await sb.from('stock_movements').insert({
-    user_id: CU.id,
-    inventory_item_id: item.id,
-    tipo: 'ajuste',
-    cantidad: delta,
-    stock_antes: before,
-    stock_despues: after,
-    motivo: 'Ajuste registrado por bot',
-    referencia_tipo: 'bot_action',
-    referencia_id: actionId,
-    origen: 'bot',
-    raw_data: { input_text: preview.input_text }
-  })
-  if (stockErr) throw stockErr
-  const { data: updated, error: updErr } = await sb.from('inventario_items').update(inventoryPatch(item, after)).eq('id', item.id).eq('user_id', CU.id).eq('stock_actual', before).select('id').maybeSingle()
-  if (updErr) throw updErr
-  if (!updated) throw new Error('El stock cambió mientras confirmabas. Volvé a generar el preview.')
-  return { inventory_item_id: item.id, stock_antes: before, stock_despues: after }
 }
 
 function renderImportSummary(validRows) {
