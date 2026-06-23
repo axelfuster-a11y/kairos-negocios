@@ -707,7 +707,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
               <div class="field"><label>Impuestos %</label><input type="number" id="p-imp" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
               <div class="field"><label>Descuento %</label><input type="number" id="p-desc" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
               <div class="field"><label>Margen deseado %</label><input type="number" id="p-mar" placeholder="30" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Precio de venta ($) <span style="font-size:11px;color:var(--txt3)">(editable)</span></label><input type="number" id="p-pr" placeholder="0" min="0" oninput="calcCosto()"></div>
+              <div class="field"><label>Precio de venta ($) <span style="font-size:11px;color:var(--txt3)">(editable)</span></label><input type="number" id="p-pr" placeholder="0" min="0" oninput="markManualProductPrice();calcCosto()"></div>
               <!-- Resultados motor de costos -->
               <div id="p-cost-result" class="cost-result" style="display:none">
                 <div class="cost-row"><span class="lbl">Costo base total</span><span class="val" id="cr-costo">$0</span></div>
@@ -1168,6 +1168,8 @@ const { createClient } = supabase
 const sb = createClient(SUPA_URL, SUPA_KEY)
 
 let CU = null
+let activeAppUserId = null
+let lastAutoSuggestedPrice = null
 
 // ══════════════════════════════════════
 // HELPERS — XSS PROTECTION
@@ -1225,7 +1227,13 @@ async function init() {
   else { document.getElementById('loading').classList.add('hide'); document.getElementById('auth-screen').style.display = 'flex' }
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) { CU = session.user; await enterApp() }
-    else if (event === 'SIGNED_OUT') { CU = null; document.getElementById('app').classList.remove('on'); document.getElementById('auth-screen').style.display = 'flex' }
+    else if (event === 'SIGNED_OUT') {
+      resetUserScopedState()
+      CU = null
+      activeAppUserId = null
+      document.getElementById('app').classList.remove('on')
+      document.getElementById('auth-screen').style.display = 'flex'
+    }
   })
 }
 
@@ -1278,6 +1286,8 @@ async function doLogout() {
 // ENTRAR A LA APP
 // ══════════════════════════════════════
 async function enterApp() {
+  if (activeAppUserId !== CU.id) resetUserScopedState()
+  activeAppUserId = CU.id
   document.getElementById('loading').classList.add('hide')
   document.getElementById('auth-screen').style.display = 'none'
   document.getElementById('app').classList.add('on')
@@ -1329,13 +1339,17 @@ function go(page, el) {
   if (!target) return
   target.classList.add('on')
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
+  if (page === 'leads') document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
   if (page === 'dash') switchDashboardTab('summary')
   if (page === 'fin') switchFinanceTab('summary')
   if (page === 'prod') switchProductTab('inv')
   if (page === 'org') loadOrganizationData()
   if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
 }
-function goPage(p) { const el = document.querySelector(`[data-p="${p}"]`); if (el) go(p, el) }
+function goPage(p) {
+  if (!document.getElementById('page-' + p)) return
+  go(p, document.querySelector(`[data-p="${p}"]`))
+}
 
 function switchSectionTab(prefix, tab, tabs) {
   tabs.forEach(name => {
@@ -1418,14 +1432,14 @@ function startDashboardAction(action) {
   }
   if (action === 'gasto') {
     goPage('fin')
-    switchFinanceTab('movements')
+    showFinanceQuestion('movements')
     document.getElementById('tx-t').value = 'egreso'
     document.getElementById('tx-d').focus()
     return
   }
   if (action === 'producto') {
     goPage('prod')
-    switchProductTab('carga')
+    showProductQuestion('carga')
     document.getElementById('p-n').focus()
   }
 }
@@ -1581,7 +1595,8 @@ function calcCosto() {
   const imp = numOrDefault('p-imp') / 100
   const desc = numOrDefault('p-desc') / 100
   const mar = numOrDefault('p-mar', 30) / 100
-  const pvManual = numOrDefault('p-pr')
+  const currentPrice = numOrDefault('p-pr')
+  const pvManual = lastAutoSuggestedPrice !== null && currentPrice === lastAutoSuggestedPrice ? 0 : currentPrice
 
   const alert = document.getElementById('p-cost-alert')
   const result = document.getElementById('p-cost-result')
@@ -1625,7 +1640,10 @@ function calcCosto() {
   document.getElementById('cr-gan').style.color = ganancia > 0 ? 'var(--green)' : 'var(--red)'
 
   // Si el usuario no puso precio manual, sugerir
-  if (pvManual <= 0) { document.getElementById('p-pr').value = Math.ceil(precioSug) }
+  if (pvManual <= 0) {
+    lastAutoSuggestedPrice = Math.ceil(precioSug)
+    document.getElementById('p-pr').value = lastAutoSuggestedPrice
+  }
 
   // Alerta de rentabilidad
   if (pvManual > 0 && pvManual < precioMin) {
@@ -1645,6 +1663,11 @@ function calcCosto() {
   return { costoBase, precioMin, precioSug, pv: pvManual > 0 ? pvManual : precioSug, ganancia, margenReal }
 }
 
+function markManualProductPrice() {
+  const currentPrice = numOrDefault('p-pr')
+  if (lastAutoSuggestedPrice !== null && currentPrice !== lastAutoSuggestedPrice) lastAutoSuggestedPrice = null
+}
+
 // ══════════════════════════════════════
 // FINANZAS
 // ══════════════════════════════════════
@@ -1661,6 +1684,39 @@ function invalidateUnifiedFinances() {
 function invalidateSalesSummary() {
   salesSummaryCache = null
   salesSummaryPromise = null
+}
+
+function resetUserScopedState() {
+  invalidateUnifiedFinances()
+  invalidateSalesSummary()
+  importedLoadPromise = null
+  importedData = { movements: [], movementsMonth: [], inventory: [], inventoryLatest: [], batches: [], loading: false, error: null }
+  importedData.botActions = []
+  importedData.inventorySaleIds = new Set()
+  teamData = { members: [], payments: [], settings: { reserva_minima: 0, max_pago_duenio_pct: 50 }, available: true }
+  organizationData = []
+  organizationAvailable = true
+  importRows = []
+  importSource = 'manual'
+  botActionPreview = null
+  botActionSurface = 'import'
+  inventoryViewFilter = 'all'
+  aiH = []
+  lastAutoSuggestedPrice = null
+  closeAI()
+  closeProfile()
+  closeImportedInventoryModal()
+  document.getElementById('wizard')?.classList.remove('on')
+  document.getElementById('im-preview-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
+  document.getElementById('im-summary-card').style.display = 'none'
+  setTbBiz(null)
+  ;[
+    'b-nom', 'b-rub', 'b-loc', 'b-can', 'b-prob', 'b-dif', 'b-cli', 'b-don', 'b-prod', 'b-prec',
+    'cfg-pkg', 'cfg-env', 'cfg-cplat', 'cfg-cpago', 'cfg-imp', 'cfg-desc', 'cfg-mar',
+    'p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'
+  ]
+    .forEach(id => { const element = document.getElementById(id); if (element) element.value = '' })
 }
 
 function financeDateKey(row) {
@@ -3103,7 +3159,7 @@ function renderAIRecentActions() {
   if (!el) return
   const rows = (importedData.botActions || []).filter(a => a.status !== 'preview').slice(0, 4)
   if (!rows.length) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">Todavia no hay acciones confirmadas.</div>'
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">Todavía no hay acciones confirmadas.</div>'
     return
   }
   const badge = { confirmed: 'bg', failed: 'br', cancelled: 'bb' }
@@ -3130,10 +3186,12 @@ function renderSystemState() {
   if (!el) return
   const actions = importedData.botActions || []
   const last = actions[0]
-  const recentErrors = actions.filter(a => a.status === 'failed').length
+  const recentLimit = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  const recentErrors = actions.filter(a => a.status === 'failed' && new Date(a.created_at || 0).getTime() >= recentLimit).length
+  const advisorBlocked = !!last && last.status === 'failed' && /todavia no ejecuta|could not find the function public\.confirm_bot_action/i.test(String(last.error || ''))
   const items = [
     { ok: !importedData.error, label: 'Supabase conectado', value: importedData.error ? 'Error al cargar datos' : 'OK' },
-    { ok: true, label: 'Asesor IA operativo', value: 'Preview y confirmación activos' },
+    { ok: !advisorBlocked, label: 'Asesor IA operativo', value: advisorBlocked ? 'Confirmación RPC pendiente o desactualizada' : 'Preview y confirmación activos' },
     { ok: importedData.inventory.length > 0, label: 'Inventario cargado', value: `${importedData.inventory.length} item(s)` },
     { ok: importedData.movements.length > 0, label: 'Movimientos cargados', value: `${importedData.movements.length} movimiento(s)` },
     { ok: !!last, label: 'Última acción del bot', value: last ? `${botActionLabel(last.action_type)} · ${last.status}` : 'Sin acciones' },
@@ -3315,7 +3373,8 @@ function parseStockAdditionCommand(text) {
 function looksOperationalIntent(text) {
   const t = normalizeText(text)
   const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|sumale|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
-  return stockIntent || /(vendi|venta|gasto|compre|compra|agregar producto|agrega producto|editar producto|edita producto)/.test(t)
+  const actionAtStart = /^(vendi|vender|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
+  return stockIntent || actionAtStart
 }
 
 function parseBotCommand(text) {
@@ -3489,7 +3548,7 @@ function botActionPage(actionType) {
 
 function botActionTitle(actionType) {
   const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
-  return map[actionType] || 'Accion operativa'
+  return map[actionType] || 'Acción operativa'
 }
 
 function botActionNotes(preview) {
@@ -3774,7 +3833,11 @@ function renderImportPreview() {
   document.getElementById('im-bot-preview-card').style.display = 'none'
   document.getElementById('im-preview-card').style.display = importRows.length ? 'block' : 'none'
   const btn = document.getElementById('im-confirm-btn')
-  if (btn) { btn.disabled = false; btn.textContent = 'Confirmar carga' }
+  const hasValidRows = importRows.some(row => row.status !== 'error')
+  if (btn) {
+    btn.disabled = !hasValidRows
+    btn.textContent = hasValidRows ? 'Confirmar carga' : 'No hay filas válidas'
+  }
   const b = { listo: 'bg', revisar: 'by', error: 'br' }
   document.getElementById('im-preview').innerHTML = importRows.map(r => {
     const notes = [...r.errors, ...r.warnings].map(escapeHTML).join('<br>') || '—'
@@ -3844,7 +3907,7 @@ function cancelAIBotAction() {
   if (box) {
     const div = document.createElement('div')
     div.className = 'ai-msg ai-thnk'
-    div.textContent = 'Accion cancelada. No se guardo nada.'
+    div.textContent = 'Acción cancelada. No se guardó nada.'
     box.appendChild(div)
     box.scrollTop = box.scrollHeight
   }
@@ -3875,20 +3938,20 @@ async function confirmBotAction(surface = botActionSurface) {
     }
     botActionPreview = null
     botActionSurface = 'import'
-    btn.disabled = true; btn.textContent = 'Accion confirmada'
+    btn.disabled = true; btn.textContent = 'Acción confirmada'
     invalidateUnifiedFinances()
     invalidateSalesSummary()
     await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
-      appendAIMessage('Accion confirmada. Actualice los datos y te llevo a la seccion correspondiente.', 'bot')
+      appendAIMessage('Acción confirmada. Actualicé los datos y te llevo a la sección correspondiente.', 'bot')
       goPage(botActionPage(actionType))
       closeAI()
     } else {
       document.getElementById('im-bot-preview-card').style.display = 'none'
     }
-    toast('Accion confirmada')
+    toast('Acción confirmada')
   } catch (e) {
     const friendly = friendlyBotError(e)
     await sb.from('bot_actions').update({ status: 'failed', error: friendly }).eq('id', action.id).eq('user_id', CU.id)
@@ -3957,6 +4020,30 @@ function appendAIMessage(text, type = 'bot') {
   return div
 }
 
+function advisorFallbackReply(message) {
+  const text = normalizeText(message)
+  const finance = unifiedFinanceCache?.totals || { ingresos: 0, egresos: 0, balance: 0 }
+  const stock = stockTotals(importedData.inventory || [])
+  if (/\bmargen\b/.test(text)) {
+    return '**Margen de venta** es el porcentaje del precio que queda después de descontar el costo del producto. Fórmula: `(precio - costo) / precio × 100`. No es lo mismo que caja ni contempla automáticamente todos los gastos fijos.'
+  }
+  if (/ganancia|rentabilidad/.test(text)) {
+    return '**Ganancia de ventas** es lo vendido menos el costo de los productos vendidos. Para saber si el negocio completo es rentable también hay que considerar personal, alquiler, impuestos y otros gastos.'
+  }
+  if (/punto de equilibrio|gastos fijos/.test(text)) {
+    return 'Kairós usa los gastos fijos cargados como referencia mensual de cobertura. Cuando los ingresos superan esa referencia, los gastos fijos están cubiertos; todavía hay que revisar costos variables y costo del equipo.'
+  }
+  if (/stock|inventario|reponer/.test(text)) {
+    return stock.count
+      ? `Tenés **${stock.count} productos** en el inventario: ${stock.rojo} en rojo, ${stock.amarillo} en amarillo y ${stock.verde} en verde. Abrí Productos → “¿Qué se está terminando?” para revisar los que requieren reposición.`
+      : 'Todavía no hay productos en el inventario nuevo. Podés crear uno desde Productos o escribir: “agregá producto toalla azul stock 10 costo 5000 precio 10000”.'
+  }
+  if (/como esta|como va|resumen|estado del negocio/.test(text)) {
+    return `Este mes entraron **${money(finance.ingresos)}**, salieron **${money(finance.egresos)}** y el resultado de caja es **${money(finance.balance)}**. El inventario tiene ${stock.count} productos y ${stock.rojo + stock.amarillo} requieren atención de stock.`
+  }
+  return 'El asesor online no respondió, así que activé el modo de respaldo. Puedo explicarte margen, ganancia, gastos fijos, stock o darte un resumen del negocio. Las acciones operativas como ventas, gastos y reposiciones siguen funcionando con preview y confirmación.'
+}
+
 async function sendAI() {
   const inp = document.getElementById('ai-inp')
   const msg = inp.value.trim(); if (!msg) return
@@ -3994,8 +4081,11 @@ async function sendAI() {
     loadDiv.remove()
 
     if (error) {
-      appendAIMessage('Error al conectar con el asesor. Intentá de nuevo.', 'think')
-      console.error('[Kairós] AI error:', error)
+      const fallback = advisorFallbackReply(msg)
+      aiH.push({ role: 'assistant', content: fallback })
+      if (aiH.length > 20) aiH = aiH.slice(-20)
+      appendAIMessage(fallback, 'bot')
+      console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', error)
       return
     }
 
@@ -4007,8 +4097,8 @@ async function sendAI() {
 
   } catch (e) {
     loadDiv.remove()
-    appendAIMessage('Error de conexión. Intentá de nuevo.', 'think')
-    console.error('[Kairós] AI catch:', e)
+    appendAIMessage(advisorFallbackReply(msg), 'bot')
+    console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', e)
   }
 }
 
