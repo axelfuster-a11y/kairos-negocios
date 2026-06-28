@@ -1,0 +1,3176 @@
+// ══════════════════════════════════════
+// SUPABASE — SIN API KEY DE IA EN EL FRONTEND
+// ══════════════════════════════════════
+const SUPA_URL = 'https://kjnhddhuaydschuqtpad.supabase.co'
+const SUPA_KEY = 'sb_publishable_HxIuPmu3GUr5NTlWOlQG0w_pr61ITsM'
+const { createClient } = supabase
+const sb = createClient(SUPA_URL, SUPA_KEY)
+
+let CU = null
+let activeAppUserId = null
+let lastAutoSuggestedPrice = null
+
+// ══════════════════════════════════════
+// HELPERS — XSS PROTECTION
+// ══════════════════════════════════════
+function escapeHTML(str) {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function V(id) { const e = document.getElementById(id); return e ? e.value : '' }
+function S(id, v) { const e = document.getElementById(id); if (e) e.textContent = v }
+function numOrDefault(id, defaultValue = 0) {
+  const raw = V(id)
+  if (raw === '' || raw === null || raw === undefined) return defaultValue
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : defaultValue
+}
+function fmt(n) { return Math.round(n).toLocaleString('es-AR') }
+function fmtDec(n) { return Number(n).toFixed(1) }
+function today() {
+  const n = new Date()
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
+}
+function getMes() { const n = new Date(); return { m: n.getMonth() + 1, y: n.getFullYear() } }
+
+let toastT
+function toast(msg, isErr = false) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = isErr ? 'on err' : 'on'
+  clearTimeout(toastT)
+  toastT = setTimeout(() => t.className = '', 3500)
+}
+function toastErr(msg) { toast(msg, true) }
+
+function handleSupaError(error, context = '') {
+  if (!error) return false
+  console.error(`[Kairós] Error${context ? ' en ' + context : ''}:`, error)
+  toastErr(`Error: ${error.message || 'algo salió mal'}`)
+  return true
+}
+
+// ══════════════════════════════════════
+// AYUDA CONTEXTUAL — SIMPLE Y CONSISTENTE
+// ══════════════════════════════════════
+const HELP_TEXT_BY_KEY = {
+  ingresos: 'Suma de dinero registrado como ingreso. Puede venir de registros manuales, importaciones, ventas confirmadas o acciones del Asesor IA.',
+  'ingresos del mes': 'Suma de ingresos registrados dentro del mes actual.',
+  'egresos del mes': 'Suma de salidas de dinero registradas dentro del mes actual.',
+  egresos: 'Suma de dinero registrado como egreso o pago.',
+  balance: 'Diferencia entre ingresos y egresos del período seleccionado.',
+  'resultado de caja': 'Ingresos cobrados menos egresos pagados. Mide flujo de dinero, no reemplaza la rentabilidad contable.',
+  'ganancia de ventas': 'Ventas confirmadas menos costo de los productos vendidos.',
+  margen: 'Porcentaje de ganancia sobre ventas. Fórmula general: ganancia dividida por ventas.',
+  'margen de ventas': 'Ganancia de ventas dividida por el total vendido.',
+  'gastos fijos': 'Costos que suelen repetirse todos los meses, como alquiler, servicios o abonos.',
+  'gastos fijos a cubrir': 'Total mensual de gastos fijos cargados. Sirve como referencia para saber cuánto debe generar el negocio.',
+  stock: 'Cantidad disponible de productos. Se compara con el stock mínimo para detectar reposición.',
+  inventario: 'Listado de productos, variantes, costos, precios y disponibilidad.',
+  'estado del stock': 'Clasificación por stock actual frente al mínimo: rojo, amarillo o verde.',
+  'costo estimado de reposicion': 'Unidades faltantes para llegar al stock mínimo multiplicadas por el costo total unitario.',
+  'valor a costo': 'Stock disponible multiplicado por el costo total de cada unidad.',
+  'valor a venta': 'Stock disponible multiplicado por el precio de venta cargado.',
+  roas: 'Retorno de publicidad. Fórmula: ingresos atribuidos a campañas divididos por inversión publicitaria.',
+  cac: 'Costo de adquisición de cliente. Fórmula: inversión publicitaria dividida por clientes generados.',
+  'ticket promedio': 'Total vendido dividido por la cantidad de ventas confirmadas.',
+  'tasa de cierre': 'Ventas cerradas divididas por consultas u oportunidades recibidas.',
+  engagement: 'Interacciones promedio divididas por seguidores. Es una referencia de respuesta del público.',
+  'personas activas': 'Integrantes marcados como activos dentro del equipo.',
+  'costo objetivo mensual': 'Remuneraciones, comisiones y cargas estimadas del equipo activo.',
+  'trabajo pagado este mes': 'Pagos por trabajo registrados durante el mes. No incluye retiros por propiedad.',
+  'monto agendado': 'Suma orientativa de cobros y pagos pendientes con monto cargado. No impacta Dinero hasta registrarlo.',
+  'para hoy': 'Pendientes cuya fecha es hoy o ya venció.',
+  pendientes: 'Elementos que todavía no fueron completados ni cancelados.',
+  'proximos 7 dias': 'Pendientes con fecha dentro de la próxima semana.',
+  preview: 'Vista previa antes de guardar. Permite revisar errores, avisos y destino de cada dato.',
+  'estado del sistema': 'Revisión de tablas, funciones y acciones necesarias para operar sin guardar datos incompletos.',
+  'historial del asesor ia': 'Acciones preparadas, confirmadas o fallidas por el Asesor IA.',
+}
+
+function readableText(el) {
+  return String(el?.textContent || '')
+    .replace(/!/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function helpKey(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s%$]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function contextualHelp(text, type = 'elemento') {
+  const clean = readableText({ textContent: text })
+  const key = helpKey(clean)
+  if (HELP_TEXT_BY_KEY[key]) return HELP_TEXT_BY_KEY[key]
+  for (const [term, info] of Object.entries(HELP_TEXT_BY_KEY)) {
+    if (key.includes(term) || term.includes(key)) return info
+  }
+  if (type === 'seccion') return `Sección ${clean}. Agrupa la información principal y deja los detalles para vistas secundarias.`
+  if (type === 'tarjeta') return `Panel ${clean}. Resume datos o acciones relacionadas para tomar una decisión sin revisar toda la tabla.`
+  if (type === 'accion') return `${clean}. Abre una vista guiada o una acción relacionada con esta parte del negocio.`
+  if (type === 'campo') return `${clean}. Dato usado para guardar, calcular o filtrar esta sección. Si no aplica, puede quedar vacío salvo que esté marcado con *.`
+  return `${clean}. Información de referencia para interpretar este punto.`
+}
+
+function appendInfoButton(target, info, className = '') {
+  if (!target || target.querySelector?.(':scope > .info-dot')) return
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = `info-dot ${className}`.trim()
+  button.dataset.info = info
+  button.textContent = '!'
+  button.setAttribute('aria-label', 'Ver explicación')
+  button.onclick = event => toggleInfo(event, button)
+  target.appendChild(document.createTextNode(' '))
+  target.appendChild(button)
+}
+
+function enhanceContextHelp() {
+  document.querySelectorAll('.page>.ph .pt').forEach(title => {
+    const page = title.closest('.page')
+    const subtitle = page?.querySelector('.ps')?.textContent || ''
+    appendInfoButton(title, `${contextualHelp(readableText(title), 'seccion')} ${subtitle}`.trim(), 'info-dot-section')
+  })
+  document.querySelectorAll('.card-t').forEach(title => appendInfoButton(title, contextualHelp(readableText(title), 'tarjeta')))
+  document.querySelectorAll('.concept .clbl').forEach(title => appendInfoButton(title, contextualHelp(readableText(title), 'tarjeta')))
+  document.querySelectorAll('.guided-menu-copy strong').forEach(title => appendInfoButton(title, contextualHelp(readableText(title), 'accion')))
+  document.querySelectorAll('.div>span,.kol-t,.profile-stat span').forEach(title => appendInfoButton(title, contextualHelp(readableText(title), 'tarjeta')))
+  document.querySelectorAll('.field>label').forEach(label => appendInfoButton(label, contextualHelp(readableText(label), 'campo'), 'info-dot-field'))
+  document.querySelectorAll('.mrow .mlbl,.cost-row .lbl').forEach(label => appendInfoButton(label, contextualHelp(readableText(label), 'elemento')))
+}
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+async function init() {
+  enhanceContextHelp()
+  if (await checkRecovery()) return
+  const { data: { session } } = await sb.auth.getSession()
+  if (session?.user) { CU = session.user; await enterApp() }
+  else { document.getElementById('loading').classList.add('hide'); document.getElementById('auth-screen').style.display = 'flex' }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) { CU = session.user; await enterApp() }
+    else if (event === 'SIGNED_OUT') {
+      resetUserScopedState()
+      CU = null
+      activeAppUserId = null
+      document.getElementById('app').classList.remove('on')
+      document.getElementById('auth-screen').style.display = 'flex'
+    }
+  })
+}
+
+function swTab(t) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('.auth-tab')[t === 'login' ? 0 : 1].classList.add('active')
+  document.getElementById('tab-login').style.display = t === 'login' ? 'block' : 'none'
+  document.getElementById('tab-reg').style.display = t === 'reg' ? 'block' : 'none'
+  document.getElementById('auth-err').style.display = 'none'
+  document.getElementById('auth-ok').style.display = 'none'
+}
+
+function showAuthErr(m) { const e = document.getElementById('auth-err'); e.textContent = m; e.style.display = 'block'; document.getElementById('auth-ok').style.display = 'none' }
+function showAuthOk(m) { const s = document.getElementById('auth-ok'); s.textContent = m; s.style.display = 'block'; document.getElementById('auth-err').style.display = 'none' }
+
+async function doLogin() {
+  const email = V('l-email').trim().toLowerCase(), pass = V('l-pass')
+  if (!email || !pass) { showAuthErr('Complete todos los campos'); return }
+  const btn = document.getElementById('login-btn'); btn.disabled = true; btn.textContent = 'Ingresando...'
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass })
+  btn.disabled = false; btn.textContent = 'Ingresar a Kairós'
+  if (error) showAuthErr(error.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : error.message)
+}
+
+async function doForgotPassword() {
+  const email = V('l-email').trim().toLowerCase()
+  if (!email) { showAuthErr('Ingrese su email para recuperar la contraseña'); return }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  if (error) showAuthErr(error.message)
+  else showAuthOk('Te enviamos un email para recuperar tu contraseña.')
+}
+
+async function doReg() {
+  const name = V('r-name').trim(), email = V('r-email').trim().toLowerCase(), pass = V('r-pass')
+  if (!name || !email || !pass) { showAuthErr('Complete todos los campos'); return }
+  if (pass.length < 6) { showAuthErr('Contraseña mínimo 6 caracteres'); return }
+  const btn = document.getElementById('reg-btn'); btn.disabled = true; btn.textContent = 'Creando...'
+  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { name } } })
+  btn.disabled = false; btn.textContent = 'Crear cuenta gratis'
+  if (error) showAuthErr(error.message)
+  else showAuthOk('Cuenta creada. Ya puede ingresar.')
+}
+
+async function doLogout() {
+  if (!confirm('¿Salir de Kairós?')) return
+  await sb.auth.signOut()
+}
+
+// ══════════════════════════════════════
+// ENTRAR A LA APP
+// ══════════════════════════════════════
+async function enterApp() {
+  if (activeAppUserId !== CU.id) resetUserScopedState()
+  activeAppUserId = CU.id
+  document.getElementById('loading').classList.add('hide')
+  document.getElementById('auth-screen').style.display = 'none'
+  document.getElementById('app').classList.add('on')
+  document.getElementById('tb-user').textContent = CU.email
+  document.getElementById('profile-btn').textContent = String(CU.email || '?').slice(0, 1).toUpperCase()
+  document.getElementById('tx-f').value = today()
+  document.getElementById('team-payment-date').value = today()
+  document.getElementById('org-date').value = today()
+  document.getElementById('org-month').value = today().slice(0, 7)
+  setDashTitle()
+  await renderAll()
+  const biz = await getBiz()
+  setTbBiz(biz)
+  await loadCfg()
+  if (!biz || !biz.nom) openWiz()
+}
+
+// ══════════════════════════════════════
+// WIZARD
+// ══════════════════════════════════════
+function openWiz() { document.getElementById('wizard').classList.add('on') }
+function closeWiz() { document.getElementById('wizard').classList.remove('on') }
+function setWDot(n) { document.querySelectorAll('.wdot').forEach((d, i) => d.classList.toggle('on', i < n)) }
+function wNext(s) {
+  if (s === 1) { if (!V('w-nom').trim()) { alert('Ingrese el nombre'); return }; document.getElementById('ws1').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
+  else { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws3').classList.add('on'); setWDot(3) }
+}
+function wBack(s) {
+  if (s === 2) { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws1').classList.add('on'); setWDot(1) }
+  if (s === 3) { document.getElementById('ws3').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
+}
+async function wFinish() {
+  const btn = document.getElementById('w-finish-btn'); btn.disabled = true; btn.textContent = 'Guardando...'
+  const can = [...document.querySelectorAll('#w-canales input:checked')].map(c => c.value).join(', ')
+  const biz = { user_id: CU.id, nom: V('w-nom').trim(), rub: V('w-rub').trim(), cli: V('w-cli').trim(), prec: parseFloat(V('w-precio')) || 0, can, loc: '', prob: '', dif: '', don: '', prod: '' }
+  const { error } = await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
+  btn.disabled = false; btn.textContent = 'Ingresar a Kairós'
+  if (handleSupaError(error, 'wizard')) return
+  setTbBiz(biz); loadBizForm(biz); closeWiz(); toast('Configuración inicial guardada')
+}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function go(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'))
+  document.querySelectorAll('.ni,.mobile-ni').forEach(n => n.classList.remove('on'))
+  const target = document.getElementById('page-' + page)
+  if (!target) return
+  target.classList.add('on')
+  document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
+  if (['leads', 'org'].includes(page)) document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
+  if (page === 'dash') switchDashboardTab('summary')
+  if (page === 'fin') switchFinanceTab('summary')
+  if (page === 'prod') switchProductTab('inv')
+  if (page === 'org') loadOrganizationData()
+  if (['dash', 'fin', 'prod', 'import'].includes(page)) loadImportedData()
+}
+function goPage(p) {
+  if (!document.getElementById('page-' + p)) return
+  go(p, document.querySelector(`[data-p="${p}"]`))
+}
+
+function showSecondaryTool(name) {
+  toast(`${name} quedará disponible desde Más herramientas cuando se active esa integración.`)
+}
+
+function scrollToImportHistory() {
+  setTimeout(() => {
+    document.getElementById('bot-actions-tb')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 80)
+}
+
+function switchSectionTab(prefix, tab, tabs) {
+  tabs.forEach(name => {
+    document.getElementById(`${prefix}-tab-${name}`)?.classList.toggle('on', name === tab)
+    document.getElementById(`${prefix}-tab-${name}-btn`)?.classList.toggle('on', name === tab)
+  })
+}
+
+function switchDashboardTab(tab) {
+  switchSectionTab('dash', tab, ['summary', 'imported'])
+  if (tab === 'imported') loadImportedData()
+}
+
+function switchFinanceTab(tab) {
+  switchSectionTab('fin', tab, ['summary', 'movements', 'imported', 'fixed', 'team'])
+  if (tab === 'imported') loadImportedData()
+  if (tab === 'team') loadTeamData()
+}
+
+function toggleAdvanced(id, button) {
+  const section = document.getElementById(id)
+  if (!section) return
+  const open = section.classList.toggle('on')
+  if (button) button.textContent = open ? 'Ocultar detalles' : button.dataset.closedLabel || 'Ver detalles'
+}
+
+function openAdvanced(id) {
+  document.getElementById(id)?.classList.add('on')
+}
+
+function showFinanceQuestion(tab) {
+  openAdvanced('fin-advanced')
+  switchFinanceTab(tab)
+  document.getElementById(`fin-tab-${tab}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function goFinanceDetail(tab) {
+  goPage('fin')
+  showFinanceQuestion(tab)
+}
+
+function showProductQuestion(tab, filter = 'all') {
+  inventoryViewFilter = filter
+  openAdvanced('prod-advanced')
+  switchProductTab(tab)
+  if (tab === 'inv') renderImportedInventory()
+  document.getElementById(tab === 'carga' ? 'prod-tab-carga-pane' : 'prod-tab-inv-pane')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function clearInventoryFilter() {
+  inventoryViewFilter = 'all'
+  renderImportedInventory()
+}
+
+function openAIWithBusinessSummary() {
+  openAI()
+  const input = document.getElementById('ai-inp')
+  input.value = '¿Cómo está mi negocio y qué me conviene hacer ahora?'
+  input.focus()
+  input.setSelectionRange(0, input.value.length)
+}
+
+function toggleInfo(event, button) {
+  event.stopPropagation()
+  document.querySelectorAll('.info-dot.on').forEach(el => { if (el !== button) el.classList.remove('on') })
+  button.classList.toggle('on')
+}
+
+document.addEventListener('click', event => {
+  if (!event.target.closest('.info-dot')) document.querySelectorAll('.info-dot.on').forEach(el => el.classList.remove('on'))
+})
+
+function startDashboardAction(action) {
+  if (action === 'venta') {
+    openAI()
+    const input = document.getElementById('ai-inp')
+    input.value = 'Registrar venta: '
+    input.setSelectionRange(input.value.length, input.value.length)
+    return
+  }
+  if (action === 'gasto') {
+    goPage('fin')
+    showFinanceQuestion('movements')
+    document.getElementById('tx-t').value = 'egreso'
+    document.getElementById('tx-d').focus()
+    return
+  }
+  if (action === 'producto') {
+    goPage('prod')
+    showProductQuestion('carga')
+    document.getElementById('p-n').focus()
+  }
+}
+
+function seedAIExample(text) {
+  openAI()
+  const input = document.getElementById('ai-inp')
+  input.value = text
+  input.focus()
+  input.setSelectionRange(0, input.value.length)
+}
+
+function openProductAIHelp() {
+  openAI()
+  appendAIMessage('Para crear un producto indique nombre, stock, costo y precio. También puede agregar categoría, color o medida. Se mostrará una vista previa antes de guardar.', 'bot')
+  const input = document.getElementById('ai-inp')
+  input.value = 'agregar producto '
+  input.focus()
+  input.setSelectionRange(input.value.length, input.value.length)
+}
+
+// ══════════════════════════════════════
+// NEGOCIO
+// ══════════════════════════════════════
+async function getBiz() {
+  const { data, error } = await sb.from('negocios').select('*').eq('user_id', CU.id).single()
+  if (error && error.code !== 'PGRST116') console.error('[Kairós] getBiz:', error)
+  return data
+}
+
+let bizTimer = null
+async function saveBiz(force = false) {
+  const biz = { user_id: CU.id, nom: V('b-nom'), rub: V('b-rub'), loc: V('b-loc'), can: V('b-can'), prob: V('b-prob'), dif: V('b-dif'), cli: V('b-cli'), don: V('b-don'), prod: V('b-prod'), prec: parseFloat(V('b-prec')) || 0 }
+  setTbBiz(biz)
+  const doSave = async () => {
+    const { error } = await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
+    if (handleSupaError(error, 'saveBiz')) return
+    if (force) toast('Negocio guardado')
+  }
+  if (force) { await doSave() } else { clearTimeout(bizTimer); bizTimer = setTimeout(doSave, 1500) }
+}
+
+function loadBizForm(b) {
+  if (!b) return
+  ;[['b-nom', 'nom'], ['b-rub', 'rub'], ['b-loc', 'loc'], ['b-can', 'can'], ['b-prob', 'prob'], ['b-dif', 'dif'], ['b-cli', 'cli'], ['b-don', 'don'], ['b-prod', 'prod'], ['b-prec', 'prec']].forEach(([id, k]) => { const e = document.getElementById(id); if (e) e.value = b[k] || '' })
+  setTbBiz(b)
+}
+
+function setTbBiz(b) {
+  document.getElementById('tb-biz').innerHTML = b?.nom
+    ? `<strong>${escapeHTML(b.nom)}</strong>${b.rub ? ' · ' + escapeHTML(b.rub) : ''}`
+    : '<span style="color:var(--txt3)">Sin negocio configurado</span>'
+}
+
+async function openProfile() {
+  const modal = document.getElementById('profile-ov')
+  modal.classList.add('on')
+  document.getElementById('profile-email').textContent = CU?.email || '—'
+  document.getElementById('profile-created').textContent = CU?.created_at ? new Date(CU.created_at).toLocaleDateString('es-AR') : '—'
+  document.getElementById('profile-business').textContent = 'Cargando...'
+  try {
+    const [biz, leadResult, finance] = await Promise.all([
+      getBiz(),
+      sb.from('leads').select('id', { count: 'exact', head: true }).eq('user_id', CU.id).neq('estado', 'cliente'),
+      loadUnifiedFinances(),
+      loadImportedData()
+    ])
+    if (leadResult.error) throw leadResult.error
+    document.getElementById('profile-business').textContent = biz?.nom || 'Sin configurar'
+    document.getElementById('profile-category').textContent = biz?.rub || '—'
+    document.getElementById('profile-products').textContent = importedData.inventory.length
+    document.getElementById('profile-movements').textContent = finance.recent.length
+    document.getElementById('profile-leads').textContent = leadResult.count || 0
+    const parts = [
+      biz?.nom ? `${biz.nom}${biz.rub ? ` es un negocio de ${biz.rub}` : ''}.` : 'El nombre del negocio aún no está configurado.',
+      biz?.cli ? `Cliente principal: ${biz.cli}.` : '',
+      biz?.can ? `Canales: ${biz.can}.` : '',
+      importedData.inventory.length ? `${importedData.inventory.length} productos en inventario.` : 'Sin productos en el inventario nuevo.'
+    ].filter(Boolean)
+    document.getElementById('profile-summary-text').textContent = parts.join(' ')
+  } catch (error) {
+    console.error('[Kairós] openProfile:', error)
+    document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intentá nuevamente.'
+  }
+}
+
+function closeProfile() {
+  document.getElementById('profile-ov').classList.remove('on')
+}
+
+function setDashTitle() {
+  const h = new Date().getHours()
+  S('dash-title', h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches')
+}
+
+// ══════════════════════════════════════
+// CONFIGURACIÓN DE COSTOS
+// ══════════════════════════════════════
+let cfgTimer = null
+async function saveCfg() {
+  clearTimeout(cfgTimer)
+  cfgTimer = setTimeout(async () => {
+    const cfg = {
+      user_id: CU.id,
+      packaging_default: numOrDefault('cfg-pkg'),
+      envio_default: numOrDefault('cfg-env'),
+      comision_plataforma_default_pct: numOrDefault('cfg-cplat'),
+      comision_pago_default_pct: numOrDefault('cfg-cpago'),
+      impuestos_default_pct: numOrDefault('cfg-imp'),
+      descuento_default_pct: numOrDefault('cfg-desc'),
+      margen_deseado_default_pct: numOrDefault('cfg-mar', 30),
+    }
+    const { error } = await sb.from('configuracion_costos').upsert(cfg, { onConflict: 'user_id' })
+    if (!handleSupaError(error, 'saveCfg')) calcCosto()
+  }, 1000)
+}
+
+async function loadCfg() {
+  const { data, error } = await sb.from('configuracion_costos').select('*').eq('user_id', CU.id).single()
+  if (error && error.code !== 'PGRST116') return
+  if (!data) return
+  const map = [['cfg-pkg','packaging_default'],['cfg-env','envio_default'],['cfg-cplat','comision_plataforma_default_pct'],['cfg-cpago','comision_pago_default_pct'],['cfg-imp','impuestos_default_pct'],['cfg-desc','descuento_default_pct'],['cfg-mar','margen_deseado_default_pct']]
+  map.forEach(([id, k]) => { const e = document.getElementById(id); if (e && data[k] !== undefined) e.value = data[k] })
+  // Pre-llenar campos del producto con defaults
+  prefillProdFromCfg(data)
+}
+
+function prefillProdFromCfg(cfg) {
+  if (!cfg) return
+  const map = [['p-pkg','packaging_default'],['p-env','envio_default'],['p-cplat','comision_plataforma_default_pct'],['p-cpago','comision_pago_default_pct'],['p-imp','impuestos_default_pct'],['p-desc','descuento_default_pct'],['p-mar','margen_deseado_default_pct']]
+  map.forEach(([id, k]) => { const e = document.getElementById(id); if (e && (e.value === '' || e.value === '0') && cfg[k] !== undefined && cfg[k] !== null) e.value = cfg[k] })
+}
+
+// ══════════════════════════════════════
+// MOTOR DE COSTOS
+// ══════════════════════════════════════
+function calcCosto() {
+  /*
+   * Motor de costos:
+   * - Costo base = producto + packaging + envio absorbido por el negocio.
+   * - Comisiones, impuestos y descuentos se calculan sobre el precio de venta.
+   * - Precio minimo rentable = costo base / (1 - porcentajes variables).
+   * - Precio sugerido incorpora el margen deseado configurado.
+   * - Ganancia bruta = precio elegido - costo base - costos variables.
+   * - Margen real = ganancia bruta / precio elegido * 100.
+   */
+  const co = numOrDefault('p-co')
+  const pkg = numOrDefault('p-pkg')
+  const env = numOrDefault('p-env')
+  const envp = V('p-envp')
+  const cplat = numOrDefault('p-cplat') / 100
+  const cpago = numOrDefault('p-cpago') / 100
+  const imp = numOrDefault('p-imp') / 100
+  const desc = numOrDefault('p-desc') / 100
+  const mar = numOrDefault('p-mar', 30) / 100
+  const currentPrice = numOrDefault('p-pr')
+  const pvManual = lastAutoSuggestedPrice !== null && currentPrice === lastAutoSuggestedPrice ? 0 : currentPrice
+
+  const alert = document.getElementById('p-cost-alert')
+  const result = document.getElementById('p-cost-result')
+
+  if (co <= 0) { result.style.display = 'none'; alert.style.display = 'none'; return }
+
+  // Envío absorbido
+  let envAbs = 0
+  if (envp === 'negocio') envAbs = env
+  else if (envp === 'mixto') envAbs = env * 0.5
+
+  const costoBase = co + pkg + envAbs
+  const pctTotal = cplat + cpago + imp + desc
+
+  // Validaciones de porcentajes
+  if (pctTotal >= 1) {
+    alert.className = 'cost-alert red'; alert.style.display = 'block'
+    alert.textContent = 'Las comisiones y descuentos superan el 100%. Revise los porcentajes.'
+    result.style.display = 'none'; return
+  }
+  if (pctTotal + mar >= 1) {
+    alert.className = 'cost-alert red'; alert.style.display = 'block'
+    alert.textContent = 'El margen deseado no es posible con estos costos y comisiones.'
+    result.style.display = 'none'; return
+  }
+
+  const precioMin = costoBase / (1 - pctTotal)
+  const precioSug = costoBase / (1 - pctTotal - mar)
+  const pv = pvManual > 0 ? pvManual : precioSug
+  const ganancia = pv - costoBase - (pv * pctTotal)
+  const margenReal = pv > 0 ? (ganancia / pv) * 100 : 0
+
+  // Mostrar resultados
+  result.style.display = 'block'
+  S('cr-costo', '$' + fmt(costoBase))
+  S('cr-min', '$' + fmt(precioMin))
+  S('cr-sug', '$' + fmt(precioSug))
+  S('cr-gan', '$' + fmt(ganancia))
+  S('cr-mar', fmtDec(margenReal) + '%')
+  document.getElementById('cr-mar').style.color = margenReal > 15 ? 'var(--green)' : margenReal > 0 ? 'var(--yel)' : 'var(--red)'
+  document.getElementById('cr-gan').style.color = ganancia > 0 ? 'var(--green)' : 'var(--red)'
+
+  // Si el usuario no puso precio manual, sugerir
+  if (pvManual <= 0) {
+    lastAutoSuggestedPrice = Math.ceil(precioSug)
+    document.getElementById('p-pr').value = lastAutoSuggestedPrice
+  }
+
+  // Alerta de rentabilidad
+  if (pvManual > 0 && pvManual < precioMin) {
+    alert.className = 'cost-alert red'; alert.style.display = 'block'
+    alert.textContent = 'Este producto pierde dinero con el precio actual. Mínimo rentable: $' + fmt(precioMin)
+  } else if (margenReal < 0) {
+    alert.className = 'cost-alert red'; alert.style.display = 'block'
+    alert.textContent = 'Margen negativo. Cada venta queda por debajo del costo.'
+  } else if (margenReal < 15) {
+    alert.className = 'cost-alert yel'; alert.style.display = 'block'
+    alert.textContent = 'Margen bajo (' + fmtDec(margenReal) + '%). Revise costos o ajuste el precio.'
+  } else {
+    alert.className = 'cost-alert grn'; alert.style.display = 'block'
+    alert.textContent = 'Producto rentable. Margen: ' + fmtDec(margenReal) + '%'
+  }
+
+  return { costoBase, precioMin, precioSug, pv: pvManual > 0 ? pvManual : precioSug, ganancia, margenReal }
+}
+
+function markManualProductPrice() {
+  const currentPrice = numOrDefault('p-pr')
+  if (lastAutoSuggestedPrice !== null && currentPrice !== lastAutoSuggestedPrice) lastAutoSuggestedPrice = null
+}
+
+// ══════════════════════════════════════
+// FINANZAS
+// ══════════════════════════════════════
+let unifiedFinanceCache = null
+let unifiedFinancePromise = null
+let salesSummaryCache = null
+let salesSummaryPromise = null
+
+function invalidateUnifiedFinances() {
+  unifiedFinanceCache = null
+  unifiedFinancePromise = null
+}
+
+function invalidateSalesSummary() {
+  salesSummaryCache = null
+  salesSummaryPromise = null
+}
+
+function resetUserScopedState() {
+  invalidateUnifiedFinances()
+  invalidateSalesSummary()
+  importedLoadPromise = null
+  importedData = { movements: [], movementsMonth: [], inventory: [], inventoryLatest: [], batches: [], loading: false, error: null }
+  importedData.botActions = []
+  importedData.inventorySaleIds = new Set()
+  teamData = { members: [], payments: [], settings: { reserva_minima: 0, max_pago_duenio_pct: 50 }, available: true }
+  organizationData = []
+  organizationAvailable = true
+  importRows = []
+  importSource = 'manual'
+  botActionPreview = null
+  botActionSurface = 'import'
+  inventoryViewFilter = 'all'
+  aiH = []
+  lastAutoSuggestedPrice = null
+  closeAI()
+  closeProfile()
+  closeImportedInventoryModal()
+  document.getElementById('wizard')?.classList.remove('on')
+  document.getElementById('im-preview-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
+  document.getElementById('im-summary-card').style.display = 'none'
+  setTbBiz(null)
+  ;[
+    'b-nom', 'b-rub', 'b-loc', 'b-can', 'b-prob', 'b-dif', 'b-cli', 'b-don', 'b-prod', 'b-prec',
+    'cfg-pkg', 'cfg-env', 'cfg-cplat', 'cfg-cpago', 'cfg-imp', 'cfg-desc', 'cfg-mar',
+    'p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'
+  ]
+    .forEach(id => { const element = document.getElementById(id); if (element) element.value = '' })
+}
+
+function financeDateKey(row) {
+  return row.fecha || (row.created_at ? String(row.created_at).slice(0, 10) : null)
+}
+
+function normalizeLegacyMovement(row) {
+  return {
+    ...row,
+    categoria: row.cat || 'sin_categoria',
+    fuente: 'histórico',
+    sourceTable: 'transacciones'
+  }
+}
+
+function normalizeOperationalMovement(row) {
+  return {
+    ...row,
+    categoria: row.categoria || 'sin_categoria',
+    fuente: row.origen === 'manual' ? 'manual' : row.origen === 'bot' ? 'Asesor IA' : row.origen || 'Carga inteligente',
+    sourceTable: 'movimientos_financieros'
+  }
+}
+
+function movementHasAmount(row) {
+  return Number(row?.monto) > 0
+}
+
+function movementAmountText(row) {
+  if (!movementHasAmount(row)) return 'Sin monto'
+  return `${row.tipo === 'ingreso' ? '+' : '-'}$${fmt(row.monto)}`
+}
+
+async function loadUnifiedFinances(force = false) {
+  if (!force && unifiedFinanceCache) return unifiedFinanceCache
+  if (!force && unifiedFinancePromise) return unifiedFinancePromise
+  unifiedFinancePromise = (async () => {
+    const { m, y } = getMes()
+    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+    const [legacyResult, operationalResult] = await Promise.all([
+      sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000),
+      sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+    ])
+    if (legacyResult.error) console.error('[Kairós] finanzas históricas:', legacyResult.error)
+    if (operationalResult.error) console.error('[Kairós] finanzas operativas:', operationalResult.error)
+    if (legacyResult.error && operationalResult.error) throw operationalResult.error
+    const all = [
+      ...(legacyResult.data || []).map(normalizeLegacyMovement),
+      ...(operationalResult.data || []).map(normalizeOperationalMovement)
+    ].sort((a, b) => String(b.created_at || b.fecha || '').localeCompare(String(a.created_at || a.fecha || '')))
+    const month = all.filter(row => {
+      const key = financeDateKey(row)
+      return key && key >= monthStart && key < monthEnd
+    })
+    unifiedFinanceCache = {
+      all,
+      month,
+      recent: all.slice(0, 50),
+      totals: movementTotals(month),
+      monthStart,
+      monthEnd
+    }
+    return unifiedFinanceCache
+  })()
+  try {
+    return await unifiedFinancePromise
+  } finally {
+    unifiedFinancePromise = null
+  }
+}
+
+async function loadSalesSummary(force = false) {
+  if (!force && salesSummaryCache) return salesSummaryCache
+  if (!force && salesSummaryPromise) return salesSummaryPromise
+  salesSummaryPromise = (async () => {
+    const { m, y } = getMes()
+    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+    const { data, error } = await sb.from('ventas').select('id,fecha,total,costo_total,ganancia,created_at').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
+    if (error) throw error
+    const sales = (data || []).filter(sale => {
+      const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
+      return key && key >= monthStart && key < monthEnd
+    })
+    const total = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
+    const cost = sales.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
+    const profit = sales.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
+    salesSummaryCache = {
+      sales,
+      count: sales.length,
+      total,
+      cost,
+      profit,
+      margin: total > 0 ? (profit / total) * 100 : 0
+    }
+    return salesSummaryCache
+  })()
+  try {
+    return await salesSummaryPromise
+  } finally {
+    salesSummaryPromise = null
+  }
+}
+
+async function addTx() {
+  const d = V('tx-d').trim(), mo = parseFloat(V('tx-m')) || 0
+  if (!d) { toastErr('Ingrese una descripción'); return }
+  if (mo <= 0) { toastErr('El monto debe ser mayor a 0'); return }
+  const { error } = await sb.from('movimientos_financieros').insert({
+    user_id: CU.id,
+    tipo: V('tx-t'),
+    descripcion: d,
+    categoria: V('tx-c') || 'sin_categoria',
+    monto: mo,
+    fecha: V('tx-f') || today(),
+    origen: 'manual'
+  })
+  if (handleSupaError(error, 'addTx')) return
+  invalidateUnifiedFinances()
+  document.getElementById('tx-d').value = ''; document.getElementById('tx-m').value = ''
+  await Promise.all([renderFin(), renderDash(), loadImportedData()]); toast('Movimiento registrado')
+}
+
+async function delTx(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return
+  const { error } = await sb.from('transacciones').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delTx')) return
+  invalidateUnifiedFinances()
+  await renderFin(); await renderDash()
+}
+
+async function deleteUnifiedMovement(sourceTable, id) {
+  const sourceLabel = sourceTable === 'transacciones' ? 'histórico' : 'operativo'
+  if (!confirm(`¿Eliminar este movimiento ${sourceLabel}?`)) return
+  const { error } = await sb.from(sourceTable).delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteUnifiedMovement')) return
+  invalidateUnifiedFinances()
+  await Promise.all([renderFin(), renderDash(), loadImportedData()])
+  toast('Movimiento eliminado')
+}
+
+async function addGF() {
+  const n = V('gf-n').trim(), m = parseFloat(V('gf-m')) || 0
+  if (!n) { toastErr('Ingrese un nombre'); return }
+  if (m <= 0) { toastErr('El monto debe ser mayor a 0'); return }
+  const { error } = await sb.from('gastos_fijos').insert({ user_id: CU.id, nom: n, mon: m })
+  if (handleSupaError(error, 'addGF')) return
+  document.getElementById('gf-n').value = ''; document.getElementById('gf-m').value = ''
+  await renderFin(); await renderDash(); toast('Gasto fijo agregado')
+}
+
+async function delGF(id) {
+  if (!confirm('¿Eliminar?')) return
+  const { error } = await sb.from('gastos_fijos').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delGF')) return
+  await renderFin(); await renderDash()
+}
+
+async function renderFin() {
+  const [finance, sales, fixedResult] = await Promise.all([
+    loadUnifiedFinances(),
+    loadSalesSummary(),
+    sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
+  ])
+  if (fixedResult.error) console.error('[Kairós] renderFin gastos fijos:', fixedResult.error)
+  const all = finance.month
+  const allGF = fixedResult.data || []
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const tf = allGF.reduce((a, b) => a + (Number(b.mon) || 0), 0)
+  S('f-ing', '$' + fmt(ing)); S('f-ing-n', all.filter(t => t.tipo === 'ingreso' && movementHasAmount(t)).length + ' registros con monto')
+  S('f-egr', '$' + fmt(egr)); S('f-egr-n', all.filter(t => t.tipo === 'egreso' && movementHasAmount(t)).length + ' registros con monto')
+  S('f-gan', '$' + fmt(gan)); document.getElementById('f-gan').style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'
+  S('f-mar', 'Sobre ingresos: ' + mar + '%'); S('f-eq', '$' + fmt(tf))
+  S('f-sales-profit', money(sales.profit))
+  S('f-sales-count', `${sales.count} venta${sales.count === 1 ? '' : 's'} · ${money(sales.total)} vendido`)
+  S('f-sales-margin', fmtDec(sales.margin) + '%')
+  document.getElementById('f-sales-profit').style.color = sales.profit >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('f-sales-margin').style.color = sales.margin >= 25 ? 'var(--green)' : sales.margin >= 0 ? 'var(--yel)' : 'var(--red)'
+  const pct = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
+  const bar = document.getElementById('f-eq-b'); bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--yel)' : 'var(--red)'
+  document.getElementById('tx-tb').innerHTML = !finance.recent.length
+    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">·</div>Sin movimientos</div></td></tr>'
+    : finance.recent.map(t => `<tr>
+        <td>${escapeHTML(t.descripcion)}</td>
+        <td>${escapeHTML(t.categoria || 'sin_categoria')}</td>
+        <td><span class="badge ${t.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(t.tipo)}</span></td>
+        <td style="font-weight:600;color:${movementHasAmount(t) ? (t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)') : 'var(--yel)'}">${movementHasAmount(t) ? '$' + fmt(t.monto) : 'Sin monto'}</td>
+        <td style="color:var(--txt3)">${escapeHTML(financeDateKey(t) || '—')}</td>
+        <td><span class="badge bb">${escapeHTML(t.fuente)}</span></td>
+        <td><button class="btn btn-del" onclick="deleteUnifiedMovement('${t.sourceTable}','${t.id}')">✕</button></td>
+      </tr>`).join('')
+  document.getElementById('gf-lista').innerHTML = !allGF.length
+    ? '<div class="empty" style="padding:20px"><div class="empty-i">·</div>Sin gastos fijos</div>'
+    : allGF.map(g => `<div class="mrow"><div class="mlbl">${escapeHTML(g.nom)}</div><div style="display:flex;align-items:center;gap:10px"><div class="mval" style="color:var(--red)">$${fmt(g.mon)}</div><button class="btn btn-del" onclick="delGF('${g.id}')">✕</button></div></div>`).join('')
+  S('gf-tot', '$' + fmt(tf))
+}
+
+// ══════════════════════════════════════
+// EQUIPO Y REMUNERACIONES
+// ══════════════════════════════════════
+let teamData = { members: [], payments: [], settings: { reserva_minima: 0, max_pago_duenio_pct: 50 }, available: true }
+
+function teamTypeLabel(type) {
+  const labels = { duenio: 'Dueño/a', socio: 'Socio/a', empleado: 'Empleado/a', colaborador: 'Colaborador/a' }
+  return labels[type] || type || '—'
+}
+
+function teamPaymentLabel(type) {
+  const labels = {
+    sueldo: 'Sueldo',
+    honorario: 'Honorario',
+    bono: 'Bono',
+    comision: 'Comisión',
+    retiro_duenio: 'Retiro del dueño',
+    distribucion_utilidad: 'Distribución de utilidad',
+    otro: 'Otro'
+  }
+  return labels[type] || type || '—'
+}
+
+function syncTeamPaymentTypes() {
+  const select = document.getElementById('team-payment-type')
+  if (!select) return
+  const member = teamData.members.find(item => item.id === V('team-payment-member'))
+  const isOwner = member && ['duenio', 'socio'].includes(member.tipo)
+  const current = select.value
+  const options = [
+    ['sueldo', 'Sueldo'],
+    ['honorario', 'Honorario'],
+    ['bono', 'Bono'],
+    ['comision', 'Comisión'],
+    ['otro', 'Otro']
+  ]
+  if (isOwner) {
+    options.push(['retiro_duenio', 'Retiro del dueño'])
+    options.push(['distribucion_utilidad', 'Distribución de utilidad'])
+  }
+  select.innerHTML = options.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')
+  if (options.some(([value]) => value === current)) select.value = current
+}
+
+function isTeamSchemaMissing(error) {
+  const message = String(error?.message || '')
+  return error?.code === 'PGRST205' || message.includes('team_members') || message.includes('team_payments') || message.includes('team_settings')
+}
+
+function setTeamControlsDisabled(disabled) {
+  document.querySelectorAll('#fin-tab-team input, #fin-tab-team select, #fin-tab-team button:not(.info-dot)')
+    .forEach(control => { control.disabled = disabled })
+}
+
+function teamWorkPayments(memberId) {
+  return teamData.payments
+    .filter(p => p.team_member_id === memberId && !['retiro_duenio', 'distribucion_utilidad'].includes(p.tipo))
+    .reduce((sum, p) => sum + (Number(p.monto) || 0), 0)
+}
+
+function teamMemberWorkTarget(member, salesTotal = 0) {
+  const target = Number(member.remuneracion_objetivo) || 0
+  const commission = Math.max(0, Number(salesTotal) || 0) * ((Number(member.comision_pct) || 0) / 100)
+  return target + commission
+}
+
+function teamMemberEstimatedCost(member, salesTotal = 0) {
+  return teamMemberWorkTarget(member, salesTotal) * (1 + (Number(member.cargas_pct) || 0) / 100)
+}
+
+async function loadTeamData() {
+  if (!CU) return
+  const state = document.getElementById('team-state')
+  if (state) state.innerHTML = '<div class="empty" style="padding:14px">Cargando equipo...</div>'
+  const { m, y } = getMes()
+  const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const [membersResult, paymentsResult, settingsResult] = await Promise.all([
+    sb.from('team_members').select('*').eq('user_id', CU.id).order('activo', { ascending: false }).order('created_at', { ascending: true }),
+    sb.from('team_payments').select('*').eq('user_id', CU.id).gte('fecha', monthStart).lt('fecha', monthEnd).order('fecha', { ascending: false }).limit(200),
+    sb.from('team_settings').select('*').eq('user_id', CU.id).maybeSingle()
+  ])
+  const firstError = membersResult.error || paymentsResult.error || settingsResult.error
+  if (firstError) {
+    teamData.available = false
+    setTeamControlsDisabled(true)
+    if (state) {
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Equipo todavía no está activado en esta base</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Los controles están bloqueados para no perder datos. Aplicá <strong>supabase/migrations/004_team_compensation.sql</strong> en Supabase SQL Editor; después volvé a esta pestaña y tocá Reintentar.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadTeamData()">Reintentar</button></div></div>`
+    }
+    if (isTeamSchemaMissing(firstError)) console.warn('[Kairós] Equipo pendiente de migración 004')
+    else console.error('[Kairós] loadTeamData:', firstError)
+    return
+  }
+  teamData.available = true
+  setTeamControlsDisabled(false)
+  teamData.members = membersResult.data || []
+  teamData.payments = paymentsResult.data || []
+  teamData.settings = settingsResult.data || { reserva_minima: 0, max_pago_duenio_pct: 50 }
+  if (state) state.innerHTML = ''
+  await renderTeamData()
+}
+
+async function renderTeamData() {
+  const active = teamData.members.filter(m => m.activo)
+  const [finance, sales] = await Promise.all([loadUnifiedFinances(), loadSalesSummary()])
+  const totalTarget = active.reduce((sum, member) => sum + teamMemberEstimatedCost(member, sales.total), 0)
+  const totalPaid = teamData.payments
+    .filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
+    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0)
+  const owners = active.filter(member => member.tipo === 'duenio')
+  const ownerGap = owners.reduce((sum, owner) => {
+    const pending = Math.max(0, teamMemberWorkTarget(owner, sales.total) - teamWorkPayments(owner.id))
+    return sum + pending
+  }, 0)
+  const cashResult = finance.totals.balance
+  const reserve = Number(teamData.settings.reserva_minima) || 0
+  const cap = (Number(teamData.settings.max_pago_duenio_pct) || 0) / 100
+  const cashAvailable = Math.max(0, cashResult - reserve)
+  const ownerSuggested = Math.min(ownerGap, cashAvailable * cap)
+
+  S('team-count', active.length)
+  S('team-target', money(totalTarget))
+  S('team-paid', money(totalPaid))
+  S('team-owner-gap', money(ownerGap))
+  S('team-cash-result', money(cashResult))
+  S('team-reserve-view', money(reserve))
+  S('team-owner-suggested', money(ownerSuggested))
+  document.getElementById('team-cash-result').style.color = cashResult >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('team-reserve').value = reserve
+  document.getElementById('team-owner-cap').value = Number(teamData.settings.max_pago_duenio_pct) || 0
+
+  const memberSelect = document.getElementById('team-payment-member')
+  memberSelect.innerHTML = '<option value="">Seleccioná...</option>' + active.map(member => `<option value="${member.id}">${escapeHTML(member.nombre)} · ${escapeHTML(teamTypeLabel(member.tipo))}</option>`).join('')
+  syncTeamPaymentTypes()
+
+  const membersTable = document.getElementById('team-members-tb')
+  membersTable.innerHTML = !teamData.members.length
+    ? '<tr><td colspan="11"><div class="empty"><div class="empty-i">·</div>Sin integrantes</div></td></tr>'
+    : teamData.members.map(member => {
+      const paid = teamWorkPayments(member.id)
+      const target = teamMemberWorkTarget(member, sales.total)
+      const pending = Math.max(0, target - paid)
+      return `<tr style="${member.activo ? '' : 'opacity:.5'}">
+        <td><strong>${escapeHTML(member.nombre)}</strong></td>
+        <td>${escapeHTML(teamTypeLabel(member.tipo))}</td>
+        <td>${escapeHTML(member.rol || '—')}</td>
+        <td>${fmtDec(Number(member.horas_semanales) || 0)}</td>
+        <td>${fmtDec(Number(member.comision_pct) || 0)}%</td>
+        <td>${fmtDec(Number(member.participacion_pct) || 0)}%</td>
+        <td>${money(target)}</td>
+        <td>${money(teamMemberEstimatedCost(member, sales.total))}</td>
+        <td>${money(paid)}</td>
+        <td style="color:${pending > 0 ? 'var(--yel)' : 'var(--green)'}">${money(pending)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="toggleTeamMember('${member.id}',${member.activo ? 'false' : 'true'})">${member.activo ? 'Desactivar' : 'Activar'}</button></td>
+      </tr>`
+    }).join('')
+
+  const memberById = new Map(teamData.members.map(member => [member.id, member]))
+  document.getElementById('team-payments-tb').innerHTML = !teamData.payments.length
+    ? '<tr><td colspan="6"><div class="empty"><div class="empty-i">·</div>Sin pagos registrados</div></td></tr>'
+    : teamData.payments.map(payment => `<tr>
+        <td>${escapeHTML(payment.fecha || '—')}</td>
+        <td>${escapeHTML(memberById.get(payment.team_member_id)?.nombre || '—')}</td>
+        <td>${escapeHTML(teamPaymentLabel(payment.tipo))}</td>
+        <td style="color:var(--red);font-weight:600">${money(payment.monto)}</td>
+        <td>${escapeHTML(payment.medio_pago || '—')}</td>
+        <td>${escapeHTML(payment.notas || '—')}</td>
+      </tr>`).join('')
+}
+
+async function addTeamMember() {
+  const nombre = V('team-name').trim()
+  if (!nombre) { toastErr('Ingrese el nombre del integrante'); return }
+  const payload = {
+    user_id: CU.id,
+    nombre,
+    tipo: V('team-type'),
+    rol: V('team-role').trim() || null,
+    horas_semanales: numOrDefault('team-hours'),
+    remuneracion_objetivo: numOrDefault('team-target-input'),
+    cargas_pct: numOrDefault('team-loads'),
+    comision_pct: numOrDefault('team-commission'),
+    participacion_pct: numOrDefault('team-ownership')
+  }
+  if ([payload.horas_semanales, payload.remuneracion_objetivo, payload.cargas_pct, payload.comision_pct, payload.participacion_pct].some(value => value < 0)) {
+    toastErr('Los valores no pueden ser negativos')
+    return
+  }
+  const currentOwnership = teamData.members.reduce((sum, member) => sum + (Number(member.participacion_pct) || 0), 0)
+  if (currentOwnership + payload.participacion_pct > 100) {
+    toastErr(`La participación societaria total no puede superar 100%. Ya cargaste ${fmtDec(currentOwnership)}%.`)
+    return
+  }
+  const { error } = await sb.from('team_members').insert(payload)
+  if (handleSupaError(error, 'addTeamMember')) return
+  ;['team-name', 'team-role', 'team-hours', 'team-target-input', 'team-loads', 'team-commission', 'team-ownership'].forEach(id => { document.getElementById(id).value = '' })
+  await loadTeamData()
+  toast('Integrante agregado')
+}
+
+async function toggleTeamMember(id, activo) {
+  const { error } = await sb.from('team_members').update({ activo }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'toggleTeamMember')) return
+  await loadTeamData()
+  toast(activo ? 'Integrante activado' : 'Integrante desactivado')
+}
+
+async function saveTeamSettings() {
+  const reserva = numOrDefault('team-reserve')
+  const cap = numOrDefault('team-owner-cap', 50)
+  if (reserva < 0 || cap < 0 || cap > 100) { toastErr('Revise la reserva y el porcentaje máximo'); return }
+  const { error } = await sb.from('team_settings').upsert({
+    user_id: CU.id,
+    reserva_minima: reserva,
+    max_pago_duenio_pct: cap
+  }, { onConflict: 'user_id' })
+  if (handleSupaError(error, 'saveTeamSettings')) return
+  await loadTeamData()
+  toast('Configuración guardada')
+}
+
+async function recordTeamPayment() {
+  const memberId = V('team-payment-member')
+  const amount = numOrDefault('team-payment-amount')
+  if (!memberId) { toastErr('Seleccioná una persona'); return }
+  if (amount <= 0) { toastErr('El monto debe ser mayor a cero'); return }
+  const { data, error } = await sb.rpc('record_team_payment', {
+    member_id: memberId,
+    payment_amount: amount,
+    payment_type: V('team-payment-type'),
+    payment_date: V('team-payment-date') || today(),
+    payment_method: V('team-payment-method').trim() || null,
+    payment_notes: V('team-payment-notes').trim() || null
+  })
+  if (handleSupaError(error, 'recordTeamPayment')) return
+  if (!data?.ok) { toastErr(data?.error || 'No se pudo registrar el pago'); return }
+  document.getElementById('team-payment-amount').value = ''
+  document.getElementById('team-payment-method').value = ''
+  document.getElementById('team-payment-notes').value = ''
+  invalidateUnifiedFinances()
+  await Promise.all([loadTeamData(), renderDash(), renderFin(), renderMet(), loadImportedData()])
+  switchFinanceTab('team')
+  toast('Pago registrado como egreso')
+}
+
+// ══════════════════════════════════════
+// ORGANIZACIÓN Y CALENDARIO
+// ══════════════════════════════════════
+let organizationData = []
+let organizationAvailable = true
+
+function isOrganizationSchemaMissing(error) {
+  const message = String(error?.message || '')
+  return error?.code === 'PGRST205' || message.includes('organization_items')
+}
+
+function setOrganizationControlsDisabled(disabled) {
+  ;['org-title', 'org-type', 'org-date', 'org-priority', 'org-owner', 'org-amount-input', 'org-notes', 'org-add-btn']
+    .forEach(id => { const control = document.getElementById(id); if (control) control.disabled = disabled })
+}
+
+async function loadOrganizationData() {
+  if (!CU) return
+  const state = document.getElementById('org-state')
+  if (state) state.innerHTML = '<div class="empty" style="padding:14px">Cargando organización...</div>'
+  const { data, error } = await sb.from('organization_items').select('*').eq('user_id', CU.id).order('fecha', { ascending: true }).order('created_at', { ascending: true }).limit(1000)
+  if (error) {
+    organizationAvailable = false
+    organizationData = []
+    setOrganizationControlsDisabled(true)
+    if (state) {
+      state.innerHTML = `<div class="concept"><div class="ci">!</div><div><div class="clbl">Calendario pendiente de activar</div><div class="ctxt">${isOrganizationSchemaMissing(error) ? 'Aplique <strong>supabase/migrations/007_organization_calendar.sql</strong> en Supabase SQL Editor. Hasta entonces esta pantalla queda en modo seguro y no intenta guardar.' : escapeHTML(error.message || 'No se pudo cargar Gestión.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadOrganizationData()">Reintentar</button></div></div>`
+    }
+    if (!isOrganizationSchemaMissing(error)) console.error('[Kairós] loadOrganizationData:', error)
+    renderOrganization()
+    return
+  }
+  organizationAvailable = true
+  organizationData = data || []
+  setOrganizationControlsDisabled(false)
+  if (state) state.innerHTML = ''
+  renderOrganization()
+}
+
+function organizationDateParts(date) {
+  if (!date) return { day: '—', month: 'Sin fecha' }
+  const value = new Date(`${date}T12:00:00`)
+  return {
+    day: String(value.getDate()).padStart(2, '0'),
+    month: value.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '')
+  }
+}
+
+function organizationTypeLabel(type) {
+  return ({ tarea: 'Tarea', pedido: 'Pedido', entrega: 'Entrega', vencimiento: 'Vencimiento', cobro: 'Cobro', pago: 'Pago', recordatorio: 'Recordatorio' })[type] || type
+}
+
+function renderOrganization() {
+  const todayKey = today()
+  const weekEnd = new Date()
+  weekEnd.setDate(weekEnd.getDate() + 7)
+  const weekEndKey = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, '0')}-${String(weekEnd.getDate()).padStart(2, '0')}`
+  const pending = organizationData.filter(item => !['completado', 'cancelado'].includes(item.estado))
+  const dueToday = pending.filter(item => item.fecha <= todayKey)
+  const nextWeek = pending.filter(item => item.fecha > todayKey && item.fecha <= weekEndKey)
+  const amount = pending.filter(item => ['cobro', 'pago'].includes(item.tipo)).reduce((sum, item) => sum + (Number(item.monto) || 0), 0)
+  S('org-today', dueToday.length)
+  S('org-week', nextWeek.length)
+  S('org-pending', pending.length)
+  S('org-amount', money(amount))
+
+  const selectedMonth = V('org-month') || todayKey.slice(0, 7)
+  const statusFilter = V('org-status-filter') || 'pending'
+  const rows = organizationData.filter(item => {
+    const monthMatches = String(item.fecha || '').slice(0, 7) === selectedMonth
+    const statusMatches = statusFilter === 'all'
+      || (statusFilter === 'pending' && !['completado', 'cancelado'].includes(item.estado))
+      || (statusFilter === 'done' && item.estado === 'completado')
+    return monthMatches && statusMatches
+  })
+  const list = document.getElementById('org-list')
+  if (!list) return
+  list.innerHTML = !rows.length
+    ? '<div class="empty"><div class="empty-i">OK</div>Sin elementos para este período</div>'
+    : rows.map(item => {
+      const date = organizationDateParts(item.fecha)
+      const done = item.estado === 'completado'
+      const late = !done && item.fecha < todayKey
+      const priorityBadge = item.prioridad === 'urgente' || late ? 'br' : item.prioridad === 'alta' ? 'by' : 'bb'
+      return `<div class="org-item ${done ? 'done' : ''}">
+        <div class="org-date"><strong>${date.day}</strong><span>${escapeHTML(date.month)}</span></div>
+        <div class="org-copy">
+          <strong>${escapeHTML(item.titulo)}</strong>
+          <span>${escapeHTML(organizationTypeLabel(item.tipo))} · <span class="badge ${priorityBadge}">${late ? 'vencido' : escapeHTML(item.prioridad)}</span>${item.responsable ? ` · ${escapeHTML(item.responsable)}` : ''}${Number(item.monto) > 0 ? ` · ${money(item.monto)}` : ''}</span>
+          ${item.notas ? `<span>${escapeHTML(item.notas)}</span>` : ''}
+        </div>
+        <div class="org-item-actions" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="toggleOrganizationItem('${item.id}',${done ? 'false' : 'true'})">${done ? 'Reabrir' : 'Completar'}</button>
+          <button class="btn btn-del" onclick="deleteOrganizationItem('${item.id}')">Eliminar</button>
+        </div>
+      </div>`
+    }).join('')
+}
+
+function setOrganizationCurrentMonth() {
+  const month = document.getElementById('org-month')
+  if (month) month.value = today().slice(0, 7)
+  renderOrganization()
+}
+
+async function addOrganizationItem() {
+  if (!organizationAvailable) { toastErr('Primero active la migración 007 de Gestión'); return }
+  const title = V('org-title').trim()
+  const date = V('org-date')
+  const amount = numOrDefault('org-amount-input')
+  if (!title) { toastErr('Indicá qué hay que hacer'); return }
+  if (!date) { toastErr('Elegí una fecha'); return }
+  if (amount < 0) { toastErr('El monto no puede ser negativo'); return }
+  const { error } = await sb.from('organization_items').insert({
+    user_id: CU.id,
+    titulo: title,
+    tipo: V('org-type'),
+    prioridad: V('org-priority'),
+    fecha: date,
+    responsable: V('org-owner').trim() || null,
+    monto: amount,
+    notas: V('org-notes').trim() || null
+  })
+  if (handleSupaError(error, 'addOrganizationItem')) return
+  ;['org-title', 'org-owner', 'org-amount-input', 'org-notes'].forEach(id => { document.getElementById(id).value = '' })
+  document.getElementById('org-month').value = date.slice(0, 7)
+  await loadOrganizationData()
+  toast('Agregado al calendario')
+}
+
+async function toggleOrganizationItem(id, completed) {
+  const { error } = await sb.from('organization_items').update({ estado: completed ? 'completado' : 'pendiente' }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'toggleOrganizationItem')) return
+  await loadOrganizationData()
+  toast(completed ? 'Marcado como completado' : 'Pendiente reabierto')
+}
+
+async function deleteOrganizationItem(id) {
+  if (!confirm('¿Eliminar este elemento del calendario?')) return
+  const { error } = await sb.from('organization_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteOrganizationItem')) return
+  await loadOrganizationData()
+  toast('Elemento eliminado')
+}
+
+// ══════════════════════════════════════
+// PRODUCTOS
+// ══════════════════════════════════════
+async function addProd() {
+  const n = V('p-n').trim(); if (!n) { toastErr('Ingrese el nombre'); return }
+  const co = numOrDefault('p-co')
+  if (co < 0) { toastErr('El costo no puede ser negativo'); return }
+  const calc = calcCosto()
+  if (co > 0 && !calc) { toastErr('Revise los costos antes de guardar el producto'); return }
+  const precioFinalRaw = V('p-pr').trim()
+  const pr = precioFinalRaw === '' && calc ? calc.pv : numOrDefault('p-pr')
+  if (pr < 0) { toastErr('El precio no puede ser negativo'); return }
+  const duplicate = await findInventoryDuplicate(n)
+  if (duplicate.exists) { toastErr('Ese producto ya existe. Use reposición para sumar stock.'); return }
+  const stock = Math.max(0, Math.trunc(numOrDefault('p-st')))
+  const stockMin = Math.max(0, Math.trunc(numOrDefault('p-min')))
+  const costoTotal = calc ? Number(calc.costoBase) : co
+  const costoExtra = Math.max(0, costoTotal - co)
+  const { data, error } = await sb.rpc('create_inventory_item', {
+    product_name: n,
+    product_category: V('p-c').trim() || null,
+    product_notes: V('p-d').trim() || null,
+    current_stock: stock,
+    minimum_stock: stockMin,
+    unit_cost: co,
+    extra_cost: costoExtra,
+    local_price: pr,
+    web_price: 0,
+    source_name: 'manual'
+  })
+  if (handleSupaError(error, 'addProd')) return
+  if (!data?.ok) { toastErr(data?.error || 'No se pudo crear el producto'); return }
+  ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  document.getElementById('p-cost-result').style.display = 'none'
+  document.getElementById('p-cost-alert').style.display = 'none'
+  await Promise.all([loadImportedData(), renderDash()])
+  switchProductTab('inv')
+  toast('Producto agregado al inventario')
+}
+
+async function delProd(id) {
+  if (!confirm('¿Eliminar?')) return
+  const { error } = await sb.from('productos').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delProd')) return
+  await renderProds()
+}
+
+async function renderProds() {
+  const { data: ps, error } = await sb.from('productos').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  if (error) { console.error('[Kairós] renderProds:', error); return }
+  const legacyCard = document.getElementById('legacy-prod-card')
+  if (legacyCard) legacyCard.style.display = ps?.length ? 'block' : 'none'
+  const eBadge = { activo: 'bg', pausado: 'by', sin_stock: 'br' }
+  const eLabel = { activo: 'Activo', pausado: 'Pausado', sin_stock: 'Sin stock' }
+  document.getElementById('p-tb').innerHTML = !(ps?.length)
+    ? '<tr><td colspan="8"><div class="empty"><div class="empty-i">·</div>Sin productos</div></td></tr>'
+    : ps.map(p => {
+        const m = p.margen_real_pct || 0
+        return `<tr>
+          <td><strong>${escapeHTML(p.nom)}</strong>${p.descripcion ? `<div style="font-size:11px;color:var(--txt3)">${escapeHTML(p.descripcion.slice(0, 55))}${p.descripcion.length > 55 ? '...' : ''}</div>` : ''}</td>
+          <td style="color:var(--txt3)">${escapeHTML(p.cat || '—')}</td>
+          <td>${p.costo_producto > 0 ? '$' + fmt(p.costo_producto) : '—'}</td>
+          <td style="font-weight:600">${p.precio_venta > 0 ? '$' + fmt(p.precio_venta) : '—'}</td>
+          <td><span style="color:${m > 15 ? 'var(--green)' : m > 0 ? 'var(--yel)' : 'var(--red)'}">${fmtDec(m)}%</span></td>
+          <td>${p.stock}</td>
+          <td><span class="badge ${eBadge[p.estado] || 'bb'}">${eLabel[p.estado] || escapeHTML(p.estado)}</span></td>
+          <td><button class="btn btn-del" onclick="delProd('${p.id}')">✕</button></td>
+        </tr>`
+      }).join('')
+}
+
+async function aiDescProd() {
+  const n = V('p-n').trim(); if (!n) { toastErr('Ingrese el nombre primero'); return }
+  openAI()
+  document.getElementById('ai-inp').value = `Generá una descripción de producto atractiva (máximo 3 oraciones) para: "${n}"${V('p-c') ? ' categoría ' + V('p-c') : ''}. Solo la descripción, sin título ni formato.`
+  await sendAI()
+}
+
+// ══════════════════════════════════════
+// LEADS
+// ══════════════════════════════════════
+async function addLead() {
+  const n = V('le-n').trim(); if (!n) { toastErr('Ingrese el nombre'); return }
+  const val = parseFloat(V('le-v')) || 0
+  if (val < 0) { toastErr('El valor no puede ser negativo'); return }
+  const { error } = await sb.from('leads').insert({ user_id: CU.id, nom: n, contacto: V('le-c'), valor: val, nota: V('le-no'), estado: 'lead' })
+  if (handleSupaError(error, 'addLead')) return
+  ;['le-n', 'le-c', 'le-v', 'le-no'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  await renderLeads(); await renderDash(); toast('Oportunidad agregada')
+}
+
+async function moveLead(id, estado) {
+  const { error } = await sb.from('leads').update({ estado }).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'moveLead')) return
+  await renderLeads(); await renderDash()
+}
+
+async function delLead(id) {
+  if (!confirm('¿Eliminar?')) return
+  const { error } = await sb.from('leads').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delLead')) return
+  await renderLeads(); await renderDash()
+}
+
+async function renderLeads() {
+  const { data: ls, error } = await sb.from('leads').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  if (error) { console.error('[Kairós] renderLeads:', error); return }
+  const next = { lead: 'contactado', contactado: 'propuesta', propuesta: 'cliente', cliente: null }
+  const nextL = { lead: 'Contactar →', contactado: 'Propuesta →', propuesta: 'Cerrar →', cliente: null }
+  ;['lead', 'contactado', 'propuesta', 'cliente'].forEach(est => {
+    const col = document.getElementById('col-' + est)
+    const items = (ls || []).filter(l => l.estado === est)
+    if (!items.length) { col.innerHTML = '<div style="color:var(--txt3);font-size:12px;text-align:center;padding:16px 0">—</div>'; return }
+    col.innerHTML = items.map(l => `
+      <div class="kcard">
+        <div class="kcard-n">${escapeHTML(l.nom)}</div>
+        <div class="kcard-i">${escapeHTML(l.contacto || 'Sin contacto')}</div>
+        ${l.valor > 0 ? `<div style="font-size:12px;color:var(--gold);margin-top:3px">$${fmt(l.valor)}</div>` : ''}
+        ${l.nota ? `<div class="kcard-i" style="margin-top:4px;font-style:italic">${escapeHTML(l.nota)}</div>` : ''}
+        <div class="kcard-a">
+          ${next[est] ? `<button class="btn btn-ghost btn-sm" onclick="moveLead('${l.id}','${next[est]}')">${nextL[est]}</button>` : ''}
+          ${(l.contacto && /^[\d+]/.test(l.contacto)) ? `<a href="https://wa.me/${l.contacto.replace(/\D/g, '')}" target="_blank" class="btn btn-ghost btn-sm">💬 WA</a>` : ''}
+          <button class="btn btn-del" onclick="delLead('${l.id}')">✕</button>
+        </div>
+      </div>`).join('')
+  })
+}
+
+// ══════════════════════════════════════
+// PUBLICIDAD
+// ══════════════════════════════════════
+async function addCamp() {
+  const n = V('ca-n').trim(); if (!n) { toastErr('Ingrese el nombre'); return }
+  const inv = parseFloat(V('ca-inv')) || 0; if (inv <= 0) { toastErr('La inversión debe ser mayor a 0'); return }
+  const cli = parseInt(V('ca-cli')) || 0, ing = parseFloat(V('ca-ing')) || 0
+  const { error } = await sb.from('campanas').insert({ user_id: CU.id, plat: V('ca-pl'), nom: n, inv, cli, ing, roas: inv > 0 && ing > 0 ? (ing / inv).toFixed(2) : null, cac: cli > 0 ? (inv / cli).toFixed(0) : null })
+  if (handleSupaError(error, 'addCamp')) return
+  ;['ca-n', 'ca-inv', 'ca-cli', 'ca-ing'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  await renderPub(); await renderMet(); toast('Campaña registrada')
+}
+
+async function delCamp(id) {
+  if (!confirm('¿Eliminar?')) return
+  const { error } = await sb.from('campanas').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delCamp')) return
+  await renderPub(); await renderMet()
+}
+
+async function renderPub() {
+  const { data: camps, error } = await sb.from('campanas').select('*').eq('user_id', CU.id).order('created_at', { ascending: false })
+  if (error) { console.error('[Kairós] renderPub:', error); return }
+  const cs = camps || []
+  const ti = cs.reduce((a, b) => a + (Number(b.inv) || 0), 0)
+  const tc = cs.reduce((a, b) => a + (Number(b.cli) || 0), 0)
+  const tig = cs.reduce((a, b) => a + (Number(b.ing) || 0), 0)
+  S('pu-inv', '$' + fmt(ti)); S('pu-cli', tc)
+  S('pu-cac', tc > 0 ? '$' + fmt(ti / tc) : '—')
+  S('pu-roas', ti > 0 && tig > 0 ? (tig / ti).toFixed(2) + 'x' : '—')
+  document.getElementById('ca-tb').innerHTML = !cs.length
+    ? '<tr><td colspan="5"><div class="empty"><div class="empty-i">·</div>Sin campañas</div></td></tr>'
+    : cs.map(c => { const r = parseFloat(c.roas), rc = r >= 4 ? 'var(--green)' : r >= 2 ? 'var(--yel)' : 'var(--red)'; return `<tr><td><strong>${escapeHTML(c.plat)}</strong><div style="font-size:11px;color:var(--txt3)">${escapeHTML(c.nom)}</div></td><td>$${fmt(c.inv)}</td><td>${c.cli}</td><td style="font-weight:600;color:${c.roas ? rc : 'var(--txt3)'}">${c.roas ? c.roas + 'x' : '—'}</td><td><button class="btn btn-del" onclick="delCamp('${c.id}')">✕</button></td></tr>` }).join('')
+}
+
+// ══════════════════════════════════════
+// CONTENIDO
+// ══════════════════════════════════════
+async function addCont() {
+  const t = V('ct-t').trim(); if (!t) { toastErr('Ingrese el título'); return }
+  const { error } = await sb.from('contenido').insert({ user_id: CU.id, tit: t, tipo: V('ct-tp'), plat: V('ct-pl'), fecha: V('ct-f') || null, estado: V('ct-es') })
+  if (handleSupaError(error, 'addCont')) return
+  document.getElementById('ct-t').value = ''
+  await renderCont(); toast('Contenido agregado')
+}
+
+async function delCont(id) {
+  const { error } = await sb.from('contenido').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delCont')) return
+  await renderCont()
+}
+
+async function addRef() {
+  const n = V('re-n').trim(), w = V('re-w').trim(); if (!n) return
+  const { error } = await sb.from('referentes').insert({ user_id: CU.id, nom: n, why: w })
+  if (handleSupaError(error, 'addRef')) return
+  document.getElementById('re-n').value = ''; document.getElementById('re-w').value = ''
+  await renderRefs()
+}
+
+async function delRef(id) {
+  const { error } = await sb.from('referentes').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'delRef')) return
+  await renderRefs()
+}
+
+let angTimer = null
+async function saveAng() {
+  clearTimeout(angTimer)
+  angTimer = setTimeout(async () => {
+    const { error } = await sb.from('angulos').upsert({ user_id: CU.id, p: V('an-p'), t: V('an-t'), s: V('an-s'), n: V('an-n') }, { onConflict: 'user_id' })
+    if (handleSupaError(error, 'saveAng')) return
+  }, 1500)
+}
+
+async function loadAng() {
+  const { data: a, error } = await sb.from('angulos').select('*').eq('user_id', CU.id).single()
+  if (error && error.code !== 'PGRST116') { console.error('[Kairós] loadAng:', error); return }
+  if (!a) return
+  ;[['an-p', 'p'], ['an-t', 't'], ['an-s', 's'], ['an-n', 'n']].forEach(([id, k]) => { const e = document.getElementById(id); if (e) e.value = a[k] || '' })
+}
+
+async function renderCont() {
+  const { data: cts, error } = await sb.from('contenido').select('*').eq('user_id', CU.id).order('fecha', { ascending: true, nullsFirst: false })
+  if (error) { console.error('[Kairós] renderCont:', error); return }
+  const el = document.getElementById('ct-lista')
+  if (!(cts?.length)) { el.innerHTML = '<div class="empty"><div class="empty-i">·</div>Sin contenido</div>'; return }
+  const ti = { educativo: 'Educativo', venta: 'Venta', conexion: 'Conexión' }
+  const eb = { idea: 'by', produccion: 'bb', publicado: 'bg' }
+  const el2 = { idea: 'Idea', produccion: 'Producción', publicado: 'Publicado' }
+  el.innerHTML = cts.map(c => `
+    <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div><div style="font-size:13px;font-weight:500">${escapeHTML(c.tit)}</div><div style="font-size:11px;color:var(--txt2);margin-top:3px">${escapeHTML(ti[c.tipo] || c.tipo || 'Contenido')}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:3px">${escapeHTML(c.plat)}${c.fecha ? ' · ' + c.fecha : ''}</div></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+          <span class="badge ${eb[c.estado]}">${el2[c.estado]}</span>
+          <button class="btn btn-del" onclick="delCont('${c.id}')">✕</button>
+        </div>
+      </div>
+    </div>`).join('')
+}
+
+async function renderRefs() {
+  const { data: rs, error } = await sb.from('referentes').select('*').eq('user_id', CU.id)
+  if (error) { console.error('[Kairós] renderRefs:', error); return }
+  document.getElementById('ref-lista').innerHTML = !(rs?.length)
+    ? '<div class="empty" style="padding:20px"><div class="empty-i">·</div>Sin referentes</div>'
+    : rs.map(r => `<div class="mrow"><div><div style="font-size:13px;font-weight:500">${escapeHTML(r.nom)}</div><div style="font-size:11px;color:var(--txt3)">${escapeHTML(r.why)}</div></div><button class="btn btn-del" onclick="delRef('${r.id}')">✕</button></div>`).join('')
+}
+
+async function aiIdeas() {
+  const biz = await getBiz(); openAI()
+  document.getElementById('ai-inp').value = `Dame 5 ideas de contenido para ${biz?.rub || 'mi negocio'} (cliente: ${biz?.cli || 'general'}). Para cada una: tipo (educativo/venta/conexión), plataforma y ángulo en una línea.`
+  await sendAI()
+}
+
+// ══════════════════════════════════════
+// MÉTRICAS
+// ══════════════════════════════════════
+function calcEng() {
+  const se = parseFloat(V('en-se')) || 0, inte = parseFloat(V('en-in')) || 0
+  if (!se) { toastErr('Ingrese la cantidad de seguidores'); return }
+  const e = ((inte / se) * 100).toFixed(2)
+  let ev, cl
+  if (e < 1) { ev = 'Bajo - revise el contenido'; cl = 'var(--red)' }
+  else if (e < 3) { ev = 'Normal - hay margen de mejora'; cl = 'var(--yel)' }
+  else if (e < 6) { ev = 'Bueno'; cl = 'var(--green)' }
+  else { ev = 'Excelente'; cl = 'var(--green)' }
+  document.getElementById('en-res').innerHTML = `<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:14px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${cl}">${e}%</div><div style="font-size:12px;color:var(--txt2);margin-top:4px">${ev}</div></div>`
+}
+
+function calcCierre() {
+  const le = parseFloat(V('ci-le')) || 0, ve = parseFloat(V('ci-ve')) || 0
+  if (!le) { toastErr('Ingrese la cantidad de oportunidades'); return }
+  if (ve > le) { toastErr('Las ventas no pueden superar las oportunidades'); return }
+  const t = ((ve / le) * 100).toFixed(1)
+  let ev, cl
+  if (t < 10) { ev = 'Bajo - revise el proceso de ventas'; cl = 'var(--red)' }
+  else if (t < 25) { ev = 'Normal'; cl = 'var(--yel)' }
+  else if (t < 50) { ev = 'Bueno'; cl = 'var(--green)' }
+  else { ev = 'Excelente'; cl = 'var(--green)' }
+  document.getElementById('ci-res').innerHTML = `<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:14px"><div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${cl}">${t}%</div><div style="font-size:12px;color:var(--txt2);margin-top:4px">${ev}</div></div>`
+}
+
+async function renderMet() {
+  const { m, y } = getMes()
+  const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const [finance, campResult, salesSummary] = await Promise.all([
+    loadUnifiedFinances(),
+    sb.from('campanas').select('*').eq('user_id', CU.id),
+    loadSalesSummary()
+  ])
+  if (campResult.error) console.error('[Kairós] renderMet campañas:', campResult.error)
+  const all = finance.month
+  const cs = campResult.data || []
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const iT = all.filter(t => t.tipo === 'ingreso')
+  S('m-cli', salesSummary.count); S('m-tick', salesSummary.count > 0 ? '$' + fmt(Math.round(salesSummary.total / salesSummary.count)) : '$0')
+  const cats = {}; iT.forEach(t => {
+    const category = t.categoria || 'sin_categoria'
+    cats[category] = (cats[category] || 0) + Number(t.monto || 0)
+  })
+  const bc = Object.entries(cats).sort((a, b) => b[1] - a[1])[0]
+  S('m-bcat', bc ? bc[0] : '—')
+  const mEl = document.getElementById('m-mar'); mEl.textContent = mar + '%'; mEl.style.color = mar > 20 ? 'var(--green)' : mar > 0 ? 'var(--yel)' : 'var(--red)'
+  S('m-rat', egr > 0 ? (ing / egr).toFixed(2) + 'x' : '—')
+  let est, badge
+  if (!ing && !egr) { est = 'Sin datos'; badge = 'by' } else if (gan > 0 && mar > 20) { est = 'Rentable'; badge = 'bg' } else if (gan > 0) { est = 'Positivo'; badge = 'by' } else { est = 'En pérdida'; badge = 'br' }
+  document.getElementById('m-est').innerHTML = `<span class="badge ${badge}">${est}</span>`
+  const ti = cs.reduce((a, b) => a + (Number(b.inv) || 0), 0)
+  const tc = cs.reduce((a, b) => a + (Number(b.cli) || 0), 0)
+  const tig = cs.reduce((a, b) => a + (Number(b.ing) || 0), 0)
+  S('m-roas', ti > 0 && tig > 0 ? (tig / ti).toFixed(2) + 'x' : '—'); S('m-cac', tc > 0 ? '$' + fmt(ti / tc) : '—')
+  const can = {}; cs.forEach(c => { can[c.plat] = (can[c.plat] || 0) + c.ing })
+  const mc = Object.entries(can).sort((a, b) => b[1] - a[1])[0]; S('m-can', mc ? mc[0] : '—')
+}
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+async function renderDash() {
+  /*
+   * Metricas del negocio:
+   * - Ingresos y egresos unifican transacciones historicas y movimientos
+   *   operativos, usando fecha o created_at cuando la fecha falta.
+   * - Resultado de caja = ingresos cobrados - egresos pagados.
+   * - Ganancia de ventas = importe vendido - costo de los productos vendidos.
+   * - Gastos fijos a cubrir usa la suma de gastos_fijos.mon y se compara con
+   *   los ingresos del mes. No se presenta como punto de equilibrio contable.
+   * - La pestaña Carga inteligente mantiene el desglose por fuente.
+   * - Leads activos son los contactos que todavia no llegaron a cliente.
+   * - El bloque importado cuenta como alertas los inventario_items en rojo.
+   */
+  const [finance, sales, leadResult, prodResult, inventoryResult, fixedResult, biz] = await Promise.all([
+    loadUnifiedFinances(),
+    loadSalesSummary(),
+    sb.from('leads').select('*').eq('user_id', CU.id),
+    sb.from('productos').select('id').eq('user_id', CU.id),
+    sb.from('inventario_items').select('id,estado_stock,costo_total,precio_venta_local,margen_local_pct').eq('user_id', CU.id),
+    sb.from('gastos_fijos').select('mon').eq('user_id', CU.id),
+    getBiz()
+  ])
+  ;[
+    ['leads', leadResult.error],
+    ['productos', prodResult.error],
+    ['inventario_items', inventoryResult.error],
+    ['gastos_fijos', fixedResult.error]
+  ].forEach(([source, error]) => { if (error) console.error(`[Kairós] renderDash ${source}:`, error) })
+  const leads = leadResult.data
+  const prods = prodResult.data
+  const inventory = inventoryResult.data || []
+  const fixedCosts = fixedResult.data
+  const b = biz
+  const all = finance.month, ls = leads || []
+  const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
+  const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const breakEven = (fixedCosts || []).reduce((sum, item) => sum + (Number(item.mon) || 0), 0)
+  const activeLeads = ls.filter(l => l.estado !== 'cliente').length
+  const redCount = inventory.filter(item => item.estado_stock === 'rojo').length
+  S('d-ing', '$' + fmt(ing)); S('d-ing-n', all.filter(t => t.tipo === 'ingreso' && movementHasAmount(t)).length + ' registros con monto')
+  S('d-egr', '$' + fmt(egr)); S('d-egr-n', all.filter(t => t.tipo === 'egreso' && movementHasAmount(t)).length + ' registros con monto')
+  const gEl = document.getElementById('d-gan'); gEl.textContent = '$' + fmt(gan); gEl.style.color = gan >= 0 ? 'var(--gold)' : 'var(--red)'
+  S('d-mar', 'Sobre ingresos: ' + mar + '%')
+  S('d-sales-profit', money(sales.profit))
+  S('d-sales-count', `${sales.count} venta${sales.count === 1 ? '' : 's'} · ${money(sales.total)} vendido`)
+  S('d-sales-margin', fmtDec(sales.margin) + '%')
+  document.getElementById('d-sales-profit').style.color = sales.profit >= 0 ? 'var(--green)' : 'var(--red)'
+  document.getElementById('d-sales-margin').style.color = sales.margin >= 25 ? 'var(--green)' : sales.margin >= 0 ? 'var(--yel)' : 'var(--red)'
+  S('d-leads', activeLeads)
+  S('d-cli', ls.filter(l => l.estado === 'cliente').length + ' clientes confirmados')
+  S('d-eq', '$' + fmt(breakEven))
+  S('d-eq-note', breakEven <= 0 ? 'Sin gastos fijos cargados' : ing >= breakEven ? `Superado por $${fmt(ing - breakEven)}` : `Faltan $${fmt(breakEven - ing)}`)
+  const lossProducts = inventory.filter(item => Number(item.precio_venta_local) > 0 && Number(item.margen_local_pct) < 0).length
+  const incompleteProducts = inventory.filter(item => Number(item.costo_total) <= 0 || Number(item.precio_venta_local) <= 0).length
+  const zeroMovements = all.filter(item => !movementHasAmount(item)).length
+  const alertParts = []
+  if (gan < 0) alertParts.push('caja negativa')
+  if (breakEven > 0 && ing < breakEven) alertParts.push('gastos fijos sin cubrir')
+  if (redCount) alertParts.push(`${redCount} stock crítico`)
+  if (lossProducts) alertParts.push(`${lossProducts} con pérdida`)
+  if (incompleteProducts) alertParts.push(`${incompleteProducts} incompletos`)
+  if (zeroMovements) alertParts.push(`${zeroMovements} sin monto`)
+  const alertCount = (gan < 0 ? 1 : 0) + (breakEven > 0 && ing < breakEven ? 1 : 0) + redCount + lossProducts + incompleteProducts + zeroMovements
+  S('d-alerts', alertCount)
+  const alertNote = alertParts.length
+    ? alertParts.slice(0, 3).join(' · ') + (alertParts.length > 3 ? ` · +${alertParts.length - 3} más` : '')
+    : 'Sin alertas críticas'
+  S('d-alerts-note', alertNote)
+  const lastTx = finance.recent.slice(0, 5)
+  document.getElementById('d-tx').innerHTML = !lastTx.length
+    ? '<div class="empty"><div class="empty-i">·</div>Sin movimientos. Registre el primer ingreso en Dinero.</div>'
+    : lastTx.map(t => `<div class="mrow"><div><div style="font-size:13px">${escapeHTML(t.descripcion)}</div><div style="font-size:11px;color:var(--txt3)">${escapeHTML(t.categoria)} · ${escapeHTML(financeDateKey(t) || '—')} · ${escapeHTML(t.fuente)}</div></div><div style="font-weight:600;color:${movementHasAmount(t) ? (t.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)') : 'var(--yel)'}">${movementAmountText(t)}</div></div>`).join('')
+  const operationalProducts = inventory.length
+  const legacyProducts = prods?.length || 0
+  const items = [
+    { ok: !!b?.nom, ico: b?.nom ? 'OK' : '!', txt: b?.nom ? `Negocio: ${escapeHTML(b.nom)}` : 'Complete los datos del negocio', p: 'neg' },
+    { ok: !!ing || !!egr, ico: ing || egr ? 'OK' : '!', txt: ing || egr ? `Dinero: $${fmt(ing)} ingresados este mes` : 'Registre el primer movimiento', p: 'fin' },
+    { ok: ls.length > 0, ico: ls.length ? 'OK' : '!', txt: ls.length ? `${ls.length} contacto(s) en seguimiento` : 'Agregue la primera oportunidad', p: 'leads' },
+    { ok: operationalProducts + legacyProducts > 0, ico: operationalProducts + legacyProducts ? 'OK' : '!', txt: operationalProducts ? `${operationalProducts} producto(s) en inventario` : legacyProducts ? `${legacyProducts} producto(s) históricos` : 'Cargue productos', p: 'prod' },
+  ]
+  document.getElementById('d-est').innerHTML = items.map(i => `<div class="mrow" style="${!i.ok ? 'cursor:pointer' : ''}" ${!i.ok ? `onclick="goPage('${i.p}')"` : ''}><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">${i.ico}</span><span style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--txt)'}">${i.txt}</span></div>${!i.ok ? '<span style="color:var(--gold);font-size:12px">→</span>' : ''}</div>`).join('')
+  S('home-cash-answer', !ing && !egr ? 'No hay movimientos con monto válido.' : gan >= 0 ? 'Este mes entró más dinero del que salió.' : 'Este mes salió más dinero del que entró.')
+  S('home-cash-number', `Entró ${money(ing)} · Salió ${money(egr)} · Resultado ${money(gan)}`)
+  S('home-sales-answer', !sales.count ? 'No hay ventas confirmadas para calcularlo.' : sales.profit >= 0 ? 'Las ventas dejan ganancia.' : 'Las ventas están dejando pérdida.')
+  S('home-sales-number', sales.count ? `${money(sales.profit)} de ganancia · De cada $100 quedan $${fmtDec(sales.margin)}` : 'Registre una venta para conocer la rentabilidad.')
+  const attentionCount = redCount + lossProducts + incompleteProducts
+  S('home-alert-answer', attentionCount ? `${attentionCount} producto${attentionCount === 1 ? '' : 's'} necesita${attentionCount === 1 ? '' : 'n'} atención.` : 'No hay alertas críticas de productos.')
+  S('home-alert-number', redCount ? `${redCount} con stock crítico` : incompleteProducts ? `${incompleteProducts} con datos incompletos` : 'Inventario sin alertas críticas')
+  S('home-next-answer', gan < 0 ? 'Revise los egresos antes de asumir un gasto nuevo.' : redCount ? 'Priorice reponer los productos con stock crítico.' : !sales.count ? 'Registre una venta para empezar a medir rentabilidad.' : 'Revise las alertas y continúe registrando movimientos.')
+  const setCommandMeter = (id, value, state) => {
+    const meter = document.getElementById(id)
+    if (!meter) return
+    meter.className = `resource-meter ${state || ''}`.trim()
+    const fill = meter.querySelector('span')
+    if (fill) fill.style.width = `${Math.max(0, Math.min(100, value))}%`
+  }
+  const cashHealth = !ing && !egr ? 0 : ing > 0 ? Math.max(0, Math.min(100, (gan / ing + 1) * 50)) : 0
+  const salesHealth = sales.count ? Math.max(0, Math.min(100, sales.margin * 2)) : 0
+  const healthyStock = inventory.filter(item => item.estado_stock === 'verde').length
+  const stockHealth = inventory.length ? healthyStock / inventory.length * 100 : 0
+  setCommandMeter('home-cash-meter', cashHealth, gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
+  setCommandMeter('home-sales-meter', salesHealth, !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
+  setCommandMeter('home-stock-meter', stockHealth, redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
+  S('command-cash-value', money(gan))
+  const cashTrend = document.getElementById('command-cash-trend')
+  if (cashTrend) {
+    cashTrend.textContent = !ing && !egr ? 'No hay movimientos con monto válido' : `Entró ${money(ing)} · Salió ${money(egr)}`
+    cashTrend.className = `console-trend ${gan > 0 ? 'good' : gan < 0 ? 'bad' : ''}`.trim()
+  }
+  const setConsoleState = (prefix, percent, label, state) => {
+    S(`${prefix}-percent`, `${Math.round(Math.max(0, Math.min(100, percent)))}%`)
+    S(`${prefix}-state`, label)
+    const stateNode = document.getElementById(`${prefix}-state`)
+    const percentNode = document.getElementById(`${prefix}-percent`)
+    if (stateNode) stateNode.className = `console-state ${state}`
+    if (percentNode) percentNode.className = `console-percent ${state}`
+  }
+  setConsoleState('cash', cashHealth, !ing && !egr ? 'Sin datos' : gan < 0 ? 'Atención' : 'Sano', gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
+  setConsoleState('stock', stockHealth, !inventory.length ? 'Sin inventario' : redCount ? 'Atención' : incompleteProducts ? 'Revisar datos' : 'Sano', redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
+  setConsoleState('sales', salesHealth, !sales.count ? 'Sin ventas' : sales.margin < 0 ? 'Con pérdida' : sales.margin < 25 ? 'Margen bajo' : 'Bien', !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
+  S('console-sales-profit', money(sales.profit))
+  S('console-sales-margin', sales.count ? money(sales.margin) : '$0')
+  const coverage = breakEven > 0 ? Math.min(100, ing / breakEven * 100) : 0
+  S('coverage-percent', `${Math.round(coverage)}%`)
+  S('coverage-copy', breakEven > 0 ? `${money(Math.min(ing, breakEven))} de ${money(breakEven)} cubiertos con ingresos del mes` : 'Cargue gastos fijos para medir cuánto cubren los ingresos del mes.')
+  setCommandMeter('coverage-meter', coverage, breakEven <= 0 ? 'warn' : coverage >= 100 ? 'good' : coverage >= 60 ? 'warn' : 'bad')
+  const stateEl = document.getElementById('command-state')
+  const critical = gan < 0 || redCount > 0 || lossProducts > 0
+  const attention = !critical && (incompleteProducts > 0 || !sales.count || (breakEven > 0 && ing < breakEven))
+  if (stateEl) stateEl.className = `command-state ${critical ? 'critical' : attention ? 'attention' : 'stable'}`
+  S('command-status', critical ? 'Requiere atención' : attention ? 'En observación' : 'Operación estable')
+  S('command-status-copy', critical
+    ? 'Hay señales que conviene resolver antes de seguir avanzando.'
+    : attention
+      ? 'La operación está en marcha, con datos o tareas pendientes de completar.'
+      : 'Caja, ventas e inventario no muestran alertas críticas.')
+  const missions = []
+  if (redCount) missions.push({ mark: '!', title: `Reponer ${redCount} producto${redCount === 1 ? '' : 's'} con stock crítico`, detail: 'Abra el inventario filtrado para decidir qué comprar.', action: "goPage('prod');showProductQuestion('inv','low')", tag: 'Urgente' })
+  if (gan < 0) missions.push({ mark: '$', title: 'Revisar los egresos del mes', detail: `La caja está ${money(Math.abs(gan))} por debajo de los ingresos.`, action: "goFinanceDetail('summary')", tag: 'Caja' })
+  if (breakEven > 0 && ing < breakEven) missions.push({ mark: 'GF', title: 'Cubrir los gastos fijos', detail: `Faltan ${money(breakEven - ing)} de ingresos para cubrir la referencia mensual.`, action: "goFinanceDetail('fixed')", tag: 'Meta' })
+  if (!sales.count) missions.push({ mark: '+', title: 'Registrar la primera venta', detail: 'Esto habilita el cálculo real de ganancia y margen.', action: "startDashboardAction('venta')", tag: 'Inicio' })
+  if (incompleteProducts) missions.push({ mark: '?', title: `Completar ${incompleteProducts} producto${incompleteProducts === 1 ? '' : 's'}`, detail: 'Falta costo o precio para poder calcular rentabilidad.', action: "goPage('prod');showProductQuestion('inv','pricing')", tag: 'Datos' })
+  if (!missions.length) missions.push({ mark: 'OK', title: 'Mantener los registros al día', detail: 'No hay alertas críticas. Registre ventas y gastos cuando ocurran.', action: "openAIWithBusinessSummary()", tag: 'Estable' })
+  const visibleMissions = missions.slice(0, 3)
+  S('mission-count', `${visibleMissions.length} prioridad${visibleMissions.length === 1 ? '' : 'es'}`)
+  document.getElementById('home-missions').innerHTML = visibleMissions.map(m => `<button class="mission-row" onclick="${m.action}"><span class="mission-mark">${m.mark}</span><span><strong>${m.title}</strong><small>${m.detail}</small></span><span class="mission-xp">${m.tag}</span></button>`).join('')
+  renderAnnualSummary(finance.all)
+}
+
+function renderAnnualSummary(financeRows = null) {
+  const rows = financeRows || unifiedFinanceCache?.all || []
+  const selector = document.getElementById('annual-year')
+  const currentYear = new Date().getFullYear()
+  const years = [...new Set(rows.map(financeDateKey).filter(Boolean).map(date => Number(String(date).slice(0, 4))).filter(Boolean).concat(currentYear))].sort((a, b) => b - a)
+  const previous = Number(selector?.value) || currentYear
+  if (selector) {
+    selector.innerHTML = years.map(year => `<option value="${year}">${year}</option>`).join('')
+    selector.value = String(years.includes(previous) ? previous : currentYear)
+  }
+  const selectedYear = Number(selector?.value) || currentYear
+  const months = Array.from({ length: 12 }, (_, index) => ({ index, ingresos: 0, egresos: 0, balance: 0 }))
+  rows.forEach(row => {
+    const key = financeDateKey(row)
+    if (!key || Number(String(key).slice(0, 4)) !== selectedYear || !movementHasAmount(row)) return
+    const monthIndex = Number(String(key).slice(5, 7)) - 1
+    if (monthIndex < 0 || monthIndex > 11) return
+    if (row.tipo === 'ingreso') months[monthIndex].ingresos += Number(row.monto) || 0
+    if (row.tipo === 'egreso') months[monthIndex].egresos += Number(row.monto) || 0
+  })
+  months.forEach(month => { month.balance = month.ingresos - month.egresos })
+  const income = months.reduce((sum, month) => sum + month.ingresos, 0)
+  const expense = months.reduce((sum, month) => sum + month.egresos, 0)
+  const balance = income - expense
+  const activeMonths = months.filter(month => month.ingresos || month.egresos)
+  const best = activeMonths.sort((a, b) => b.balance - a.balance)[0]
+  const names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+  S('annual-income', money(income))
+  S('annual-expense', money(expense))
+  S('annual-balance', money(balance))
+  S('annual-best', best ? `${names[best.index]} · ${money(best.balance)}` : 'Sin datos')
+  const balanceEl = document.getElementById('annual-balance')
+  if (balanceEl) balanceEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)'
+  const maxValue = Math.max(1, ...months.flatMap(month => [month.ingresos, month.egresos]))
+  const grid = document.getElementById('annual-grid')
+  if (grid) {
+    grid.innerHTML = months.map(month => `<div class="annual-month" title="${names[month.index]}: ingresos ${money(month.ingresos)}, egresos ${money(month.egresos)}, resultado ${money(month.balance)}">
+      <div class="annual-bars"><div class="annual-bar" style="height:${Math.max(2, month.ingresos / maxValue * 100)}%;background:var(--green)"></div><div class="annual-bar" style="height:${Math.max(2, month.egresos / maxValue * 100)}%;background:var(--red)"></div></div>
+      <div class="annual-label">${names[month.index]}</div>
+    </div>`).join('')
+  }
+}
+
+// ══════════════════════════════════════
+// DATOS IMPORTADOS / CARGA INTELIGENTE
+// ══════════════════════════════════════
+let importedData = { movements: [], movementsMonth: [], inventory: [], inventoryLatest: [], batches: [], loading: false, error: null }
+importedData.botActions = []
+importedData.inventorySaleIds = new Set()
+let importedLoadPromise = null
+let inventoryViewFilter = 'all'
+
+function money(n) { return '$' + fmt(Number(n) || 0) }
+function importDate(v) { return v ? String(v).slice(0, 10) : '—' }
+function stockTotals(items) {
+  const list = items || []
+  return {
+    count: list.length,
+    costo: list.reduce((a, p) => a + ((Number(p.stock_actual) || 0) * (Number(p.costo_total ?? p.costo_unitario) || 0)), 0),
+    venta: list.reduce((a, p) => a + ((Number(p.stock_actual) || 0) * (Number(p.precio_venta_local || p.precio_venta_web) || 0)), 0),
+    rojo: list.filter(p => p.estado_stock === 'rojo').length,
+    amarillo: list.filter(p => p.estado_stock === 'amarillo').length,
+    verde: list.filter(p => p.estado_stock === 'verde').length
+  }
+}
+
+function inventoryNeedsReorder(item) {
+  const stock = Number(item.stock_actual)
+  const minimum = Number(item.stock_minimo)
+  return Number.isFinite(stock) && Number.isFinite(minimum) && (item.estado_stock === 'rojo' || item.estado_stock === 'amarillo' || stock <= minimum)
+}
+
+function inventoryHasPricingAlert(item) {
+  return Number(item.costo_total ?? item.costo_unitario) <= 0 || Number(item.precio_venta_local || item.precio_venta_web) <= 0 || Number(item.margen_local_pct) < 25
+}
+
+function inventoryReorderCost(item) {
+  const missing = Math.max(0, (Number(item.stock_minimo) || 0) - (Number(item.stock_actual) || 0))
+  return missing * (Number(item.costo_total ?? item.costo_unitario) || 0)
+}
+function movementTotals(items) {
+  const list = items || []
+  const ingresos = list.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
+  const egresos = list.filter(m => m.tipo === 'egreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
+  return { ingresos, egresos, balance: ingresos - egresos, count: list.length }
+}
+function setImportedState(id, msg, mode = 'info') {
+  const el = document.getElementById(id)
+  if (!el) return
+  if (!msg) { el.innerHTML = ''; return }
+  const color = mode === 'error' ? 'var(--red)' : 'var(--txt3)'
+  el.innerHTML = `<div class="empty" style="padding:18px;color:${color}">${escapeHTML(msg)}</div>`
+}
+function renderImportedStates() {
+  const ids = ['imp-dash-state', 'imp-fin-state', 'imp-prod-state', 'imp-import-state']
+  if (importedData.loading) ids.forEach(id => setImportedState(id, 'Cargando datos importados...'))
+  else if (importedData.error) ids.forEach(id => setImportedState(id, 'Error al cargar datos importados', 'error'))
+  else {
+    const hasAny = importedData.movements.length || importedData.inventory.length || importedData.batches.length
+    ids.forEach(id => setImportedState(id, hasAny ? '' : 'Sin datos importados todavía'))
+  }
+}
+
+async function loadImportedData() {
+  if (!CU) return
+  if (importedLoadPromise) return importedLoadPromise
+  importedData.loading = true
+  importedData.error = null
+  renderImportedStates()
+  importedLoadPromise = (async () => {
+    try {
+      await Promise.all([loadImportedMovements(), loadImportedInventory(), loadImportBatches(), loadBotActions(), loadInventorySaleLinks()])
+      importedData.error = null
+    } catch (e) {
+      importedData.error = e
+      console.error('[Kairós] loadImportedData:', e)
+    } finally {
+      importedData.loading = false
+      importedLoadPromise = null
+      renderImportedDashboard()
+      renderImportedMovements()
+      renderImportedInventory()
+      renderRecentImports()
+      renderBotActionsHistory()
+      renderSystemState()
+    }
+  })()
+  return importedLoadPromise
+}
+
+async function loadImportedMovements() {
+  const { m, y } = getMes()
+  const mesStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const mesEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const latest = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(50)
+  const recent = await sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
+  if (latest.error) throw latest.error
+  if (recent.error) throw recent.error
+  importedData.movements = latest.data || []
+  importedData.movementsMonth = (recent.data || []).filter(mov => {
+    const dateKey = mov.fecha || (mov.created_at ? String(mov.created_at).slice(0, 10) : null)
+    return dateKey >= mesStart && dateKey < mesEnd
+  })
+}
+
+async function loadImportedInventory() {
+  const { data, error } = await sb.from('inventario_items').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
+  if (error) throw error
+  importedData.inventory = data || []
+  importedData.inventoryLatest = (data || []).slice(0, 50)
+}
+
+async function loadImportBatches() {
+  const { data, error } = await sb.from('import_batches').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(25)
+  if (error) throw error
+  importedData.batches = data || []
+}
+
+async function loadBotActions() {
+  const { data, error } = await sb.from('bot_actions').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(30)
+  if (error) throw error
+  importedData.botActions = data || []
+}
+
+async function loadInventorySaleLinks() {
+  const { data, error } = await sb.from('venta_items').select('inventory_item_id').eq('user_id', CU.id).limit(1000)
+  if (error) throw error
+  importedData.inventorySaleIds = new Set((data || []).map(v => v.inventory_item_id).filter(Boolean))
+}
+
+function renderImportedDashboard() {
+  renderImportedStates()
+  const mt = movementTotals(importedData.movementsMonth)
+  const st = stockTotals(importedData.inventory)
+  S('id-ing', money(mt.ingresos)); S('id-egr', money(mt.egresos)); S('id-bal', money(mt.balance)); S('id-movs', mt.count + ' movimientos del mes')
+  S('id-prod', st.count); S('id-stock-costo', money(st.costo)); S('id-stock-venta', money(st.venta))
+  S('id-stock-est', `Stock: ${st.rojo} / ${st.amarillo} / ${st.verde}`)
+  const br = document.getElementById('id-stock-breakdown')
+  if (br) {
+    br.innerHTML = st.count
+      ? `<div class="mrow"><div class="mlbl">Rojo</div><div class="mval" style="color:var(--red)">${st.rojo}</div></div><div class="mrow"><div class="mlbl">Amarillo</div><div class="mval" style="color:var(--yel)">${st.amarillo}</div></div><div class="mrow"><div class="mlbl">Verde</div><div class="mval" style="color:var(--green)">${st.verde}</div></div>`
+      : '<div class="empty" style="padding:20px"><div class="empty-i">·</div>Sin inventario importado</div>'
+  }
+}
+
+function renderImportedMovements() {
+  const rows = importedData.movements || []
+  const totals = movementTotals(importedData.movementsMonth)
+  S('if-ing', money(totals.ingresos)); S('if-egr', money(totals.egresos)); S('if-bal', money(totals.balance)); S('if-cant', totals.count)
+  const tb = document.getElementById('imp-mov-tb')
+  if (!tb) return
+  tb.innerHTML = !rows.length
+    ? '<tr><td colspan="8"><div class="empty"><div class="empty-i">·</div>Sin movimientos importados</div></td></tr>'
+    : rows.map(m => `<tr>
+        <td style="color:var(--txt3)">${escapeHTML(financeDateKey(m) || '—')}</td>
+        <td>${escapeHTML(m.descripcion || '—')}</td>
+        <td><span class="badge ${m.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(m.tipo || '—')}</span></td>
+        <td style="font-weight:600;color:${m.tipo === 'ingreso' ? 'var(--green)' : 'var(--red)'}">${money(m.monto)}</td>
+        <td>${escapeHTML(m.medio_pago || '—')}</td>
+        <td>${escapeHTML(m.categoria || 'sin_categoria')}</td>
+        <td>${escapeHTML(m.origen || 'manual')}</td>
+        <td><button class="btn btn-del" onclick="deleteImportedMovement('${m.id}')">Eliminar</button></td>
+      </tr>`).join('')
+}
+
+function renderImportedInventory() {
+  const allRows = importedData.inventory || []
+  const filtered = inventoryViewFilter === 'low'
+    ? allRows.filter(inventoryNeedsReorder)
+    : inventoryViewFilter === 'pricing'
+      ? allRows.filter(inventoryHasPricingAlert)
+      : allRows
+  const rows = filtered.slice(0, 50)
+  const totals = stockTotals(allRows)
+  S('ip-cant', totals.count); S('ip-costo', money(totals.costo)); S('ip-venta', money(totals.venta)); S('ip-est', `${totals.rojo} / ${totals.amarillo} / ${totals.verde}`)
+  const reorderItems = allRows.filter(inventoryNeedsReorder)
+  const reorderCost = reorderItems.reduce((sum, item) => sum + inventoryReorderCost(item), 0)
+  S('ip-reorder-cost', money(reorderCost))
+  S('ip-reorder-note', reorderItems.length ? `${reorderItems.length} producto${reorderItems.length === 1 ? '' : 's'} por debajo o cerca del mínimo` : 'Sin faltantes calculables')
+  const filterNote = document.getElementById('inventory-filter-note')
+  const filterText = document.getElementById('inventory-filter-text')
+  if (filterNote && filterText) {
+    const labels = {
+      low: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con stock bajo o agotado. Están marcados en amarillo.`,
+      pricing: `Mostrando ${rows.length} producto${rows.length === 1 ? '' : 's'} con precio, costo o margen para revisar.`
+    }
+    filterNote.classList.toggle('on', inventoryViewFilter !== 'all')
+    filterText.textContent = labels[inventoryViewFilter] || ''
+  }
+  const badge = { rojo: 'br', amarillo: 'by', verde: 'bg', sin_datos: 'bb' }
+  const tb = document.getElementById('imp-inv-tb')
+  if (!tb) return
+  tb.innerHTML = !rows.length
+    ? `<tr><td colspan="11"><div class="empty"><div class="empty-i">·</div>${inventoryViewFilter === 'all' ? 'Sin inventario importado' : 'No hay productos que coincidan con este filtro'}</div></td></tr>`
+    : rows.map(p => {
+      const hasSales = importedData.inventorySaleIds?.has(p.id)
+      const highlighted = inventoryViewFilter === 'low' ? inventoryNeedsReorder(p) : inventoryViewFilter === 'pricing' ? inventoryHasPricingAlert(p) : false
+      return `<tr class="${highlighted ? 'attention-row' : ''}">
+        <td><strong>${escapeHTML(p.producto || '—')}</strong></td>
+        <td>${escapeHTML(p.categoria || '—')}</td>
+        <td>${escapeHTML(p.color || '—')}</td>
+        <td>${escapeHTML(p.medida || '—')}</td>
+        <td>${p.stock_actual ?? '—'}</td>
+        <td>${money(p.costo_unitario)}</td>
+        <td>${money(p.precio_venta_local)}</td>
+        <td style="color:${Number(p.margen_local_pct) >= 25 ? 'var(--green)' : Number(p.margen_local_pct) >= 0 ? 'var(--yel)' : 'var(--red)'}">${fmtDec(Number(p.margen_local_pct) || 0)}%</td>
+        <td><span class="badge ${badge[p.estado_stock] || 'bb'}">${escapeHTML(p.estado_stock || 'sin_datos')}</span></td>
+        <td>${escapeHTML(p.accion_recomendada || '—')}</td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="editImportedInventoryItem('${p.id}')">Editar</button>
+          ${hasSales ? `<button class="btn btn-ghost btn-sm" onclick="archiveImportedInventoryItem('${p.id}')">Archivar</button>` : `<button class="btn btn-del" onclick="deleteImportedInventoryItem('${p.id}')">Eliminar</button>`}
+        </div></td>
+      </tr>`
+    }).join('')
+}
+
+function switchProductTab(tab) {
+  const inv = document.getElementById('prod-tab-inv-pane')
+  const carga = document.getElementById('prod-tab-carga-pane')
+  const invBtn = document.getElementById('prod-tab-inv')
+  const cargaBtn = document.getElementById('prod-tab-carga')
+  if (!inv || !carga) return
+  const showCarga = tab === 'carga'
+  inv.style.display = showCarga ? 'none' : 'block'
+  carga.style.display = showCarga ? 'block' : 'none'
+  if (invBtn) invBtn.className = 'btn btn-sm ' + (showCarga ? 'btn-ghost' : 'btn-gold')
+  if (cargaBtn) cargaBtn.className = 'btn btn-sm ' + (showCarga ? 'btn-gold' : 'btn-ghost')
+}
+
+function importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb) {
+  const costoTotal = costo + extra
+  const ganLocal = precioLocal - costoTotal
+  const marLocal = precioLocal > 0 ? (ganLocal / precioLocal) * 100 : 0
+  const ganWeb = precioWeb - costoTotal
+  const marWeb = precioWeb > 0 ? (ganWeb / precioWeb) * 100 : 0
+  const estado = stock <= 0 ? 'rojo' : stock <= stockMin ? 'amarillo' : 'verde'
+  return {
+    costo_total: costoTotal,
+    ganancia_local: ganLocal,
+    margen_local_pct: marLocal,
+    ganancia_web: ganWeb,
+    margen_web_pct: marWeb,
+    estado_stock: estado,
+    accion_recomendada: inventoryAction(stock, stockMin, costoTotal, precioLocal)
+  }
+}
+
+let editingInventoryId = null
+
+function setEditField(id, value) {
+  const el = document.getElementById(id)
+  if (el) el.value = value ?? ''
+}
+
+function editFieldText(id, label, required = false) {
+  const clean = V(id).trim()
+  if (required && !clean) throw new Error(`${label} es obligatorio`)
+  return clean || null
+}
+
+function editFieldNumber(id, label, integer = false) {
+  const raw = V(id).trim()
+  const parsed = parseNumberValue(raw === '' ? 0 : raw)
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${label} debe ser un numero mayor o igual a 0`)
+  return integer ? Math.trunc(parsed) : parsed
+}
+
+function closeImportedInventoryModal() {
+  editingInventoryId = null
+  const modal = document.getElementById('inv-edit-ov')
+  if (modal) modal.classList.remove('on')
+}
+
+function editImportedInventoryItem(id) {
+  const item = (importedData.inventory || []).find(p => p.id === id) || (importedData.inventoryLatest || []).find(p => p.id === id)
+  if (!item) { toastErr('No se encontro el item para editar'); return }
+  editingInventoryId = id
+  setEditField('ie-producto', item.producto)
+  setEditField('ie-categoria', item.categoria)
+  setEditField('ie-color', item.color)
+  setEditField('ie-medida', item.medida)
+  setEditField('ie-stock', item.stock_actual ?? 0)
+  setEditField('ie-stock-min', item.stock_minimo ?? 0)
+  setEditField('ie-costo', item.costo_unitario ?? 0)
+  setEditField('ie-extra', item.costo_extra ?? 0)
+  setEditField('ie-precio-local', item.precio_venta_local ?? 0)
+  setEditField('ie-precio-web', item.precio_venta_web ?? 0)
+  setEditField('ie-proveedor', item.proveedor)
+  setEditField('ie-notas', item.notas)
+  const modal = document.getElementById('inv-edit-ov')
+  if (modal) modal.classList.add('on')
+}
+
+async function saveImportedInventoryEdit() {
+  if (!editingInventoryId) { toastErr('No hay producto para guardar'); return }
+  const btn = document.getElementById('ie-save')
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...' }
+  try {
+    const producto = editFieldText('ie-producto', 'Producto', true)
+    const categoria = editFieldText('ie-categoria', 'Categoria')
+    const color = editFieldText('ie-color', 'Color')
+    const medida = editFieldText('ie-medida', 'Medida')
+    const stock = editFieldNumber('ie-stock', 'Stock actual', true)
+    const stockMin = editFieldNumber('ie-stock-min', 'Stock minimo', true)
+    const costo = editFieldNumber('ie-costo', 'Costo unitario')
+    const extra = editFieldNumber('ie-extra', 'Costo extra')
+    const precioLocal = editFieldNumber('ie-precio-local', 'Precio venta local')
+    const precioWeb = editFieldNumber('ie-precio-web', 'Precio venta web')
+    const proveedor = editFieldText('ie-proveedor', 'Proveedor')
+    const notas = editFieldText('ie-notas', 'Notas')
+    const derived = importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb)
+    const payload = {
+      producto, categoria, color, medida,
+      stock_actual: stock,
+      stock_minimo: stockMin,
+      costo_unitario: costo,
+      costo_extra: extra,
+      precio_venta_local: precioLocal,
+      precio_venta_web: precioWeb,
+      proveedor,
+      notas,
+      ...derived
+    }
+    const { error } = await sb.from('inventario_items').update(payload).eq('id', editingInventoryId).eq('user_id', CU.id)
+    if (handleSupaError(error, 'editImportedInventoryItem')) return
+    await loadImportedData()
+    closeImportedInventoryModal()
+    toast('Producto actualizado')
+  } catch (e) {
+    toastErr(e.message || 'No se pudo actualizar el producto')
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios' }
+  }
+}
+
+function renderRecentImports() {
+  const movs = (importedData.movements || []).slice(0, 8)
+  const invs = (importedData.inventoryLatest || []).slice(0, 8)
+  const batches = importedData.batches || []
+  const mtb = document.getElementById('imp-recent-movs')
+  if (mtb) mtb.innerHTML = !movs.length
+    ? '<tr><td colspan="4"><div class="empty"><div class="empty-i">·</div>Sin movimientos importados</div></td></tr>'
+    : movs.map(m => `<tr><td>${importDate(m.fecha)}</td><td>${escapeHTML(m.descripcion || '—')}</td><td><span class="badge ${m.tipo === 'ingreso' ? 'bg' : 'br'}">${escapeHTML(m.tipo || '—')}</span></td><td>${money(m.monto)}</td></tr>`).join('')
+  const itb = document.getElementById('imp-recent-inv')
+  if (itb) itb.innerHTML = !invs.length
+    ? '<tr><td colspan="4"><div class="empty"><div class="empty-i">·</div>Sin inventario importado</div></td></tr>'
+    : invs.map(p => `<tr><td>${escapeHTML(p.producto || '—')}</td><td>${p.stock_actual ?? '—'}</td><td>${money(p.costo_unitario)}</td><td>${money(p.precio_venta_local)}</td></tr>`).join('')
+  const btb = document.getElementById('imp-batches-tb')
+  if (btb) btb.innerHTML = !batches.length
+    ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">📥</div>Sin historial de importaciones</div></td></tr>'
+    : batches.map(b => `<tr><td>${importDate(b.created_at)}</td><td>${escapeHTML(b.source || '—')}</td><td>${escapeHTML(b.target || '—')}</td><td><span class="badge ${b.status === 'confirmed' ? 'bg' : b.status === 'failed' ? 'br' : 'by'}">${escapeHTML(b.status || '—')}</span></td><td>${b.total_filas ?? 0}</td><td>${b.filas_validas ?? 0}</td><td>${b.filas_con_error ?? 0}</td></tr>`).join('')
+}
+
+function summarizeBotResult(data) {
+  const r = data || {}
+  if (r.venta_id) return `Venta ${money(r.total)}. Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  if (r.movimiento_id && r.stock_despues !== undefined) return `Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  if (r.movimiento_id) return 'Movimiento registrado'
+  if (r.inventory_item_id && r.stock_actual !== undefined) return `Producto creado. Stock ${r.stock_actual}`
+  if (r.inventory_item_id) return `Stock ${r.stock_antes ?? '—'} -> ${r.stock_despues ?? '—'}`
+  return '—'
+}
+
+function botActionLabel(type) {
+  const labels = { crear_producto: 'Crear producto', venta_stock: 'Venta', gasto: 'Gasto', reposicion: 'Reposición', ajuste_stock: 'Ajuste stock' }
+  return labels[type] || type || '—'
+}
+
+function botStatusLabel(status) {
+  const labels = { preview: 'pendiente', confirmed: 'confirmada', failed: 'fallida', cancelled: 'cancelada' }
+  return labels[status] || status || '—'
+}
+
+function friendlyBotError(err) {
+  const msg = String(err?.message || err || '')
+  const t = normalizeText(msg)
+  if (t.includes('stock cambio') || t.includes('el stock cambio')) return 'El stock cambió antes de confirmar. Intente nuevamente.'
+  if (t.includes('producto no encontrado')) return 'No encontré ese producto. Revise el nombre o créelo primero.'
+  if (t.includes('producto ya existe') || t.includes('duplic')) return 'Ese producto ya existe. Use reposición para sumar stock.'
+  if (t.includes('falta precio') || t.includes('precio invalido')) return 'Falta el precio de venta. Ejemplo: venta 2 toalla azul a 10000 cada una.'
+  if (t.includes('stock insuficiente')) return 'No hay stock suficiente para confirmar esa venta. Revise el inventario.'
+  if (t.includes('cantidad invalida')) return 'La cantidad no es válida. Revise el número e intente nuevamente.'
+  return msg || 'No se pudo completar la acción.'
+}
+
+function renderBotActionsHistory() {
+  const rows = importedData.botActions || []
+  const tb = document.getElementById('bot-actions-tb')
+  const badge = { preview: 'by', confirmed: 'bg', failed: 'br', cancelled: 'bb' }
+  if (tb) {
+    tb.innerHTML = !rows.length
+      ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">IA</div>Sin acciones del Asesor IA</div></td></tr>'
+      : rows.map(a => `<tr>
+        <td style="color:var(--txt3)">${importDate(a.created_at)}</td>
+        <td>${escapeHTML(botActionLabel(a.action_type))}</td>
+        <td>${escapeHTML((a.input_text || '—').slice(0, 90))}</td>
+        <td><span class="badge ${badge[a.status] || 'bb'}">${escapeHTML(botStatusLabel(a.status))}</span></td>
+        <td style="color:${a.error ? 'var(--red)' : 'var(--txt3)'}">${escapeHTML(a.error || '—')}</td>
+        <td>${importDate(a.confirmed_at)}</td>
+        <td>${escapeHTML(summarizeBotResult(a.result_data))}</td>
+      </tr>`).join('')
+  }
+  renderAIRecentActions()
+}
+
+function renderAIRecentActions() {
+  const el = document.getElementById('ai-recent-actions')
+  if (!el) return
+  const rows = (importedData.botActions || []).filter(a => a.status !== 'preview').slice(0, 4)
+  if (!rows.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3)">No hay acciones confirmadas por el momento.</div>'
+    return
+  }
+  const badge = { confirmed: 'bg', failed: 'br', cancelled: 'bb' }
+  el.innerHTML = rows.map(a => `
+    <button class="ai-history-item" type="button" onclick="showBotActionDetail('${a.id}')">
+      <span>${escapeHTML(botActionLabel(a.action_type))}</span>
+      <span class="badge ${badge[a.status] || 'by'}">${escapeHTML(botStatusLabel(a.status))}</span>
+      <small>${escapeHTML((a.input_text || '—').slice(0, 54))}</small>
+      <small>${escapeHTML(importDate(a.confirmed_at || a.created_at))}</small>
+    </button>`).join('')
+}
+
+function showBotActionDetail(id) {
+  const action = (importedData.botActions || []).find(a => a.id === id)
+  if (!action) return
+  const detail = action.error
+    ? `${botActionLabel(action.action_type)}: ${action.error}`
+    : `${botActionLabel(action.action_type)}: ${summarizeBotResult(action.result_data)}`
+  appendAIMessage(detail, action.status === 'failed' ? 'think' : 'bot')
+}
+
+function renderSystemState() {
+  const el = document.getElementById('system-state-list')
+  if (!el) return
+  const actions = importedData.botActions || []
+  const last = actions[0]
+  const recentLimit = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  const recentErrors = actions.filter(a => a.status === 'failed' && new Date(a.created_at || 0).getTime() >= recentLimit).length
+  const advisorBlocked = !!last && last.status === 'failed' && /todavia no ejecuta|could not find the function public\.confirm_bot_action/i.test(String(last.error || ''))
+  const items = [
+    { ok: !importedData.error, label: 'Supabase conectado', value: importedData.error ? 'Error al cargar datos' : 'OK' },
+    { ok: !advisorBlocked, label: 'Asesor IA operativo', value: advisorBlocked ? 'Confirmación RPC pendiente o desactualizada' : 'Preview y confirmación activos' },
+    { ok: importedData.inventory.length > 0, label: 'Inventario cargado', value: `${importedData.inventory.length} item(s)` },
+    { ok: importedData.movements.length > 0, label: 'Movimientos cargados', value: `${importedData.movements.length} movimiento(s)` },
+    { ok: !!last, label: 'Última acción del bot', value: last ? `${botActionLabel(last.action_type)} · ${last.status}` : 'Sin acciones' },
+    { ok: recentErrors === 0, label: 'Errores recientes del bot', value: String(recentErrors) }
+  ]
+  el.innerHTML = items.map(i => `<div class="mrow"><div class="mlbl">${i.ok ? 'OK' : '!'} ${escapeHTML(i.label)}</div><div class="mval" style="font-size:13px;color:${i.ok ? 'var(--txt2)' : 'var(--yel)'}">${escapeHTML(i.value)}</div></div>`).join('')
+}
+
+async function deleteImportedMovement(id) {
+  if (!confirm('¿Eliminar este movimiento importado?')) return
+  const { error } = await sb.from('movimientos_financieros').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteImportedMovement')) return
+  invalidateUnifiedFinances()
+  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+  toast('Movimiento importado eliminado')
+}
+
+async function deleteImportedInventoryItem(id) {
+  if (!confirm('¿Eliminar este item de inventario importado y sus alias/movimientos de stock?')) return
+  const { data: saleRows, error: saleErr } = await sb.from('venta_items').select('id').eq('inventory_item_id', id).eq('user_id', CU.id).limit(1)
+  if (handleSupaError(saleErr, 'checkInventorySales')) return
+  if ((saleRows || []).length) {
+    toastErr('No se puede eliminar porque ya tiene ventas asociadas. Más adelante se podrá archivar.')
+    return
+  }
+  const { error: aliasErr } = await sb.from('inventory_aliases').delete().eq('inventory_item_id', id).eq('user_id', CU.id)
+  if (handleSupaError(aliasErr, 'deleteInventoryAliases')) return
+  const { error: stockErr } = await sb.from('stock_movements').delete().eq('inventory_item_id', id).eq('user_id', CU.id)
+  if (handleSupaError(stockErr, 'deleteInventoryStockMovements')) return
+  const { error } = await sb.from('inventario_items').delete().eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'deleteImportedInventoryItem')) return
+  await loadImportedData()
+  toast('Item eliminado correctamente')
+}
+
+// ══════════════════════════════════════
+// CARGA INTELIGENTE
+// ══════════════════════════════════════
+async function archiveImportedInventoryItem(id) {
+  const item = (importedData.inventory || []).find(p => p.id === id) || (importedData.inventoryLatest || []).find(p => p.id === id)
+  const hasSales = importedData.inventorySaleIds?.has(id)
+  if (!hasSales) { toastErr('Este producto no tiene ventas asociadas. Puede eliminarlo si es una carga de prueba.'); return }
+  if (!confirm('¿Archivar este producto con ventas asociadas?')) return
+  const payload = {}
+  if (item && Object.prototype.hasOwnProperty.call(item, 'archivado')) payload.archivado = true
+  else if (item && Object.prototype.hasOwnProperty.call(item, 'activo')) payload.activo = false
+  else {
+    toastErr('Este producto tiene ventas. Por ahora no se puede borrar; más adelante se archivará.')
+    return
+  }
+  const { error } = await sb.from('inventario_items').update(payload).eq('id', id).eq('user_id', CU.id)
+  if (handleSupaError(error, 'archiveImportedInventoryItem')) return
+  await loadImportedData()
+  toast('Producto archivado')
+}
+
+let importRows = []
+let importSource = 'manual'
+let botActionPreview = null
+let botActionSurface = 'import'
+
+function toggleManualImport() {
+  const isInv = V('im-man-type') === 'inventario'
+  document.getElementById('im-man-fin').style.display = isInv ? 'none' : 'block'
+  document.getElementById('im-man-inv').style.display = isInv ? 'block' : 'none'
+}
+
+function normalizeText(v) {
+  return String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function normalizeKey(k) {
+  return normalizeText(k).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+function rowMap(raw) {
+  const out = {}
+  Object.entries(raw || {}).forEach(([k, v]) => { out[normalizeKey(k)] = v })
+  return out
+}
+
+function pick(raw, aliases) {
+  const r = rowMap(raw)
+  for (const a of aliases) {
+    const v = r[normalizeKey(a)]
+    if (v !== undefined && v !== null && String(v).trim() !== '') return v
+  }
+  return ''
+}
+
+function parseNumberValue(v) {
+  if (v === null || v === undefined || v === '') return null
+  if (typeof v === 'number') return Number.isFinite(v) ? v : NaN
+  let s = String(v).trim().replace(/[^\d,.-]/g, '')
+  if (!s) return null
+  const hasComma = s.includes(','), hasDot = s.includes('.')
+  if (hasComma && hasDot && s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.')
+  else if (hasComma && !hasDot) s = s.replace(',', '.')
+  else if (hasDot && !hasComma && /\.\d{3}$/.test(s)) s = s.replace(/\./g, '')
+  else s = s.replace(/,/g, '')
+  const n = Number(s)
+  return Number.isFinite(n) ? n : NaN
+}
+
+function formatDateValue(v) {
+  if (!v) return null
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
+  const s = String(v).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  const dmy = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/)
+  if (dmy) {
+    const y = dmy[3].length === 2 ? '20' + dmy[3] : dmy[3]
+    return `${y}-${String(dmy[2]).padStart(2, '0')}-${String(dmy[1]).padStart(2, '0')}`
+  }
+  return s
+}
+
+function detectTipo(v) {
+  const t = normalizeText(v)
+  if (/(venta|ventas|ingreso|entrada|vendi|vendí|cobre|cobro)/.test(t)) return 'ingreso'
+  if (/(gasto|gastos|egreso|salida|compra|alquiler|pague|pago)/.test(t)) return 'egreso'
+  return ''
+}
+
+function detectMedio(v) {
+  const t = normalizeText(v)
+  if (t.includes('mercado pago') || t.includes('mercado_pago')) return 'mercado_pago'
+  if (t.includes('transferencia')) return 'transferencia'
+  if (t.includes('efectivo')) return 'efectivo'
+  if (t.includes('debito')) return 'debito'
+  if (t.includes('credito')) return 'credito'
+  return ''
+}
+
+function detectRowTarget(raw, forced = 'auto') {
+  if (forced === 'inventario') return 'inventario_items'
+  if (forced === 'movimientos' || forced === 'movimientos_financieros' || forced === 'ingreso' || forced === 'egreso') return 'movimientos_financieros'
+  const t = normalizeText(Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join(' '))
+  if (/(producto|sku|stock|costo|precio|inventario|tengo)/.test(t) && !/(alquiler|gasto alquiler|transferencia)/.test(t)) return 'inventario_items'
+  if (/(monto|importe|total|valor|venta|ventas|ingreso|entrada|gasto|egreso|salida|alquiler|compra|vendi|vendí)/.test(t)) return 'movimientos_financieros'
+  if (detectMedio(t) || /(^|\s)\$?\s*\d{3,}(?:[.,]\d+)?(\s|$)/.test(t)) return 'movimientos_financieros'
+  return 'unknown'
+}
+
+function normalizeAliasText(v) {
+  return normalizeText(v).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function stripBotProductNoise(v) {
+  return String(v || '')
+    .replace(/\b(stock|costo|precio|a|por)\s+\$?\s*[\d.,]+(?:\s*cada\s+una)?/gi, ' ')
+    .replace(/\b(stock\s+m[ií]nimo)\s+\$?\s*[\d.,]+/gi, ' ')
+    .replace(/\b(en)\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
+    .replace(/\b(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
+    .replace(/\b(cada\s+una|unidad|unidades)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function parseStockAdditionCommand(text) {
+  const t = normalizeText(text)
+  const patterns = [
+    /^(?:suma|sumale|agrega|agregale)\s+([\d.,]+)\s+(?:de\s+)?stock\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:suma|sumale|agrega|agregale)\s+stock\s+([\d.,]+)\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:aumenta|incrementa)\s+(?:el\s+)?stock\s+de\s+(.+?)\s+en\s+([\d.,]+)$/,
+    /^(?:repone|reponer)\s+([\d.,]+)\s+(.+)$/
+  ]
+  for (const p of patterns) {
+    const m = t.match(p)
+    if (!m) continue
+    const amountFirst = !p.source.includes('(.+?)\\s+en')
+    const cantidad = parseNumberValue(amountFirst ? m[1] : m[2])
+    const producto = stripBotProductNoise(amountFirst ? m[2] : m[1])
+    return { action_type: 'reposicion', input_text: text, producto, cantidad, costo_unitario: null, medio_pago: detectMedio(text) }
+  }
+  return null
+}
+
+function looksOperationalIntent(text) {
+  const t = normalizeText(text)
+  const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|sumale|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
+  const actionAtStart = /^(vendi|vender|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
+  return stockIntent || actionAtStart
+}
+
+function parseBotCommand(text) {
+  const t = normalizeText(text)
+  const medio = detectMedio(text)
+  const stockAdd = parseStockAdditionCommand(text)
+  if (stockAdd) return stockAdd
+  if (/^(agrega|agreg[áa]|crear|crea)\b/.test(t) && /\bproducto\b/.test(t)) {
+    let producto = text.replace(/^.*?\bproducto\s+/i, '')
+    producto = stripBotProductNoise(producto)
+    return {
+      action_type: 'crear_producto',
+      input_text: text,
+      producto,
+      stock: parseNumberValue((text.match(/\bstock\s+([\d.,]+)/i) || [])[1]),
+      costo: parseNumberValue((text.match(/\bcosto\s+([\d.,]+)/i) || [])[1]),
+      precio: parseNumberValue((text.match(/\bprecio\s+([\d.,]+)/i) || [])[1])
+    }
+  }
+  if (/^(vendi|vend[íi]|venta)\b/.test(t)) {
+    const qtyMatch = text.match(/^(?:vend[íi]|vendi|venta)\s+([\d.,]+)\s+/i)
+    const qty = qtyMatch ? parseNumberValue(qtyMatch[1]) : 1
+    const unitMatch = text.match(/\ba\s+\$?\s*([\d.,]+)(?:\s*cada\s+una)?/i)
+    const totalMatch = text.match(/\bpor\s+\$?\s*([\d.,]+)/i)
+    const precio = unitMatch ? parseNumberValue(unitMatch[1]) : totalMatch ? parseNumberValue(totalMatch[1]) : null
+    let producto = text.replace(/^(?:vend[íi]|vendi|venta)\s+/i, '')
+    if (qtyMatch) producto = producto.replace(/^[\d.,]+\s+/, '')
+    producto = stripBotProductNoise(producto)
+    return { action_type: 'venta_stock', input_text: text, producto, cantidad: qty, precio_unitario: precio, medio_pago: medio }
+  }
+  if (/^(gasto|pague|pagu[ée])\b/.test(t)) {
+    const montoMatch = text.match(/\$?\s*([\d.,]+)/i)
+    let descripcion = text
+      .replace(/^(gasto|pague|pagu[ée])\s+/i, '')
+      .replace(/\$?\s*[\d.,]+/i, ' ')
+      .replace(/\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/i, ' ')
+      .trim()
+    return { action_type: 'gasto', input_text: text, descripcion, monto: parseNumberValue(montoMatch ? montoMatch[1] : ''), medio_pago: medio }
+  }
+  if (/^(compre|compr[ée])\b/.test(t)) {
+    const qtyMatch = text.match(/^(?:compr[ée]|compre)\s+([\d.,]+)\s+/i)
+    let producto = text.replace(/^(?:compr[ée]|compre)\s+/i, '')
+    if (qtyMatch) producto = producto.replace(/^[\d.,]+\s+/, '')
+    producto = stripBotProductNoise(producto)
+    const costoMatch = text.match(/\bcosto\s+\$?\s*([\d.,]+)/i) || text.match(/\ba\s+\$?\s*([\d.,]+)/i)
+    return { action_type: 'reposicion', input_text: text, producto, cantidad: parseNumberValue(qtyMatch ? qtyMatch[1] : ''), costo_unitario: parseNumberValue(costoMatch ? costoMatch[1] : ''), medio_pago: medio }
+  }
+  if (/^(ajusta|ajust[áa])\s+stock\b/.test(t)) {
+    const m = text.match(/stock\s+de\s+(.+?)\s+a\s+([\d.,]+)/i)
+    return { action_type: 'ajuste_stock', input_text: text, producto: m ? m[1].trim() : '', stock_final: parseNumberValue(m ? m[2] : '') }
+  }
+  return null
+}
+
+async function findInventoryMatch(productText) {
+  const query = normalizeAliasText(productText)
+  if (!query) return { status: 'none', matches: [] }
+  const invRes = await sb.from('inventario_items').select('id,producto,categoria,color,medida,stock_actual,stock_minimo,costo_unitario,costo_extra,costo_total,precio_venta_local,precio_venta_web').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(1000)
+  if (invRes.error) throw invRes.error
+  const aliasRes = await sb.from('inventory_aliases').select('inventory_item_id,alias,normalized_alias').eq('user_id', CU.id).limit(1000)
+  if (aliasRes.error) throw aliasRes.error
+  const aliasesByItem = {}
+  ;(aliasRes.data || []).forEach(a => {
+    aliasesByItem[a.inventory_item_id] = aliasesByItem[a.inventory_item_id] || []
+    aliasesByItem[a.inventory_item_id].push(a)
+  })
+  const scored = (invRes.data || []).map(item => {
+    const productNorm = normalizeAliasText([item.producto, item.color, item.medida].filter(Boolean).join(' '))
+    const aliasNorms = (aliasesByItem[item.id] || []).map(a => normalizeAliasText(a.normalized_alias || a.alias))
+    const all = [productNorm, ...aliasNorms].filter(Boolean)
+    let score = 0
+    if (all.some(v => v === query)) score = 100
+    else if (all.some(v => v.includes(query) || query.includes(v))) score = 70
+    else {
+      const qTokens = query.split(' ').filter(Boolean)
+      if (qTokens.length && all.some(v => qTokens.every(tok => v.includes(tok)))) score = 60
+    }
+    return { item, score }
+  }).filter(m => m.score > 0).sort((a, b) => b.score - a.score)
+  const top = scored.filter(m => m.score === scored[0]?.score)
+  if (!top.length) return { status: 'none', matches: [] }
+  if (top.length > 1) return { status: 'ambiguous', matches: top.map(m => m.item) }
+  return { status: 'match', item: top[0].item, matches: [top[0].item] }
+}
+
+async function findInventoryDuplicate(productText) {
+  const match = await findInventoryMatch(productText)
+  if (match.status === 'match') return { exists: true, item: match.item, ambiguous: false }
+  if (match.status === 'ambiguous') return { exists: true, matches: match.matches, ambiguous: true }
+  return { exists: false, item: null, ambiguous: false }
+}
+
+function stockState(stock, min) {
+  if (stock === null || stock === undefined || !Number.isFinite(Number(stock))) return 'sin_datos'
+  const s = Number(stock), m = Number(min) || 0
+  return s <= 0 ? 'rojo' : s <= m ? 'amarillo' : 'verde'
+}
+
+function inventoryAction(stock, min, costo, precio) {
+  const estado = stockState(stock, min)
+  if (estado === 'rojo') return 'Reponer urgente / pausar publicacion'
+  if (estado === 'amarillo') return 'Reponer / vender con cuidado'
+  if (!Number.isFinite(Number(costo)) || !Number.isFinite(Number(precio)) || Number(precio) <= 0) return 'Completar datos para calcular margen'
+  const margen = ((Number(precio) - Number(costo)) / Number(precio)) * 100
+  return margen >= 25 ? 'Publicar fuerte' : 'Revisar precio o liquidar'
+}
+
+async function buildBotActionPreview(command) {
+  const preview = { ...command, errors: [], warnings: [], rows: [], match: null, canConfirm: true }
+  const addRow = (detail, qty, amount, expected) => {
+    preview.rows = [{ action: command.action_type, detail, qty, amount, expected }]
+  }
+  if (command.action_type === 'crear_producto') {
+    if (!command.producto) preview.errors.push('Falta producto')
+    else {
+      const duplicate = await findInventoryDuplicate(command.producto)
+      if (duplicate.exists) preview.errors.push('Ese producto ya existe. Use reposición para sumar stock.')
+    }
+    ;[['stock', command.stock], ['costo', command.costo], ['precio', command.precio]].forEach(([lbl, val]) => {
+      if (val === null) preview.errors.push(`Falta ${lbl}`)
+      else if (!Number.isFinite(val) || val < 0) preview.errors.push(`${lbl} invalido`)
+    })
+    addRow(command.producto || 'Sin producto', Number.isFinite(command.stock) ? command.stock : '—', Number.isFinite(command.precio) ? '$' + fmt(command.precio) : '—', 'Crear inventario, alias y stock inicial')
+  } else if (['venta_stock', 'reposicion', 'ajuste_stock'].includes(command.action_type)) {
+    const match = await findInventoryMatch(command.producto)
+    preview.match = match
+    if (match.status === 'none') preview.errors.push('No encontré ese producto. Revise el nombre o créelo primero.')
+    if (match.status === 'ambiguous') { preview.warnings.push('Hay mas de un producto parecido'); preview.canConfirm = false }
+    const item = match.item
+    if (command.action_type === 'venta_stock') {
+      if (command.cantidad === null) command.cantidad = 1
+      if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
+      if (command.precio_unitario === null) preview.errors.push('Falta el precio de venta. Ejemplo: venta 2 toalla azul a 10000 cada una.')
+      else if (!Number.isFinite(command.precio_unitario) || command.precio_unitario < 0) preview.errors.push('Falta el precio de venta. Ejemplo: venta 2 toalla azul a 10000 cada una.')
+      if (item && Number(item.stock_actual || 0) < command.cantidad) { preview.warnings.push('Stock insuficiente: revisar antes de vender'); preview.canConfirm = false }
+      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.precio_unitario) ? '$' + fmt(command.precio_unitario * (command.cantidad || 1)) : '—', 'Registrar venta, ingreso y salida de stock')
+    }
+    if (command.action_type === 'reposicion') {
+      if (!Number.isFinite(command.cantidad) || command.cantidad <= 0) preview.errors.push('Cantidad invalida')
+      if (command.costo_unitario === null) preview.warnings.push('No se registrara egreso porque falta costo')
+      else if (!Number.isFinite(command.costo_unitario) || command.costo_unitario < 0) preview.errors.push('Costo invalido')
+      const before = item ? Math.trunc(Number(item.stock_actual) || 0) : null
+      const after = item && Number.isFinite(command.cantidad) ? before + Math.trunc(Number(command.cantidad)) : null
+      const actionText = after !== null
+        ? `Stock: ${before} -> ${after}. ${command.costo_unitario === null ? 'Sin egreso financiero porque falta costo' : 'Subir stock y registrar compra'}`
+        : command.costo_unitario === null ? 'Subir stock sin egreso financiero porque falta costo' : 'Subir stock y registrar compra'
+      addRow(item?.producto || command.producto || 'Sin producto', command.cantidad || '—', Number.isFinite(command.costo_unitario) ? '$' + fmt(command.costo_unitario * command.cantidad) : '—', actionText)
+    }
+    if (command.action_type === 'ajuste_stock') {
+      if (!Number.isFinite(command.stock_final) || command.stock_final < 0) preview.errors.push('Stock final invalido')
+      if (item && Number(item.stock_actual || 0) === Number(command.stock_final)) preview.errors.push('El stock ya esta en ese valor')
+      addRow(item?.producto || command.producto || 'Sin producto', Number.isFinite(command.stock_final) ? command.stock_final : '—', '—', 'Ajustar stock al valor indicado')
+    }
+  } else if (command.action_type === 'gasto') {
+    if (!command.descripcion) preview.errors.push('Falta descripcion')
+    if (command.monto === null) preview.errors.push('Falta monto')
+    else if (!Number.isFinite(command.monto) || command.monto <= 0) preview.errors.push('Monto invalido')
+    addRow(command.descripcion || 'Sin descripcion', '—', Number.isFinite(command.monto) ? '$' + fmt(command.monto) : '—', 'Registrar egreso')
+  }
+  if (preview.errors.length) preview.canConfirm = false
+  preview.status = preview.errors.length ? 'error' : preview.warnings.length ? 'revisar' : 'listo'
+  return preview
+}
+
+function botActionPage(actionType) {
+  if (['crear_producto', 'reposicion', 'ajuste_stock'].includes(actionType)) return 'prod'
+  if (actionType === 'gasto') return 'fin'
+  if (actionType === 'venta_stock') return 'fin'
+  return 'dash'
+}
+
+function botActionTitle(actionType) {
+  const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
+  return map[actionType] || 'Acción operativa'
+}
+
+function botActionNotes(preview) {
+  const notes = [...(preview?.errors || []), ...(preview?.warnings || [])]
+  return notes.length ? notes.map(escapeHTML).join('<br>') : 'Listo para confirmar.'
+}
+
+function parseNaturalMessage(text, forced = 'auto') {
+  const t = normalizeText(text)
+  const target = detectRowTarget({ texto: text }, forced)
+  if (target === 'movimientos_financieros') {
+    const explicitMonto = text.match(/\b(?:por|monto|total|de)\s+\$?\s*([\d.,]+)/i)
+    const montoMatch = explicitMonto || text.match(/\$?\s*([\d.,]+)/i)
+    const tipo = forced === 'ingreso' ? 'ingreso' : forced === 'egreso' ? 'egreso' : detectTipo(text)
+    let descripcion = text
+      .replace(/^\s*(vendi|vendí|venta|ingreso|entrada|gasto|egreso|salida|compra)\s+/i, '')
+      .replace(/\s+por\s+\$?\s*[\d.,]+/i, '')
+      .replace(new RegExp(`\\s*\\$?\\s*${montoMatch ? montoMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : ''}\\s*`, 'i'), ' ')
+      .replace(/\s+(en|por)\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)/i, '')
+      .replace(/\s+(efectivo|transferencia|debito|débito|credito|crédito|mercado pago|mercado_pago)$/i, '')
+      .trim()
+    return { target, raw: { descripcion, monto: montoMatch ? montoMatch[1] : '', tipo, medio_pago: detectMedio(text), categoria: tipo === 'egreso' ? 'gastos' : tipo === 'ingreso' ? 'ventas' : '' } }
+  }
+  if (target === 'inventario_items') {
+    const stock = text.match(/(?:tengo|stock)\s+([\d.,]+)/i)
+    const stockMin = text.match(/stock\s+m[ií]nimo\s+([\d.,]+)/i)
+    const costo = text.match(/costo\s+([\d.,]+)/i)
+    const precio = text.match(/precio\s+([\d.,]+)/i)
+    let producto = text
+      .replace(/(?:tengo|stock)\s+[\d.,]+\s*/i, '')
+      .replace(/costo\s+[\d.,]+/i, '')
+      .replace(/precio\s+[\d.,]+/i, '')
+      .replace(/stock\s+m[ií]nimo\s+[\d.,]+/i, '')
+      .trim()
+    return { target, raw: { producto, stock_actual: stock ? stock[1] : '', stock_minimo: stockMin ? stockMin[1] : '', costo_unitario: costo ? costo[1] : '', precio_venta_local: precio ? precio[1] : '' } }
+  }
+  return { target: 'unknown', raw: { texto: text } }
+}
+
+function buildImportRow(rowNumber, target, raw, source) {
+  if (target === 'movimientos_financieros') return normalizeFinancialRow(raw, rowNumber, source)
+  if (target === 'inventario_items') return normalizeInventoryRow(raw, rowNumber, source)
+  return { rowNumber, target: 'unknown', status: 'error', importStatus: 'error', errors: ['No se pudo detectar el destino'], warnings: [], raw, normalized: null, label: 'Sin destino', metric: '—', action: 'Corregir datos' }
+}
+
+function normalizeFinancialRow(raw, rowNumber, source = 'manual') {
+  const errors = [], warnings = []
+  const descripcion = String(pick(raw, ['descripcion', 'descripción', 'detalle', 'concepto', 'producto', 'texto']) || '').trim()
+  const montoRaw = pick(raw, ['monto', 'importe', 'total', 'precio', 'valor'])
+  const monto = parseNumberValue(montoRaw)
+  let tipo = normalizeText(pick(raw, ['tipo', 'movimiento', 'operacion', 'operación']))
+  if (!tipo) tipo = detectTipo([descripcion, pick(raw, ['categoria', 'categoría'])].join(' '))
+  if (tipo && tipo !== 'ingreso' && tipo !== 'egreso') tipo = detectTipo(tipo)
+  const fecha = formatDateValue(pick(raw, ['fecha', 'date', 'dia', 'día']))
+  const categoriaRaw = pick(raw, ['categoria', 'categoría', 'rubro'])
+  const categoria = String(categoriaRaw || 'sin_categoria').trim() || 'sin_categoria'
+  const medio = String(pick(raw, ['medio_pago', 'medio de pago', 'pago', 'forma_pago']) || detectMedio(JSON.stringify(raw))).trim()
+
+  if (!descripcion) errors.push('Falta descripción')
+  if (monto === null) errors.push('Falta monto')
+  else if (!Number.isFinite(monto) || monto <= 0) errors.push('Monto inválido')
+  if (!tipo) errors.push('Falta tipo: ingreso o egreso')
+  if (!fecha) warnings.push('Falta fecha')
+  if (!categoriaRaw) warnings.push('Falta categoría')
+
+  const status = errors.length ? 'error' : warnings.length ? 'revisar' : 'listo'
+  return {
+    rowNumber,
+    target: 'movimientos_financieros',
+    status,
+    importStatus: errors.length ? 'error' : warnings.length ? 'warning' : 'valid',
+    errors,
+    warnings,
+    raw,
+    normalized: { user_id: CU.id, fecha, descripcion, monto: Number.isFinite(monto) ? monto : 0, tipo, medio_pago: medio || null, categoria, mes: fecha ? fecha.slice(0, 7) : null, origen: source },
+    label: descripcion || 'Sin descripción',
+    metric: Number.isFinite(monto) ? '$' + fmt(monto) : '—',
+    action: errors.length ? 'Corregir datos' : warnings.length ? 'Confirmar con aviso' : 'Guardar'
+  }
+}
+
+function normalizeInventoryRow(raw, rowNumber, source = 'manual') {
+  const errors = [], warnings = []
+  const producto = String(pick(raw, ['producto', 'nombre', 'item', 'descripcion', 'descripción']) || '').trim()
+  const stock = parseNumberValue(pick(raw, ['stock_actual', 'stock', 'cantidad', 'unidades']))
+  const stockMin = parseNumberValue(pick(raw, ['stock_minimo', 'stock mínimo', 'minimo', 'mínimo']))
+  const costo = parseNumberValue(pick(raw, ['costo_unitario', 'costo', 'costo unitario']))
+  const extra = parseNumberValue(pick(raw, ['costo_extra', 'extra', 'costo extra']))
+  const precioLocal = parseNumberValue(pick(raw, ['precio_venta_local', 'precio_local', 'precio', 'precio venta local']))
+  const precioWeb = parseNumberValue(pick(raw, ['precio_venta_web', 'precio_web', 'precio venta web']))
+
+  if (!producto) errors.push('Falta producto')
+  ;[['stock', stock], ['costo', costo], ['precio', precioLocal]].forEach(([lbl, n]) => {
+    if (n === null) warnings.push(`Falta ${lbl}`)
+    else if (!Number.isFinite(n) || n < 0) errors.push(`${lbl} inválido`)
+  })
+  ;[['stock mínimo', stockMin], ['costo extra', extra], ['precio web', precioWeb]].forEach(([lbl, n]) => {
+    if (n !== null && (!Number.isFinite(n) || n < 0)) errors.push(`${lbl} inválido`)
+  })
+
+  const stockVal = Number.isFinite(stock) ? Math.trunc(stock) : null
+  const minVal = Number.isFinite(stockMin) ? Math.trunc(stockMin) : 0
+  const costoVal = Number.isFinite(costo) ? costo : null
+  const extraVal = Number.isFinite(extra) ? extra : 0
+  const costoTotal = costoVal !== null ? costoVal + extraVal : null
+  const localVal = Number.isFinite(precioLocal) ? precioLocal : null
+  const webVal = Number.isFinite(precioWeb) ? precioWeb : null
+  const ganLocal = localVal !== null && costoTotal !== null ? localVal - costoTotal : 0
+  const marLocal = localVal > 0 ? (ganLocal / localVal) * 100 : 0
+  const ganWeb = webVal !== null && costoTotal !== null ? webVal - costoTotal : 0
+  const marWeb = webVal > 0 ? (ganWeb / webVal) * 100 : 0
+  let estado = 'sin_datos'
+  if (stockVal !== null) estado = stockVal <= 0 ? 'rojo' : stockVal <= minVal ? 'amarillo' : 'verde'
+
+  let accion = 'Completar datos para calcular margen'
+  if (stockVal !== null && stockVal <= 0) accion = 'Reponer urgente / pausar publicación'
+  else if (stockVal !== null && stockVal <= minVal) accion = 'Reponer / vender con cuidado'
+  else if (costoVal === null || localVal === null) accion = 'Completar datos para calcular margen'
+  else if (marLocal < 25) accion = 'Revisar precio o liquidar'
+  else accion = 'Publicar fuerte'
+
+  const status = errors.length ? 'error' : warnings.length ? 'revisar' : 'listo'
+  return {
+    rowNumber,
+    target: 'inventario_items',
+    status,
+    importStatus: errors.length ? 'error' : warnings.length ? 'warning' : 'valid',
+    errors,
+    warnings,
+    raw,
+    normalized: {
+      user_id: CU.id,
+      sku: String(pick(raw, ['sku']) || '').trim() || null,
+      categoria: String(pick(raw, ['categoria', 'categoría']) || '').trim() || null,
+      producto,
+      variante: String(pick(raw, ['variante']) || '').trim() || null,
+      medida: String(pick(raw, ['medida', 'talle', 'tamaño']) || '').trim() || null,
+      color: String(pick(raw, ['color']) || '').trim() || null,
+      stock_actual: stockVal,
+      stock_minimo: minVal,
+      costo_unitario: costoVal,
+      costo_extra: extraVal,
+      costo_total: costoTotal,
+      precio_venta_local: localVal,
+      precio_venta_web: webVal,
+      ganancia_local: ganLocal,
+      margen_local_pct: marLocal,
+      ganancia_web: ganWeb,
+      margen_web_pct: marWeb,
+      estado_stock: estado,
+      accion_recomendada: accion,
+      proveedor: String(pick(raw, ['proveedor']) || '').trim() || null,
+      notas: String(pick(raw, ['notas', 'nota']) || '').trim() || null,
+      origen: source
+    },
+    label: producto || 'Sin producto',
+    metric: stockVal !== null ? String(stockVal) : '—',
+    action: errors.length ? 'Corregir datos' : accion
+  }
+}
+
+async function applyInventoryDuplicateCheck(row) {
+  if (row.target !== 'inventario_items' || !row.normalized?.producto) return row
+  const duplicate = await findInventoryDuplicate(row.normalized.producto)
+  if (!duplicate.exists) return row
+  row.errors.push('Producto ya existente: use reposición o edite el existente.')
+  row.status = 'error'
+  row.importStatus = 'error'
+  row.action = 'Corregir datos'
+  return row
+}
+
+async function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
+  try {
+    importSource = source
+    botActionPreview = null
+    document.getElementById('im-bot-preview-card').style.display = 'none'
+    importRows = await Promise.all(rows.map(async (raw, i) => {
+      const parsed = raw?.target ? raw : { target: detectRowTarget(raw, forced), raw }
+      return applyInventoryDuplicateCheck(buildImportRow(i + 1, parsed.target, parsed.raw || raw, source))
+    }))
+    renderImportPreview()
+  } catch (e) {
+    handleSupaError(e, 'analyzeImportRows')
+  }
+}
+
+async function handleSmartMessage() {
+  const msg = V('im-msg').trim()
+  if (!msg) { toastErr('Escribí un mensaje para analizar'); return }
+  const command = parseBotCommand(msg)
+  if (command) {
+    try {
+      botActionPreview = await buildBotActionPreview(command)
+      importRows = []
+      renderBotActionPreview()
+      return
+    } catch (e) {
+      handleSupaError(e, 'bot_preview')
+      return
+    }
+  }
+  const parsed = parseNaturalMessage(msg, V('im-kind'))
+  await analyzeImportRows([parsed], 'mensaje', parsed.target === 'unknown' ? 'auto' : parsed.target)
+}
+
+async function handleImportFile() {
+  const file = document.getElementById('im-file').files[0]
+  if (!file) { toastErr('Seleccioná un archivo'); return }
+  if (!window.XLSX) { toastErr('No se pudo cargar el lector de archivos'); return }
+  const buf = await file.arrayBuffer()
+  const wb = XLSX.read(buf, { type: 'array' })
+  const ws = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+  if (!rows.length) { toastErr('El archivo no tiene filas para importar'); return }
+  await analyzeImportRows(rows, file.name, V('im-file-kind'))
+}
+
+async function handleManualPrepare() {
+  if (V('im-man-type') === 'inventario') {
+    await analyzeImportRows([{
+      producto: V('im-p-prod'), sku: V('im-p-sku'), categoria: V('im-p-cat'), variante: V('im-p-var'), medida: V('im-p-med'), color: V('im-p-col'),
+      stock_actual: V('im-p-stock'), stock_minimo: V('im-p-min'), costo_unitario: V('im-p-costo'), costo_extra: V('im-p-extra'),
+      precio_venta_local: V('im-p-plocal'), precio_venta_web: V('im-p-pweb'), proveedor: V('im-p-prov'), notas: V('im-p-notas')
+    }], 'manual', 'inventario')
+  } else {
+    await analyzeImportRows([{ fecha: V('im-f-fecha'), descripcion: V('im-f-desc'), monto: V('im-f-monto'), tipo: V('im-f-tipo'), medio_pago: V('im-f-medio'), categoria: V('im-f-cat') }], 'manual', 'auto')
+  }
+}
+
+function renderBotActionPreview(surface = 'import') {
+  botActionSurface = surface
+  if (surface === 'ai') { renderAIBotActionPreview(); return }
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-preview-card').style.display = 'none'
+  const card = document.getElementById('im-bot-preview-card')
+  const btn = document.getElementById('im-bot-confirm-btn')
+  if (!botActionPreview) {
+    card.style.display = 'none'
+    return
+  }
+  card.style.display = 'block'
+  if (btn) { btn.disabled = !botActionPreview.canConfirm; btn.textContent = botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar' }
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  const notes = [...botActionPreview.errors, ...botActionPreview.warnings].map(escapeHTML).join('<br>') || '—'
+  document.getElementById('im-bot-preview').innerHTML = botActionPreview.rows.map(r => {
+    return `<tr><td>${escapeHTML(r.action)}</td><td>${escapeHTML(r.detail)}</td><td>${escapeHTML(r.qty)}</td><td>${escapeHTML(r.amount)}</td><td><span class="badge ${b[botActionPreview.status]}">${botActionPreview.status}</span></td><td style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt3)'}">${notes}</td><td>${escapeHTML(r.expected)}</td></tr>`
+  }).join('')
+}
+
+function renderAIBotActionPreview() {
+  const box = document.getElementById('ai-msgs')
+  if (!box || !botActionPreview) return
+  const old = document.getElementById('ai-bot-action-preview')
+  if (old) old.remove()
+  const row = botActionPreview.rows[0] || { detail: '—', qty: '—', amount: '—', expected: '—' }
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  const div = document.createElement('div')
+  div.className = 'ai-action'
+  div.id = 'ai-bot-action-preview'
+  div.innerHTML = `
+    <div class="ai-action-t">${escapeHTML(botActionTitle(botActionPreview.action_type))}</div>
+    <div class="ai-action-grid">
+      <div class="ai-action-row"><div class="ai-action-l">Detalle</div><div class="ai-action-v">${escapeHTML(row.detail)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Cantidad</div><div class="ai-action-v">${escapeHTML(row.qty)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Monto</div><div class="ai-action-v">${escapeHTML(row.amount)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Estado</div><div class="ai-action-v"><span class="badge ${b[botActionPreview.status] || 'bb'}">${escapeHTML(botActionPreview.status)}</span></div></div>
+    </div>
+    <div class="ai-action-note" style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt2)'}">${botActionNotes(botActionPreview)}</div>
+    <div class="ai-action-note">${escapeHTML(row.expected)}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="cancelAIBotAction()">Cancelar</button>
+      <button class="btn btn-gold btn-sm" id="ai-bot-confirm-btn" onclick="confirmBotAction('ai')" ${botActionPreview.canConfirm ? '' : 'disabled'}>${botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar'}</button>
+    </div>
+  `
+  box.appendChild(div)
+  box.scrollTop = box.scrollHeight
+}
+
+function renderImportPreview() {
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
+  document.getElementById('im-preview-card').style.display = importRows.length ? 'block' : 'none'
+  const btn = document.getElementById('im-confirm-btn')
+  const hasValidRows = importRows.some(row => row.status !== 'error')
+  if (btn) {
+    btn.disabled = !hasValidRows
+    btn.textContent = hasValidRows ? 'Confirmar carga' : 'No hay filas válidas'
+  }
+  const b = { listo: 'bg', revisar: 'by', error: 'br' }
+  document.getElementById('im-preview').innerHTML = importRows.map(r => {
+    const notes = [...r.errors, ...r.warnings].map(escapeHTML).join('<br>') || '—'
+    return `<tr><td>${r.rowNumber}</td><td>${r.target === 'inventario_items' ? 'Producto/stock' : r.target === 'movimientos_financieros' ? 'Movimiento' : 'Sin destino'}</td><td>${escapeHTML(r.label)}</td><td>${escapeHTML(r.metric)}</td><td><span class="badge ${b[r.status]}">${r.status}</span></td><td style="color:${r.errors.length ? 'var(--red)' : r.warnings.length ? 'var(--yel)' : 'var(--txt3)'}">${notes}</td><td>${escapeHTML(r.action)}</td></tr>`
+  }).join('')
+}
+
+async function confirmImport() {
+  if (!importRows.length) { toastErr('No hay preview para confirmar'); return }
+  const btn = document.getElementById('im-confirm-btn')
+  if (btn.disabled) return
+  const validRows = importRows.filter(r => r.status !== 'error')
+  if (!validRows.length) { toastErr('No hay filas válidas para guardar'); return }
+  btn.disabled = true; btn.textContent = 'Guardando...'
+  const targets = [...new Set(importRows.map(r => r.target).filter(t => t !== 'unknown'))]
+  const batchTarget = targets.length === 1 ? targets[0] : targets.length > 1 ? 'mixed' : 'unknown'
+  let batchId = null
+  const failBatch = async () => {
+    if (batchId) await sb.from('import_batches').update({ status: 'failed' }).eq('id', batchId).eq('user_id', CU.id)
+  }
+
+  const { data: batch, error: bErr } = await sb.from('import_batches').insert({
+    user_id: CU.id, source: importSource, target: batchTarget, status: 'preview',
+    nombre_archivo: importSource === 'manual' || importSource === 'mensaje' ? null : importSource,
+    total_filas: importRows.length,
+    filas_validas: validRows.length,
+    filas_con_error: importRows.length - validRows.length
+  }).select('id').single()
+  if (handleSupaError(bErr, 'import_batch')) { btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  batchId = batch.id
+
+  const importPayload = importRows.map(r => ({
+    batch_id: batchId,
+    user_id: CU.id,
+    row_number: r.rowNumber,
+    raw_data: r.raw || {},
+    normalized_data: r.normalized,
+    errors: [...r.errors, ...r.warnings],
+    status: r.importStatus
+  }))
+  const { error: rowsErr } = await sb.from('import_rows').insert(importPayload)
+  if (handleSupaError(rowsErr, 'import_rows')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+
+  const { data: rpcResult, error: rpcErr } = await sb.rpc('confirm_import_batch', { batch_id: batchId })
+  if (handleSupaError(rpcErr, 'confirm_import_batch')) { await failBatch(); btn.disabled = false; btn.textContent = 'Confirmar carga'; return }
+  if (!rpcResult || rpcResult.ok === false || rpcResult.status === 'failed') {
+    toastErr(rpcResult?.error || 'No se pudo confirmar la carga')
+    btn.disabled = false
+    btn.textContent = 'Confirmar carga'
+    return
+  }
+
+  renderImportSummary(validRows)
+  importRows = []
+  btn.disabled = true; btn.textContent = 'Carga confirmada'
+  invalidateUnifiedFinances()
+  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+  toast('Carga confirmada')
+}
+
+function cancelAIBotAction() {
+  botActionPreview = null
+  botActionSurface = 'import'
+  const old = document.getElementById('ai-bot-action-preview')
+  if (old) old.remove()
+  const box = document.getElementById('ai-msgs')
+  if (box) {
+    const div = document.createElement('div')
+    div.className = 'ai-msg ai-thnk'
+    div.textContent = 'Acción cancelada. No se guardó nada.'
+    box.appendChild(div)
+    box.scrollTop = box.scrollHeight
+  }
+}
+
+async function confirmBotAction(surface = botActionSurface) {
+  if (!botActionPreview) { toastErr('No hay accion para confirmar'); return }
+  if (!botActionPreview.canConfirm) { toastErr('Esta accion necesita correccion antes de guardar'); return }
+  const btn = document.getElementById(surface === 'ai' ? 'ai-bot-confirm-btn' : 'im-bot-confirm-btn')
+  if (btn.disabled) return
+  btn.disabled = true; btn.textContent = 'Ejecutando...'
+  const previewData = JSON.parse(JSON.stringify(botActionPreview))
+  const actionType = botActionPreview.action_type
+  const { data: action, error: actionErr } = await sb.from('bot_actions').insert({
+    user_id: CU.id,
+    input_text: botActionPreview.input_text,
+    action_type: botActionPreview.action_type,
+    status: 'preview',
+    preview_data: previewData
+  }).select('id').single()
+  if (handleSupaError(actionErr, 'bot_actions')) { btn.disabled = false; btn.textContent = 'Confirmar accion'; return }
+
+  try {
+    const { data: rpcResult, error: rpcErr } = await sb.rpc('confirm_bot_action', { action_id: action.id })
+    if (rpcErr) throw rpcErr
+    if (!rpcResult || rpcResult.ok === false || rpcResult.status === 'failed') {
+      throw new Error(rpcResult?.error || 'No se pudo confirmar la accion')
+    }
+    botActionPreview = null
+    botActionSurface = 'import'
+    btn.disabled = true; btn.textContent = 'Acción confirmada'
+    invalidateUnifiedFinances()
+    invalidateSalesSummary()
+    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+    if (surface === 'ai') {
+      const old = document.getElementById('ai-bot-action-preview')
+      if (old) old.remove()
+      appendAIMessage('Acción confirmada. Actualicé los datos y te llevo a la sección correspondiente.', 'bot')
+      goPage(botActionPage(actionType))
+      closeAI()
+    } else {
+      document.getElementById('im-bot-preview-card').style.display = 'none'
+    }
+    toast('Acción confirmada')
+  } catch (e) {
+    const friendly = friendlyBotError(e)
+    await sb.from('bot_actions').update({ status: 'failed', error: friendly }).eq('id', action.id).eq('user_id', CU.id)
+    btn.disabled = false; btn.textContent = 'Confirmar accion'
+    if (surface === 'ai') appendAIMessage(friendly, 'think')
+    console.error('[KairÃ³s] confirmBotAction:', e)
+    toastErr(friendly)
+    await loadImportedData()
+  }
+}
+
+function renderImportSummary(validRows) {
+  const warnings = importRows.filter(r => r.status === 'revisar').length
+  const errors = importRows.filter(r => r.status === 'error').length
+  const movs = validRows.filter(r => r.target === 'movimientos_financieros').map(r => r.normalized)
+  const invs = validRows.filter(r => r.target === 'inventario_items').map(r => r.normalized)
+  const ing = movs.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + (b.monto || 0), 0)
+  const egr = movs.filter(m => m.tipo === 'egreso').reduce((a, b) => a + (b.monto || 0), 0)
+  const stockCosto = invs.reduce((a, p) => a + ((p.stock_actual || 0) * (p.costo_total || 0)), 0)
+  const stockVenta = invs.reduce((a, p) => a + ((p.stock_actual || 0) * (p.precio_venta_local || p.precio_venta_web || 0)), 0)
+  S('im-s-ok', validRows.length); S('im-s-warn', warnings); S('im-s-err', errors); S('im-s-prod', invs.length)
+  S('im-s-ing', '$' + fmt(ing)); S('im-s-egr', '$' + fmt(egr)); S('im-s-costo', '$' + fmt(stockCosto)); S('im-s-venta', '$' + fmt(stockVenta))
+  document.getElementById('im-summary-card').style.display = 'block'
+}
+
+function resetImport() {
+  importRows = []
+  botActionPreview = null
+  document.getElementById('im-preview-card').style.display = 'none'
+  document.getElementById('im-bot-preview-card').style.display = 'none'
+  document.getElementById('im-summary-card').style.display = 'none'
+  document.getElementById('im-preview').innerHTML = ''
+  document.getElementById('im-bot-preview').innerHTML = ''
+}
+
+// ══════════════════════════════════════
+// AI — SEGURO VIA EDGE FUNCTION
+// ══════════════════════════════════════
+let aiH = []
+
+function openAI() {
+  document.getElementById('ai-panel').classList.add('on')
+  document.getElementById('ai-ov').classList.add('on')
+  renderAIRecentActions()
+  if (CU) loadImportedData()
+  setTimeout(() => document.getElementById('ai-inp').focus(), 300)
+}
+function closeAI() { document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
+
+function aiClock() {
+  return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date())
+}
+
+function appendAIMessage(text, type = 'bot') {
+  const box = document.getElementById('ai-msgs')
+  const div = document.createElement('div')
+  div.className = type === 'user' ? 'ai-msg ai-usr' : type === 'think' ? 'ai-msg ai-thnk' : 'ai-msg ai-bot'
+  if (type === 'bot') div.innerHTML = mdToHtml(String(text))
+  else div.textContent = String(text)
+  const meta = document.createElement('span')
+  meta.className = 'ai-msg-meta'
+  meta.textContent = `${type === 'user' ? 'Usuario' : 'Asesor'} · ${aiClock()}`
+  div.appendChild(meta)
+  box.appendChild(div)
+  box.scrollTop = box.scrollHeight
+  return div
+}
+
+function advisorFallbackReply(message) {
+  const text = normalizeText(message)
+  const finance = unifiedFinanceCache?.totals || { ingresos: 0, egresos: 0, balance: 0 }
+  const stock = stockTotals(importedData.inventory || [])
+  if (/\bmargen\b/.test(text)) {
+    return '**Margen de venta** es el porcentaje del precio que queda después de descontar el costo del producto. Fórmula: `(precio - costo) / precio × 100`. No es lo mismo que caja ni contempla automáticamente todos los gastos fijos.'
+  }
+  if (/ganancia|rentabilidad/.test(text)) {
+    return '**Ganancia de ventas** es lo vendido menos el costo de los productos vendidos. Para saber si el negocio completo es rentable también hay que considerar personal, alquiler, impuestos y otros gastos.'
+  }
+  if (/punto de equilibrio|gastos fijos/.test(text)) {
+    return 'Kairós usa los gastos fijos cargados como referencia mensual de cobertura. Cuando los ingresos superan esa referencia, los gastos fijos están cubiertos; todavía hay que revisar costos variables y costo del equipo.'
+  }
+  if (/stock|inventario|reponer/.test(text)) {
+    return stock.count
+      ? `Hay **${stock.count} productos** en el inventario: ${stock.rojo} en rojo, ${stock.amarillo} en amarillo y ${stock.verde} en verde. Abra Productos → “Reposición necesaria” para revisar los que requieren reposición.`
+      : 'No hay productos en el inventario nuevo. Puede crear uno desde Productos o escribir: “agregar producto toalla azul stock 10 costo 5000 precio 10000”.'
+  }
+  if (/como esta|como va|resumen|estado del negocio/.test(text)) {
+    return `Este mes entraron **${money(finance.ingresos)}**, salieron **${money(finance.egresos)}** y el resultado de caja es **${money(finance.balance)}**. El inventario tiene ${stock.count} productos y ${stock.rojo + stock.amarillo} requieren atención de stock.`
+  }
+  return 'El asesor online no respondió; se muestra una respuesta local de respaldo. Puedo explicar margen, ganancia, gastos fijos, stock o resumir el negocio. Las acciones operativas mantienen vista previa y confirmación antes de guardar.'
+}
+
+async function sendAI() {
+  const inp = document.getElementById('ai-inp')
+  const msg = inp.value.trim(); if (!msg) return
+  inp.value = ''
+  const box = document.getElementById('ai-msgs')
+
+  // Crear nodo de mensaje usuario (sin innerHTML con datos del usuario)
+  appendAIMessage(msg, 'user')
+
+  const loadDiv = appendAIMessage('Analizando...', 'think')
+  loadDiv.textContent = 'Analizando...'
+
+  aiH.push({ role: 'user', content: msg })
+
+  try {
+    const command = parseBotCommand(msg)
+    if (command) {
+      botActionPreview = await buildBotActionPreview(command)
+      loadDiv.remove()
+      renderBotActionPreview('ai')
+      return
+    }
+
+    // Llamada segura via Edge Function, sin API key en el frontend.
+    if (looksOperationalIntent(msg)) {
+      loadDiv.remove()
+      appendAIMessage('Para modificar stock necesito producto y cantidad con más claridad. Ejemplo: "sumar 10 de stock a prueba ia azul" o "ajustar stock de prueba ia azul a 20".', 'bot')
+      return
+    }
+
+    const { data, error } = await sb.functions.invoke('ai-advisor', {
+      body: { message: msg, history: aiH.slice(-18) }
+    })
+
+    loadDiv.remove()
+
+    if (error) {
+      const fallback = advisorFallbackReply(msg)
+      aiH.push({ role: 'assistant', content: fallback })
+      if (aiH.length > 20) aiH = aiH.slice(-20)
+      appendAIMessage(fallback, 'bot')
+      console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', error)
+      return
+    }
+
+    const reply = data?.reply || 'No pude procesar tu consulta.'
+    aiH.push({ role: 'assistant', content: reply })
+    if (aiH.length > 20) aiH = aiH.slice(-20)
+
+    appendAIMessage(reply, 'bot')
+
+  } catch (e) {
+    loadDiv.remove()
+    appendAIMessage(advisorFallbackReply(msg), 'bot')
+    console.warn('[Kairós] ai-advisor no disponible; se usó el modo de respaldo:', e)
+  }
+}
+
+// ── MARKDOWN SIMPLE PARA CHAT IA ──────
+function mdToHtml(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>')
+}
+
+// ══════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════
+async function renderAll() {
+  const biz = await getBiz()
+  loadBizForm(biz)
+  await Promise.all([loadAng(), renderFin(), renderProds(), renderLeads(), renderPub(), renderCont(), renderRefs(), renderMet(), renderDash(), loadImportedData()])
+}
+
+// ══════════════════════════════════════
+// RESET PASSWORD
+// ══════════════════════════════════════
+async function checkRecovery() {
+  // Supabase manda el token en el hash de la URL
+  const hash = window.location.hash
+  if (hash.includes('type=recovery')) {
+    // Supabase JS detecta el token del hash automáticamente
+    const { data: { session } } = await sb.auth.getSession()
+    if (session) {
+      // Hay sesión activa por token de recovery — mostrar pantalla de reset
+      document.getElementById('loading').classList.add('hide')
+      document.getElementById('reset-screen').style.display = 'flex'
+      return true
+    }
+  }
+  return false
+}
+
+async function doReset() {
+  const pass  = document.getElementById('reset-pass').value
+  const pass2 = document.getElementById('reset-pass2').value
+  const err   = document.getElementById('reset-err')
+  const ok    = document.getElementById('reset-ok')
+  err.style.display = 'none'; ok.style.display = 'none'
+
+  if (!pass || pass.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres'; err.style.display = 'block'; return }
+  if (pass !== pass2) { err.textContent = 'Las contraseñas no coinciden'; err.style.display = 'block'; return }
+
+  const btn = document.getElementById('reset-btn'); btn.disabled = true; btn.textContent = 'Guardando...'
+  const { error } = await sb.auth.updateUser({ password: pass })
+  btn.disabled = false; btn.textContent = 'Guardar nueva contraseña'
+
+  if (error) { err.textContent = error.message; err.style.display = 'block'; return }
+
+  ok.textContent = 'Contraseña actualizada. Redirigiendo...'
+  ok.style.display = 'block'
+  // Limpiar el hash de la URL
+  window.history.replaceState(null, '', window.location.pathname)
+  setTimeout(async () => {
+    document.getElementById('reset-screen').style.display = 'none'
+    await sb.auth.signOut()
+    document.getElementById('auth-screen').style.display = 'flex'
+  }, 2000)
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init)
