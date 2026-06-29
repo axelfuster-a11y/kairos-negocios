@@ -31,6 +31,7 @@ Luego abrir `http://localhost:8080`.
 - `assets/app.js`: logica principal de la app. Todavia concentra estado, render, datos, IA e integraciones.
 - `assets/styles.css`: estilos visuales y responsive.
 - `assets/js/core/`: helpers puros compartidos de formato, DOM, fechas, seguridad y validacion.
+- `assets/js/services/financeService.js`: lectura y operaciones financieras simples compartidas por `assets/app.js`.
 - `assets/js/ui/`: helpers simples de interfaz.
 - `tools/`: checks estaticos sin dependencias externas.
 - `supabase/`: documentacion y migraciones SQL versionadas.
@@ -38,7 +39,7 @@ Luego abrir `http://localhost:8080`.
 
 ## Estado actual
 
-La app ya fue simplificada visualmente a cuatro modulos principales, pero la arquitectura interna sigue en transicion. El objetivo inmediato es preparar una refactorizacion segura sin cambiar comportamiento visible.
+La app ya fue simplificada visualmente a cuatro modulos principales, pero la arquitectura interna sigue en transicion. La primera extraccion de services es `KairosFinanceService`, cargado como script clasico para no convertir `assets/app.js` a ES modules ni romper handlers inline.
 
 La app todavia usa Supabase. No se debe cambiar Supabase, migraciones ni base de datos en una fase de refactor frontend salvo que el prompt lo pida explicitamente.
 
@@ -77,4 +78,3 @@ Validacion manual minima:
 - Asesor IA abre.
 - Registrar venta prepara el mensaje.
 - Consola sin `ReferenceError`.
-

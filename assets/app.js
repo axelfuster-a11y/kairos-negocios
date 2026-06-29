@@ -5,6 +5,7 @@ const SUPA_URL = 'https://kjnhddhuaydschuqtpad.supabase.co'
 const SUPA_KEY = 'sb_publishable_HxIuPmu3GUr5NTlWOlQG0w_pr61ITsM'
 const { createClient } = supabase
 const sb = createClient(SUPA_URL, SUPA_KEY)
+window.KairosFinanceService.configure({ getClient: () => sb, getUserId: () => CU?.id })
 
 let CU = null
 let activeAppUserId = null
@@ -584,20 +585,8 @@ function markManualProductPrice() {
 // ══════════════════════════════════════
 // FINANZAS
 // ══════════════════════════════════════
-let unifiedFinanceCache = null
-let unifiedFinancePromise = null
-let salesSummaryCache = null
-let salesSummaryPromise = null
-
-function invalidateUnifiedFinances() {
-  unifiedFinanceCache = null
-  unifiedFinancePromise = null
-}
-
-function invalidateSalesSummary() {
-  salesSummaryCache = null
-  salesSummaryPromise = null
-}
+function invalidateUnifiedFinances() { window.KairosFinanceService.invalidateUnifiedFinances() }
+function invalidateSalesSummary() { window.KairosFinanceService.invalidateSalesSummary() }
 
 function resetUserScopedState() {
   invalidateUnifiedFinances()
@@ -636,129 +625,41 @@ function financeDateKey(row) {
   return row.fecha || (row.created_at ? String(row.created_at).slice(0, 10) : null)
 }
 
-function normalizeLegacyMovement(row) {
-  return {
-    ...row,
-    categoria: row.cat || 'sin_categoria',
-    fuente: 'histórico',
-    sourceTable: 'transacciones'
-  }
-}
-
-function normalizeOperationalMovement(row) {
-  return {
-    ...row,
-    categoria: row.categoria || 'sin_categoria',
-    fuente: row.origen === 'manual' ? 'manual' : row.origen === 'bot' ? 'Asesor IA' : row.origen || 'Carga inteligente',
-    sourceTable: 'movimientos_financieros'
-  }
-}
-
-async function loadUnifiedFinances(force = false) {
-  if (!force && unifiedFinanceCache) return unifiedFinanceCache
-  if (!force && unifiedFinancePromise) return unifiedFinancePromise
-  unifiedFinancePromise = (async () => {
-    const { m, y } = getMes()
-    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
-    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-    const [legacyResult, operationalResult] = await Promise.all([
-      sb.from('transacciones').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000),
-      sb.from('movimientos_financieros').select('*').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
-    ])
-    if (legacyResult.error) console.error('[Kairós] finanzas históricas:', legacyResult.error)
-    if (operationalResult.error) console.error('[Kairós] finanzas operativas:', operationalResult.error)
-    if (legacyResult.error && operationalResult.error) throw operationalResult.error
-    const all = [
-      ...(legacyResult.data || []).map(normalizeLegacyMovement),
-      ...(operationalResult.data || []).map(normalizeOperationalMovement)
-    ].sort((a, b) => String(b.created_at || b.fecha || '').localeCompare(String(a.created_at || a.fecha || '')))
-    const month = all.filter(row => {
-      const key = financeDateKey(row)
-      return key && key >= monthStart && key < monthEnd
-    })
-    unifiedFinanceCache = {
-      all,
-      month,
-      recent: all.slice(0, 50),
-      totals: movementTotals(month),
-      monthStart,
-      monthEnd
-    }
-    return unifiedFinanceCache
-  })()
-  try {
-    return await unifiedFinancePromise
-  } finally {
-    unifiedFinancePromise = null
-  }
-}
-
-async function loadSalesSummary(force = false) {
-  if (!force && salesSummaryCache) return salesSummaryCache
-  if (!force && salesSummaryPromise) return salesSummaryPromise
-  salesSummaryPromise = (async () => {
-    const { m, y } = getMes()
-    const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
-    const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-    const { data, error } = await sb.from('ventas').select('id,fecha,total,costo_total,ganancia,created_at').eq('user_id', CU.id).order('created_at', { ascending: false }).limit(5000)
-    if (error) throw error
-    const sales = (data || []).filter(sale => {
-      const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
-      return key && key >= monthStart && key < monthEnd
-    })
-    const total = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
-    const cost = sales.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
-    const profit = sales.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
-    salesSummaryCache = {
-      sales,
-      count: sales.length,
-      total,
-      cost,
-      profit,
-      margin: total > 0 ? (profit / total) * 100 : 0
-    }
-    return salesSummaryCache
-  })()
-  try {
-    return await salesSummaryPromise
-  } finally {
-    salesSummaryPromise = null
-  }
-}
+function normalizeLegacyMovement(row) { return window.KairosFinanceService.normalizeLegacyMovement(row) }
+function normalizeOperationalMovement(row) { return window.KairosFinanceService.normalizeOperationalMovement(row) }
+function movementTotals(items) { return window.KairosFinanceService.movementTotals(items) }
+async function loadUnifiedFinances(force = false) { return window.KairosFinanceService.loadUnifiedFinances(force) }
+async function loadSalesSummary(force = false) { return window.KairosFinanceService.loadSalesSummary(force) }
 
 async function addTx() {
   const d = V('tx-d').trim(), mo = parseFloat(V('tx-m')) || 0
-  if (!d) { toastErr('Ingrese una descripción'); return }
+  if (!d) { toastErr('Ingrese una descripci\u00f3n'); return }
   if (mo <= 0) { toastErr('El monto debe ser mayor a 0'); return }
-  const { error } = await sb.from('movimientos_financieros').insert({
-    user_id: CU.id,
+  const { error } = await window.KairosFinanceService.addManualMovement({
     tipo: V('tx-t'),
     descripcion: d,
     categoria: V('tx-c') || 'sin_categoria',
     monto: mo,
-    fecha: V('tx-f') || today(),
-    origen: 'manual'
+    fecha: V('tx-f') || today()
   })
+  if (typeof error === 'string') { toastErr(error); return }
   if (handleSupaError(error, 'addTx')) return
-  invalidateUnifiedFinances()
   document.getElementById('tx-d').value = ''; document.getElementById('tx-m').value = ''
   await Promise.all([renderFin(), renderDash(), loadImportedData()]); toast('Movimiento registrado')
 }
 
 async function delTx(id) {
-  if (!confirm('¿Eliminar este movimiento?')) return
-  const { error } = await sb.from('transacciones').delete().eq('id', id).eq('user_id', CU.id)
+  if (!confirm('\u00bfEliminar este movimiento?')) return
+  const { error } = await window.KairosFinanceService.deleteMovement('transacciones', id)
   if (handleSupaError(error, 'delTx')) return
-  invalidateUnifiedFinances()
   await renderFin(); await renderDash()
 }
 
 async function deleteUnifiedMovement(sourceTable, id) {
-  const sourceLabel = sourceTable === 'transacciones' ? 'histórico' : 'operativo'
-  if (!confirm(`¿Eliminar este movimiento ${sourceLabel}?`)) return
-  const { error } = await sb.from(sourceTable).delete().eq('id', id).eq('user_id', CU.id)
+  const sourceLabel = sourceTable === 'transacciones' ? 'hist\u00f3rico' : 'operativo'
+  if (!confirm(`\u00bfEliminar este movimiento ${sourceLabel}?`)) return
+  const { error } = await window.KairosFinanceService.deleteMovement(sourceTable, id)
   if (handleSupaError(error, 'deleteUnifiedMovement')) return
-  invalidateUnifiedFinances()
   await Promise.all([renderFin(), renderDash(), loadImportedData()])
   toast('Movimiento eliminado')
 }
@@ -1671,7 +1572,7 @@ async function renderDash() {
 }
 
 function renderAnnualSummary(financeRows = null) {
-  const rows = financeRows || unifiedFinanceCache?.all || []
+  const rows = financeRows || window.KairosFinanceService.getUnifiedFinanceCache()?.all || []
   const selector = document.getElementById('annual-year')
   const currentYear = new Date().getFullYear()
   const years = [...new Set(rows.map(financeDateKey).filter(Boolean).map(date => Number(String(date).slice(0, 4))).filter(Boolean).concat(currentYear))].sort((a, b) => b - a)
@@ -1749,12 +1650,6 @@ function inventoryHasPricingAlert(item) {
 function inventoryReorderCost(item) {
   const missing = Math.max(0, (Number(item.stock_minimo) || 0) - (Number(item.stock_actual) || 0))
   return missing * (Number(item.costo_total ?? item.costo_unitario) || 0)
-}
-function movementTotals(items) {
-  const list = items || []
-  const ingresos = list.filter(m => m.tipo === 'ingreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
-  const egresos = list.filter(m => m.tipo === 'egreso').reduce((a, m) => a + (Number(m.monto) || 0), 0)
-  return { ingresos, egresos, balance: ingresos - egresos, count: list.length }
 }
 function setImportedState(id, msg, mode = 'info') {
   const el = document.getElementById(id)
@@ -2162,10 +2057,9 @@ function renderSystemState() {
 }
 
 async function deleteImportedMovement(id) {
-  if (!confirm('¿Eliminar este movimiento importado?')) return
-  const { error } = await sb.from('movimientos_financieros').delete().eq('id', id).eq('user_id', CU.id)
+  if (!confirm('\u00bfEliminar este movimiento importado?')) return
+  const { error } = await window.KairosFinanceService.deleteMovement('movimientos_financieros', id)
   if (handleSupaError(error, 'deleteImportedMovement')) return
-  invalidateUnifiedFinances()
   await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
   toast('Movimiento importado eliminado')
 }
@@ -2983,7 +2877,7 @@ function appendAIMessage(text, type = 'bot') {
 
 function advisorFallbackReply(message) {
   const text = normalizeText(message)
-  const finance = unifiedFinanceCache?.totals || { ingresos: 0, egresos: 0, balance: 0 }
+  const finance = window.KairosFinanceService.getUnifiedFinanceCache()?.totals || { ingresos: 0, egresos: 0, balance: 0 }
   const stock = stockTotals(importedData.inventory || [])
   if (/\bmargen\b/.test(text)) {
     return '**Margen de venta** es el porcentaje del precio que queda después de descontar el costo del producto. Fórmula: `(precio - costo) / precio × 100`. No es lo mismo que caja ni contempla automáticamente todos los gastos fijos.'

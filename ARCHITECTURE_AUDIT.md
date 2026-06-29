@@ -7,6 +7,8 @@ Alcance: analisis y reporte. No se modifico codigo funcional, migraciones, Supab
 
 Nota de estado posterior: se inicio una fase segura de preparacion sin cambios de comportamiento visible. Esta fase sincroniza documentacion, elimina el `package-lock.json` accidental cuando no hay `package.json`, agrega checks estaticos sin dependencias npm y extrae helpers puros de bajo riesgo. No cambia Supabase ni migraciones.
 
+Nota de estado de service: se agrego `assets/js/services/financeService.js` como primer service incremental. Centraliza lectura financiera unificada, resumen de ventas, caches, totales, normalizacion y operaciones manuales simples. Importaciones, IA, inventario y pagos de equipo quedan fuera de este service por ahora.
+
 ## 1. Resumen ejecutivo
 
 Kairos quedo mejor orientado despues del commit `66e6fb3`: la navegacion principal ya se entiende como cuatro modulos visibles (`Inicio`, `Dinero`, `Productos`, `Gestion`), el `Asesor IA` paso a boton flotante y las herramientas secundarias quedaron fuera del camino principal.

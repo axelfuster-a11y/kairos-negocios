@@ -32,6 +32,7 @@ Stack:
 
 - App estatica en `index.html`, `assets/app.js` y `assets/styles.css`.
 - Helpers frontend iniciales en `assets/js/core/` y `assets/js/ui/`.
+- Service financiero inicial en `assets/js/services/financeService.js`.
 - HTML, CSS y JavaScript puro.
 - Supabase Auth.
 - Supabase Database.
@@ -75,6 +76,7 @@ assets/styles.css
 assets/js/core/
 assets/js/ui/
 tools/
+assets/js/services/
 SUPABASE_SCHEMA_NOTES.md
 INTEGRATIONS_ROADMAP.md
 supabase/README.md
