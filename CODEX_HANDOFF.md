@@ -19,18 +19,19 @@ C:\Users\estudio\Documents\Codex\2026-06-16\tengo-conectado-github\work\kairos-n
 Branch actual:
 
 ```text
-main
+refactor-simple-professional-ui
 ```
 
-Commit actual de `main` al momento de este handoff:
+Commit base de esta fase:
 
 ```text
-d7133e47f5213c30769a2282f405a4e439291de2
+66e6fb3 Simplify navigation into four core modules
 ```
 
 Stack:
 
-- App monolítica en `index.html`.
+- App estatica en `index.html`, `assets/app.js` y `assets/styles.css`.
+- Helpers frontend iniciales en `assets/js/core/` y `assets/js/ui/`.
 - HTML, CSS y JavaScript puro.
 - Supabase Auth.
 - Supabase Database.
@@ -43,13 +44,15 @@ La app ya tiene una base funcional bastante avanzada:
 
 - Login, registro y recuperación de contraseña.
 - Onboarding inicial.
-- Dashboard visual tipo centro de mando.
-- Finanzas.
-- Productos e inventario.
-- Personas/equipo.
-- Organización/calendario.
+- Navegacion principal simplificada a 4 modulos: Inicio, Dinero, Productos y Gestion.
+- Dashboard visual tipo centro de mando dentro de Inicio.
+- Dinero para finanzas, ventas, gastos fijos, pagos, equipo y retiros.
+- Productos para inventario, stock, costos, precios, compras y reposicion.
+- Gestion para clientes, oportunidades, tareas, pedidos, entregas y vencimientos.
 - Asesor IA operativo.
-- Carga inteligente/manual/archivo.
+- Asesor IA como boton flotante, no como modulo principal.
+- Mas herramientas para funciones secundarias: Publicidad, Contenido, Metricas avanzadas, Importaciones, Mi Negocio, Configuracion, Documentos, Historial tecnico e Integraciones futuras.
+- Carga asistida/manual/archivo.
 - Historial de acciones del bot.
 - Tablas nuevas para datos operativos.
 - Migraciones SQL versionadas en `supabase/migrations`.
@@ -65,6 +68,13 @@ El último cambio grande fue una adaptación visual hacia una interfaz más clar
 
 ```text
 index.html
+README.md
+ARCHITECTURE_AUDIT.md
+assets/app.js
+assets/styles.css
+assets/js/core/
+assets/js/ui/
+tools/
 SUPABASE_SCHEMA_NOTES.md
 INTEGRATIONS_ROADMAP.md
 supabase/README.md
@@ -311,4 +321,3 @@ Restricciones:
 - Mantener preview + confirmación para acciones críticas.
 - No inventar datos críticos.
 ```
-

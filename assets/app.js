@@ -13,41 +13,8 @@ let lastAutoSuggestedPrice = null
 // ══════════════════════════════════════
 // HELPERS — XSS PROTECTION
 // ══════════════════════════════════════
-function escapeHTML(str) {
-  if (!str) return ''
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-function V(id) { const e = document.getElementById(id); return e ? e.value : '' }
-function S(id, v) { const e = document.getElementById(id); if (e) e.textContent = v }
-function numOrDefault(id, defaultValue = 0) {
-  const raw = V(id)
-  if (raw === '' || raw === null || raw === undefined) return defaultValue
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : defaultValue
-}
-function fmt(n) { return Math.round(n).toLocaleString('es-AR') }
-function fmtDec(n) { return Number(n).toFixed(1) }
-function today() {
-  const n = new Date()
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
-}
-function getMes() { const n = new Date(); return { m: n.getMonth() + 1, y: n.getFullYear() } }
-
-let toastT
-function toast(msg, isErr = false) {
-  const t = document.getElementById('toast')
-  t.textContent = msg
-  t.className = isErr ? 'on err' : 'on'
-  clearTimeout(toastT)
-  toastT = setTimeout(() => t.className = '', 3500)
-}
-function toastErr(msg) { toast(msg, true) }
+// Helpers puros cargados antes de este archivo:
+// assets/js/core/* y assets/js/ui/toast.js.
 
 function handleSupaError(error, context = '') {
   if (!error) return false
@@ -685,15 +652,6 @@ function normalizeOperationalMovement(row) {
     fuente: row.origen === 'manual' ? 'manual' : row.origen === 'bot' ? 'Asesor IA' : row.origen || 'Carga inteligente',
     sourceTable: 'movimientos_financieros'
   }
-}
-
-function movementHasAmount(row) {
-  return Number(row?.monto) > 0
-}
-
-function movementAmountText(row) {
-  if (!movementHasAmount(row)) return 'Sin monto'
-  return `${row.tipo === 'ingreso' ? '+' : '-'}$${fmt(row.monto)}`
 }
 
 async function loadUnifiedFinances(force = false) {
