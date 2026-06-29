@@ -183,6 +183,7 @@ async function doReg() {
 
 async function doLogout() {
   if (!confirm('¿Salir de Kairós?')) return
+  resetUserScopedState()
   await sb.auth.signOut()
 }
 
@@ -605,7 +606,7 @@ function resetUserScopedState() {
   inventoryViewFilter = 'all'
   aiH = []
   lastAutoSuggestedPrice = null
-  closeAI()
+  resetAdvisorState()
   closeProfile()
   closeImportedInventoryModal()
   document.getElementById('wizard')?.classList.remove('on')
@@ -2847,6 +2848,44 @@ function resetImport() {
 // ══════════════════════════════════════
 let aiH = []
 
+function resetAdvisorState() {
+  aiH = []
+  botActionPreview = null
+  botActionSurface = 'import'
+  if (importedData) importedData.botActions = []
+
+  const input = document.getElementById('ai-inp')
+  if (input) input.value = ''
+
+  const box = document.getElementById('ai-msgs')
+  if (box) {
+    box.innerHTML = `
+      <div class="ai-msg ai-bot">Puede consultar sobre el negocio o preparar una acción para revisar y confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
+      <div class="ai-quick-actions">
+        <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
+        <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
+        <button class="ai-quick-action" onclick="seedAIExample('agregá producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
+        <button class="ai-quick-action" onclick="seedAIExample('sumar 10 de stock a nombre del producto')">Sumar stock</button>
+      </div>`
+  }
+
+  const recent = document.getElementById('ai-recent-actions')
+  if (recent) recent.innerHTML = '<div style="font-size:11px;color:var(--txt3)">No hay acciones confirmadas por el momento.</div>'
+
+  const aiPreview = document.getElementById('ai-bot-action-preview')
+  if (aiPreview) aiPreview.remove()
+
+  const importPreview = document.getElementById('im-bot-preview')
+  if (importPreview) importPreview.innerHTML = ''
+
+  ;['im-bot-preview-card', 'im-preview-card', 'im-summary-card'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.style.display = 'none'
+  })
+
+  closeAI()
+}
+
 function openAI() {
   document.getElementById('ai-panel').classList.add('on')
   document.getElementById('ai-ov').classList.add('on')
@@ -2854,7 +2893,10 @@ function openAI() {
   if (CU) loadImportedData()
   setTimeout(() => document.getElementById('ai-inp').focus(), 300)
 }
-function closeAI() { document.getElementById('ai-panel').classList.remove('on'); document.getElementById('ai-ov').classList.remove('on') }
+function closeAI() {
+  document.getElementById('ai-panel')?.classList.remove('on')
+  document.getElementById('ai-ov')?.classList.remove('on')
+}
 
 function aiClock() {
   return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date())
