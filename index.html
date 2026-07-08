@@ -8,9 +8,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/styles.css?v=layout-fix-20260708">
 </head>
 <body>
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></symbol>
+  <symbol id="i-inventory" viewBox="0 0 24 24"><path d="M4 4h16v5H4z"/><path d="M4 13h16v7H4z"/><path d="M8 9v4"/><path d="M16 9v4"/><path d="M9 17h6"/></symbol>
+  <symbol id="i-sale" viewBox="0 0 24 24"><path d="M4 5h2l2.5 10h9L20 8H7"/><circle cx="10" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.8A2.8 2.8 0 0 1 5.8 5H18"/><path d="M16 13h5"/><path d="M17.5 13.1v.1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 16.2A5 5 0 0 1 21 20"/></symbol>
+  <symbol id="i-ai" viewBox="0 0 24 24"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m5.6 5.6 2.8 2.8"/><path d="m15.6 15.6 2.8 2.8"/><path d="m18.4 5.6-2.8 2.8"/><path d="m8.4 15.6-2.8 2.8"/><circle cx="12" cy="12" r="3.5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1-2.1 2.1-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1.1 1.7V21h-3v-.2A1.8 1.8 0 0 0 10.5 19a1.8 1.8 0 0 0-2 .4l-.1.1-2.1-2.1.1-.1a1.8 1.8 0 0 0 .4-2A1.8 1.8 0 0 0 5 14H4v-3h1a1.8 1.8 0 0 0 1.7-1.1 1.8 1.8 0 0 0-.4-2l-.1-.1 2.1-2.1.1.1a1.8 1.8 0 0 0 2 .4A1.8 1.8 0 0 0 11.5 4V3h3v1a1.8 1.8 0 0 0 1.1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1 2.1 2.1-.1.1a1.8 1.8 0 0 0-.4 2A1.8 1.8 0 0 0 21 11h1v3h-1a1.8 1.8 0 0 0-1.6 1Z"/></symbol>
+  <symbol id="i-expense" viewBox="0 0 24 24"><path d="M6 3h10l2 2v16H6z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h3"/></symbol>
+  <symbol id="i-purchase" viewBox="0 0 24 24"><path d="M6 6h15l-2 7H8L6 6Z"/><path d="M6 6 5 3H2"/><path d="M9 18h9"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M13 9v3"/><path d="M11.5 10.5h3"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M12 16V8"/><path d="M16 16v-7"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></symbol>
+</svg>
 
 <div class="loading-screen" id="loading">
   <div class="loading-k">K</div>
@@ -105,22 +119,26 @@
   </div>
   <div class="app-body">
     <nav class="sidebar">
+      <div class="sidebar-brand"><span><svg class="app-icon"><use href="#i-ai"></use></svg></span><strong>Kairós</strong></div>
       <div class="ns-title">Principal</div>
-      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico">IN</span><span>Inicio</span></div>
-      <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico">$</span><span>Dinero</span></div>
-      <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico">P</span><span>Productos</span></div>
-      <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico">GE</span><span>Gestión</span></div>
+      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Inicio</span></div>
+      <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></div>
+      <div class="ni" data-p="sales" onclick="go('sales',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></div>
+      <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></div>
+      <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></div>
+      <div class="ni" onclick="openAI()"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>IA</span></div>
+      <div class="ni" onclick="openProfile()"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></div>
       <details class="sidebar-more">
         <summary>Más herramientas</summary>
-        <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico">A</span><span>Publicidad</span></div>
-        <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico">C</span><span>Contenido</span></div>
-        <div class="ni" data-p="met" onclick="go('met',this)"><span class="ni-ico">%</span><span>Métricas avanzadas</span></div>
-        <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico">IM</span><span>Importaciones</span></div>
-        <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico">MN</span><span>Mi Negocio</span></div>
-        <div class="ni" onclick="openProfile()"><span class="ni-ico">CF</span><span>Configuración</span></div>
-        <div class="ni" onclick="showSecondaryTool('Documentos')"><span class="ni-ico">DO</span><span>Documentos</span></div>
-        <div class="ni" onclick="go('import',this);scrollToImportHistory()"><span class="ni-ico">HT</span><span>Historial técnico</span></div>
-        <div class="ni" onclick="showSecondaryTool('Integraciones futuras')"><span class="ni-ico">IF</span><span>Integraciones futuras</span></div>
+        <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></div>
+        <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></div>
+        <div class="ni" data-p="met" onclick="go('met',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></div>
+        <div class="ni" data-p="import" onclick="go('import',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-purchase"></use></svg></span><span>Importaciones</span></div>
+        <div class="ni" data-p="neg" onclick="go('neg',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Mi Negocio</span></div>
+        <div class="ni" onclick="openProfile()"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></div>
+        <div class="ni" onclick="showSecondaryTool('Documentos')"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Documentos</span></div>
+        <div class="ni" onclick="go('import',this);scrollToImportHistory()"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Historial técnico</span></div>
+        <div class="ni" onclick="showSecondaryTool('Integraciones futuras')"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>Integraciones futuras</span></div>
       </details>
       <div class="nspc"></div>
     </nav>
@@ -128,61 +146,76 @@
 
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
-        <div class="ph"><div class="pt" id="dash-title">Kairós</div><div class="ps">Estado general, alertas y próxima acción recomendada.</div></div>
-        <div class="command-shell" aria-label="Centro de mando del negocio">
-          <div class="command-head">
-            <div>
-              <div class="command-kicker">Centro de mando</div>
-              <div class="command-title">Estado general</div>
-              <div class="command-copy" id="command-status-copy">Lectura simple de dinero, ventas, stock y próximos pasos.</div>
+        <div class="home-header">
+          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Este es el estado de tu negocio hoy</div></div>
+          <button class="business-switcher" onclick="openProfile()"><span id="home-business-name">Tienda Axel</span><small>Perfil del negocio</small></button>
+        </div>
+        <div class="home-dashboard" aria-label="Panel principal del negocio">
+          <section class="home-main">
+            <div class="home-card home-status-card">
+              <div class="home-card-head">
+                <div>
+                  <div class="home-card-title">Estado general</div>
+                  <p>Kairós organiza tus datos para mostrar qué funciona, qué requiere atención y cuál es el próximo paso.</p>
+                </div>
+                <div class="command-state" id="command-state">
+                  <div class="command-state-top"><span class="command-light"></span>Estado actual</div>
+                  <strong id="command-status">Calculando...</strong>
+                </div>
+              </div>
+              <div class="home-metric-grid">
+                <button class="home-metric-card metric-cash" onclick="goFinanceDetail('summary')">
+                  <span class="metric-help" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Te dice con qué plata cuenta el negocio.">!</span>
+                  <span>Caja operativa</span><strong id="command-cash-value">$0</strong><small id="command-cash-trend">Ingresos menos gastos registrados</small><span class="resource-meter" id="home-cash-meter"><span></span></span>
+                </button>
+                <button class="home-metric-card metric-profit" onclick="goFinanceDetail('summary')">
+                  <span class="metric-help" data-info="Ganancia generada por las ventas del mes. Te muestra si vender está dejando margen.">!</span>
+                  <span>Ganancia por ventas</span><strong id="console-sales-profit">$0</strong><small id="home-sales-number">Registre ventas para conocer este dato.</small><span class="resource-meter" id="home-sales-meter"><span></span></span>
+                </button>
+                <button class="home-metric-card metric-coverage" onclick="goFinanceDetail('fixed')">
+                  <span class="metric-help" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Te dice si el negocio ya pagó el mes.">!</span>
+                  <span>Gastos fijos cubiertos</span><strong id="coverage-percent">0%</strong><small id="coverage-copy">Qué parte de los gastos mensuales ya está cubierta.</small><span class="resource-meter good" id="coverage-meter"><span></span></span>
+                </button>
+              </div>
+              <div class="home-hidden-metrics"><span id="home-cash-answer"></span><span id="home-cash-number"></span><span id="home-sales-answer"></span><span id="home-alert-answer"></span><span id="home-alert-number"></span><span id="home-next-answer"></span><span id="cash-state"></span><span id="cash-percent"></span><span id="stock-state"></span><span id="stock-percent"></span><span id="sales-state"></span><span id="sales-percent"></span><span id="console-sales-margin"></span><span class="resource-meter good" id="home-stock-meter"><span></span></span><span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span></div>
             </div>
-            <div class="command-state" id="command-state">
-              <div class="command-state-top"><span class="command-light"></span>Estado actual</div>
-              <strong id="command-status">Calculando...</strong>
+
+            <div class="home-modules">
+              <button class="module-card" onclick="goPage('prod')"><span class="module-icon"><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Productos</strong><small>Gestione precios, costos y variantes.</small></button>
+              <button class="module-card" onclick="goPage('prod');showProductQuestion('inv')"><span class="module-icon"><svg class="app-icon"><use href="#i-inventory"></use></svg></span><strong>Inventario</strong><small>Controle faltantes y reposición.</small></button>
+              <button class="module-card" onclick="goPage('sales')"><span class="module-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Ventas</strong><small>Registre ventas, compras y rentabilidad.</small></button>
+              <button class="module-card" onclick="goFinanceDetail('summary')"><span class="module-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><strong>Finanzas</strong><small>Controle caja, gastos y resultado real.</small></button>
             </div>
-          </div>
-          <div class="business-console">
-            <div class="console-balance">
-              <div><div class="console-label">Dinero registrado este mes</div><div class="console-value" id="command-cash-value">$0</div><div class="console-trend" id="command-cash-trend">Ingresos registrados menos egresos registrados</div></div>
-              <div class="console-emblem">$</div>
+
+            <div class="home-card home-diagnosis-card">
+              <div class="home-card-head compact"><div><div class="home-card-title">Diagnóstico de Kairós</div><p id="command-status-copy">Kairós detectó buena rotación en los productos principales, pero algunos necesitan reposición. Revise inventario antes de realizar nuevas compras.</p></div></div>
+              <button class="btn btn-gold" onclick="openAIWithBusinessSummary()">Ver análisis completo</button>
             </div>
-            <div class="console-resources">
-              <button class="console-row" onclick="goFinanceDetail('summary')">
-                <span class="resource-icon">$</span><span class="console-name">Dinero<span class="console-state" id="cash-state">Calculando</span></span>
-                <span class="resource-meter" id="home-cash-meter"><span></span></span><span class="console-percent" id="cash-percent">0%</span>
-              </button>
-              <button class="console-row" onclick="goPage('prod');showProductQuestion('inv','low')">
-                <span class="resource-icon">ST</span><span class="console-name">Stock<span class="console-state" id="stock-state">Calculando</span></span>
-                <span class="resource-meter" id="home-stock-meter"><span></span></span><span class="console-percent" id="stock-percent">0%</span>
-              </button>
-              <button class="console-row" onclick="goFinanceDetail('summary')">
-                <span class="resource-icon">VE</span><span class="console-name">Ventas<span class="console-state" id="sales-state">Calculando</span></span>
-                <span class="resource-meter" id="home-sales-meter"><span></span></span><span class="console-percent" id="sales-percent">0%</span>
-              </button>
-              <button class="console-row" onclick="openAIWithBusinessSummary()">
-                <span class="resource-icon">IA</span><span class="console-name">Próximo paso<span class="console-state good">Asesor disponible</span></span>
-                <span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span><span class="console-percent good">Listo</span>
-              </button>
+          </section>
+
+          <aside class="home-side">
+            <div class="home-card">
+              <div class="home-card-title">Acciones rápidas</div>
+              <div class="quick-action-grid">
+                <button class="quick-action" onclick="startDashboardAction('venta')"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
+                <button class="quick-action" onclick="startDashboardAction('gasto')"><span><svg class="app-icon"><use href="#i-expense"></use></svg></span><strong>Registrar gasto</strong></button>
+                <button class="quick-action" onclick="startDashboardAction('compra')"><span><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong></button>
+                <button class="quick-action" onclick="startDashboardAction('producto')"><span><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong></button>
+              </div>
             </div>
-            <div class="console-results">
-              <div class="console-result"><span class="resource-icon">GA</span><span><small>Ganancia de ventas</small><strong id="console-sales-profit">$0</strong></span></div>
-              <div class="console-result"><span class="resource-icon">%</span><span><small>De cada $100 vendidos quedan</small><strong id="console-sales-margin">$0</strong></span></div>
+            <div class="home-card">
+              <div class="home-card-head compact"><div class="home-card-title">Alertas operativas</div><span id="mission-count">Preparando lista</span></div>
+              <div class="alert-list" id="home-alerts"><div class="alert-item"><span class="dot warn"></span><strong>Productos con inventario bajo</strong><small>Calculando datos actuales.</small></div></div>
             </div>
-            <div style="display:none"><span id="home-cash-answer"></span><span id="home-cash-number"></span><span id="home-sales-answer"></span><span id="home-sales-number"></span><span id="home-alert-answer"></span><span id="home-alert-number"></span><span id="home-next-answer"></span></div>
-          </div>
-          <div class="attention-panel">
-              <div class="panel-heading"><strong>Próxima acción recomendada</strong><span id="mission-count">Preparando lista</span></div>
-              <div class="mission-list" id="home-missions"><div class="mission-row"><span class="mission-mark">···</span><span><strong>Analizando tu negocio</strong><small>Un momento, estamos ordenando los próximos pasos.</small></span></div></div>
-          </div>
-          <div class="coverage-panel">
-            <div class="coverage-top"><div><div class="mode-label">Cobertura de gastos fijos</div><div class="coverage-percent" id="coverage-percent">0%</div></div><div class="coverage-copy" id="coverage-copy">Muestra qué parte de los gastos mensuales ya está cubierta por ingresos registrados.</div></div>
-            <div class="resource-meter good" id="coverage-meter"><span></span></div>
-          </div>
-          <div class="command-action-bar">
-            <button class="btn btn-gold dashboard-primary" onclick="startDashboardAction('venta')">Registrar venta</button>
-            <button class="btn command-secondary-btn" onclick="startDashboardAction('gasto')">Anotar gasto</button>
-            <button class="btn command-secondary-btn" onclick="startDashboardAction('producto')">Agregar producto</button>
-          </div>
+            <div class="home-card">
+              <div class="home-card-title">Últimos movimientos</div>
+              <div class="movement-list" id="home-movements"><div class="movement-item"><span class="module-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><div><strong>Sin movimientos recientes</strong><small>Registre ventas o gastos para completar esta sección.</small></div></div></div>
+            </div>
+            <div class="home-card home-missions-card">
+              <div class="home-card-title">Próxima acción recomendada</div>
+              <div class="mission-list" id="home-missions"><div class="mission-row"><span class="mission-mark">...</span><span><strong>Analizando tu negocio</strong><small>Un momento, estamos ordenando los próximos pasos.</small></span></div></div>
+            </div>
+          </aside>
         </div>
         <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('home-advanced',this)">Ver información detallada</button>
         <div class="advanced-wrap" id="home-advanced">
@@ -273,9 +306,96 @@
         </div>
       </div>
 
+      <!-- VENTAS -->
+      <div class="page" id="page-sales">
+        <div class="module-shell sales-shell">
+          <div class="module-header">
+            <div><div class="pt">Ventas</div><div class="ps">Registro comercial, compras, productos vendidos y rentabilidad.</div></div>
+            <div class="module-header-actions">
+              <button class="btn btn-ghost" onclick="startDashboardAction('compra')"><svg class="app-icon"><use href="#i-purchase"></use></svg>Registrar compra</button>
+              <button class="btn btn-gold" onclick="startDashboardAction('venta')"><svg class="app-icon"><use href="#i-sale"></use></svg>Registrar venta</button>
+            </div>
+          </div>
+
+          <div class="module-summary-grid">
+            <button class="module-summary-card" onclick="startDashboardAction('venta')"><span class="summary-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ventas del mes</small><strong id="sales-total">$0</strong><em id="sales-count">0 operaciones</em></button>
+            <button class="module-summary-card" onclick="goPage('prod')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-box"></use></svg></span><small>Productos vendidos</small><strong id="sales-products">0</strong><em>Unidades y variantes registradas</em></button>
+            <button class="module-summary-card" onclick="goPage('sales')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Ganancia comercial</small><strong id="sales-profit">$0</strong><em>Venta menos costo vendido</em></button>
+            <button class="module-summary-card" onclick="goPage('fin')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Margen promedio</small><strong id="sales-margin">0%</strong><em>Rentabilidad sobre ventas</em></button>
+          </div>
+
+          <div class="module-layout">
+            <section class="module-main">
+              <div class="module-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Operación comercial</div><p>Ventas muestra qué se vendió, cuánto dejó y qué compras o reposiciones se registraron para sostener la operación.</p></div>
+                  <span class="module-pill">Datos del mes</span>
+                </div>
+                <div class="commerce-actions">
+                  <button onclick="startDashboardAction('venta')"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong><small>Guardar una operación comercial.</small></button>
+                  <button onclick="startDashboardAction('compra')"><span class="warn"><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong><small>Informar reposición o proveedor.</small></button>
+                  <button onclick="goPage('prod');showProductQuestion('carga')"><span class="blue"><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong><small>Agregar precio, costo e inventario.</small></button>
+                </div>
+              </div>
+
+              <div class="module-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Ventas registradas</div><p>Listado de operaciones guardadas. Si no hay detalle disponible, Kairós conserva el total y el origen económico.</p></div>
+                  <button class="btn btn-ghost btn-sm" onclick="renderSales()">Actualizar</button>
+                </div>
+                <div class="module-table-wrap">
+                  <table class="module-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Total</th><th>Costo</th><th>Ganancia</th><th>Margen</th><th>Origen</th></tr></thead><tbody id="sales-tb"><tr><td colspan="7"><div class="empty"><div class="empty-i">·</div>Sin ventas registradas</div></td></tr></tbody></table>
+                </div>
+              </div>
+            </section>
+
+            <aside class="module-side">
+              <div class="module-card">
+                <div class="home-card-title">Compras y reposición</div>
+                <div id="sales-purchases" class="compact-list"><div class="empty" style="padding:14px"><div class="empty-i">·</div>Sin compras detectadas</div></div>
+              </div>
+              <div class="module-card">
+                <div class="home-card-title">Lectura comercial</div>
+                <p id="sales-diagnosis">Kairós mostrará una lectura comercial cuando existan ventas, costos y movimientos suficientes.</p>
+                <button class="btn btn-gold btn-full" onclick="openAIWithBusinessSummary()">Analizar ventas</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
       <!-- FINANZAS -->
       <div class="page" id="page-fin">
-        <div class="ph"><div class="pt">Dinero</div><div class="ps">Ventas, ingresos, egresos, gastos, pagos y remuneraciones en una vista simple.</div></div>
+        <div class="module-shell finance-shell">
+        <div class="module-header">
+          <div><div class="pt">Finanzas</div><div class="ps">Datos económicos del negocio, caja, gastos, resultado y evolución.</div></div>
+          <div class="module-header-actions">
+            <button class="btn btn-ghost" onclick="showFinanceQuestion('movements')"><svg class="app-icon"><use href="#i-expense"></use></svg>Registrar movimiento</button>
+            <button class="btn btn-gold" onclick="showFinanceQuestion('summary')"><svg class="app-icon"><use href="#i-chart"></use></svg>Ver resumen</button>
+          </div>
+        </div>
+
+        <div class="module-summary-grid">
+          <button class="module-summary-card" onclick="showFinanceQuestion('summary')"><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Caja operativa</small><strong id="finance-cash">$0</strong><em>Ingresos menos egresos registrados</em></button>
+          <button class="module-summary-card" onclick="showFinanceQuestion('summary')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ingresos del mes</small><strong id="finance-income">$0</strong><em id="finance-income-note">0 registros</em></button>
+          <button class="module-summary-card" onclick="showFinanceQuestion('movements')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-expense"></use></svg></span><small>Egresos del mes</small><strong id="finance-expense">$0</strong><em id="finance-expense-note">0 registros</em></button>
+          <button class="module-summary-card" onclick="showFinanceQuestion('fixed')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Gastos fijos cubiertos</small><strong id="finance-fixed-coverage">0%</strong><em>Según ingresos del mes</em></button>
+        </div>
+
+        <div class="module-layout finance-overview">
+          <section class="module-card">
+            <div class="module-card-head">
+              <div><div class="home-card-title">Evolución económica</div><p>Comparación visual de ingresos, egresos, resultado y cobertura de gastos fijos.</p></div>
+              <span class="module-pill">Mes actual</span>
+            </div>
+            <div class="finance-chart" id="finance-chart-bars"></div>
+          </section>
+          <aside class="module-card">
+            <div class="home-card-title">Lectura financiera</div>
+            <p id="finance-diagnosis">Kairós consolidará caja, gastos y resultado cuando existan movimientos registrados.</p>
+            <button class="btn btn-gold btn-full" onclick="openAIWithBusinessSummary()">Ver análisis financiero</button>
+          </aside>
+        </div>
         <div class="guided-menu">
           <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>Dinero ingresado y egresado</strong><span>Ingresos, egresos y resultado de caja.</span></span><span class="guided-chevron">›</span></button>
           <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">RV</span><span class="guided-menu-copy"><strong>Rentabilidad de ventas</strong><span>Lo vendido menos el costo de los productos.</span></span><span class="guided-chevron">›</span></button>
@@ -425,119 +545,126 @@
           </div>
         </div>
         </div>
+        </div>
       </div>
 
       <!-- PRODUCTOS -->
       <div class="page" id="page-prod">
-        <div class="ph"><div class="pt">Productos</div><div class="ps">Inventario, costos y precios con una lectura simple y operativa.</div></div>
-        <div class="ai-entry-card">
-          <div><strong style="display:block;margin-bottom:4px">Carga recomendada: Asesor IA o archivo</strong><p>Para evitar errores, primero use una carga asistida. La edición manual queda disponible para correcciones puntuales.</p></div>
-          <div class="action-pair">
-            <button class="btn btn-gold" onclick="openProductAIHelp()">Cargar con Asesor IA</button>
-            <button class="btn btn-ghost" onclick="goPage('import')">Subir archivo</button>
-          </div>
-        </div>
-        <div class="guided-menu">
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv','all')"><span class="guided-menu-icon">ST</span><span class="guided-menu-copy"><strong>Inventario disponible</strong><span>Productos, variantes, colores y medidas.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv','pricing')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>Costos y precios</strong><span>Costo total, precio y ganancia por unidad.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showProductQuestion('inv','low')"><span class="guided-menu-icon">!</span><span class="guided-menu-copy"><strong>Reposición necesaria</strong><span>Productos agotados o cerca del stock mínimo.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="openProductAIHelp()"><span class="guided-menu-icon">+</span><span class="guided-menu-copy"><strong>Compra recomendada</strong><span>El Asesor puede preparar una reposición para revisar.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showProductQuestion('carga')"><span class="guided-menu-icon">ED</span><span class="guided-menu-copy"><strong>Edición o carga manual</strong><span>Alternativa para corregir o completar datos puntuales.</span></span><span class="guided-chevron">›</span></button>
-        </div>
-        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('prod-advanced',this)" data-closed-label="Ver inventario, costos y carga manual">Ver inventario, costos y carga manual</button>
-        <div class="advanced-wrap" id="prod-advanced">
-        <div class="concept"><div class="ci">CO</div><div><div class="clbl">Motor de costos</div><div class="ctxt">Ingrese el costo y Kairós calcula automáticamente el <strong>precio mínimo rentable</strong>, el <strong>precio sugerido</strong> y el <strong>margen real</strong>. Todos los porcentajes son configurables.</div></div></div>
-
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-          <button class="btn btn-gold btn-sm" id="prod-tab-inv" onclick="switchProductTab('inv')">Inventario</button>
-          <button class="btn btn-ghost btn-sm" id="prod-tab-carga" onclick="switchProductTab('carga')">Carga</button>
-        </div>
-
-        <div id="prod-tab-carga-pane" style="display:none">
-        <div class="ai-entry-card">
-          <div><strong style="display:block;margin-bottom:4px">Carga asistida por conversación</strong><p>El Asesor IA solicita nombre, stock, costo y precio, prepara una vista previa y no guarda nada hasta confirmar.</p></div>
-          <button class="btn btn-gold" onclick="openProductAIHelp()">Cargar producto con IA</button>
-        </div>
-        <!-- Config de costos -->
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-t">Configuración de costos por defecto</div>
-          <div class="g4">
-            <div class="field"><label>Packaging default ($)</label><input type="number" id="cfg-pkg" placeholder="0" min="0" oninput="saveCfg()"></div>
-            <div class="field"><label>Envío default ($)</label><input type="number" id="cfg-env" placeholder="0" min="0" oninput="saveCfg()"></div>
-            <div class="field"><label>Comisión plataforma %</label><input type="number" id="cfg-cplat" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
-            <div class="field"><label>Comisión pago %</label><input type="number" id="cfg-cpago" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
-            <div class="field"><label>Impuestos %</label><input type="number" id="cfg-imp" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
-            <div class="field"><label>Descuento %</label><input type="number" id="cfg-desc" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
-            <div class="field"><label>Margen deseado %</label><input type="number" id="cfg-mar" placeholder="30" min="0" max="100" oninput="saveCfg()"></div>
-          </div>
-        </div>
-
-        <!-- Agregar producto -->
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-t">Agregar producto o servicio</div>
-          <div class="g2">
-            <div>
-              <div class="field"><label>Nombre *</label><input type="text" id="p-n" placeholder="Remera básica, Asesoría 1h..."></div>
-              <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ropa, Servicios..."></div>
-              <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Descripción breve del producto..."></textarea></div>
-              <div class="field"><label>Stock (0 si es servicio)</label><input type="number" id="p-st" placeholder="0" min="0"></div>
-              <div class="field"><label>Stock mínimo</label><input type="number" id="p-min" placeholder="0" min="0"></div>
+        <div class="products-shell">
+          <div class="products-header">
+            <div><div class="pt">Productos</div><div class="ps">Administración de precios, costos, variantes y rentabilidad.</div></div>
+            <div class="products-header-actions">
+              <input id="prod-quick-search" type="search" placeholder="Buscar producto" oninput="syncProductSearch(this.value)">
+              <button class="btn btn-gold" onclick="showProductQuestion('carga')">Crear producto</button>
             </div>
-            <div>
-              <div class="field"><label>Costo del producto ($)</label><input type="number" id="p-co" placeholder="0" min="0" oninput="calcCosto()"></div>
-              <div class="field"><label>Packaging ($) <span style="color:var(--txt3)" id="p-pkg-hint"></span></label><input type="number" id="p-pkg" placeholder="0" min="0" oninput="calcCosto()"></div>
-              <div class="field"><label>Costo de envío ($)</label><input type="number" id="p-env" placeholder="0" min="0" oninput="calcCosto()"></div>
-              <div class="field"><label>Responsable del envío</label><select id="p-envp" onchange="calcCosto()"><option value="cliente">Cliente</option><option value="negocio">Negocio</option><option value="mixto">Mixto (50/50)</option></select></div>
-              <div class="field"><label>Comisión plataforma %</label><input type="number" id="p-cplat" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Comisión pago %</label><input type="number" id="p-cpago" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Impuestos %</label><input type="number" id="p-imp" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Descuento %</label><input type="number" id="p-desc" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Margen deseado %</label><input type="number" id="p-mar" placeholder="30" min="0" max="100" oninput="calcCosto()"></div>
-              <div class="field"><label>Precio de venta ($) <span style="font-size:11px;color:var(--txt3)">(editable)</span></label><input type="number" id="p-pr" placeholder="0" min="0" oninput="markManualProductPrice();calcCosto()"></div>
-              <!-- Resultados motor de costos -->
-              <div id="p-cost-result" class="cost-result" style="display:none">
-                <div class="cost-row"><span class="lbl">Costo base total</span><span class="val" id="cr-costo">$0</span></div>
-                <div class="cost-row"><span class="lbl">Precio mínimo rentable</span><span class="val" id="cr-min">$0</span></div>
-                <div class="cost-row"><span class="lbl">Precio sugerido</span><span class="val" id="cr-sug" style="color:var(--gold)">$0</span></div>
-                <div class="cost-row"><span class="lbl">Ganancia bruta<span class="cost-help">De cada venta, lo que te queda después de descontar lo que te costó el producto.</span></span><span class="val" id="cr-gan">$0</span></div>
-                <div class="cost-row" style="font-weight:600"><span class="lbl" style="color:var(--txt)">Margen real</span><span class="val" id="cr-mar">0%</span></div>
+          </div>
+
+          <div class="product-summary-grid">
+            <div class="product-summary-card"><span>Productos activos</span><strong id="prod-active-count">0</strong><small>Disponibles en inventario.</small></div>
+            <div class="product-summary-card"><span>Margen promedio</span><strong id="prod-avg-margin">—</strong><small>Calculado con costo y precio.</small></div>
+            <div class="product-summary-card warning"><span>Productos sin costo</span><strong id="prod-missing-cost">0</strong><small>Requieren costo para calcular margen.</small></div>
+            <div class="product-summary-card warning"><span>Productos sin precio</span><strong id="prod-missing-price">0</strong><small>Requieren precio de venta.</small></div>
+          </div>
+
+          <div class="product-toolbar">
+            <input id="product-search" type="search" placeholder="Buscar por nombre, SKU o categoría" oninput="renderImportedInventory()">
+            <select id="product-category-filter" onchange="renderImportedInventory()"><option value="">Categoría</option></select>
+            <select id="product-state-filter" onchange="renderImportedInventory()"><option value="">Estado</option><option value="verde">Activo</option><option value="amarillo">Inventario bajo</option><option value="rojo">Crítico</option><option value="sin_datos">Sin datos</option></select>
+            <select id="product-profit-filter" onchange="renderImportedInventory()"><option value="">Rentabilidad</option><option value="ok">Con margen</option><option value="low">Margen bajo</option><option value="missing">No calculado</option></select>
+            <button class="btn btn-ghost" onclick="goPage('import')">Importar</button>
+            <button class="btn btn-ghost" onclick="exportProducts()">Exportar</button>
+          </div>
+
+          <div id="imp-prod-state"></div>
+          <div id="prod-tab-inv-pane">
+            <div class="products-layout">
+              <div class="product-list-card">
+                <div class="product-card-head"><div><div class="home-card-title">Listado de productos</div><p>Precios, costos, margen e inventario de los productos registrados.</p></div><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar</button></div>
+                <div class="attention-note" id="inventory-filter-note"><span id="inventory-filter-text"></span><button class="btn btn-ghost btn-sm" onclick="clearInventoryFilter()">Ver todo</button></div>
+                <div class="tw product-table-wrap">
+                  <table class="product-table"><thead><tr><th>Producto</th><th>SKU</th><th>Categoría</th><th>Costo</th><th>Precio de venta</th><th>Margen</th><th>Inventario</th><th>Estado</th><th>Acciones</th></tr></thead>
+                  <tbody id="imp-inv-tb"><tr><td colspan="9"><div class="empty"><div class="empty-i">·</div>Sin inventario importado</div></td></tr></tbody></table>
+                </div>
               </div>
-              <div id="p-cost-alert" class="cost-alert"></div>
+              <aside class="product-side-panel">
+                <div class="product-info-card">
+                  <div class="home-card-title">Diagnóstico de productos</div>
+                  <p>Hay productos que no pueden calcular rentabilidad porque faltan datos de costo o precio. Completá esa información para obtener un análisis más preciso.</p>
+                  <button class="btn btn-gold btn-full" onclick="showProductQuestion('inv','pricing')">Completar datos pendientes</button>
+                </div>
+                <div class="product-info-card">
+                  <div class="home-card-title">Prioridades de productos</div>
+                  <div class="product-priority-list">
+                    <button onclick="showProductQuestion('inv','pricing')"><span class="dot warn"></span>Completar costos faltantes</button>
+                    <button onclick="showProductQuestion('inv','pricing')"><span class="dot warn"></span>Revisar precios sin margen calculado</button>
+                    <button onclick="showProductQuestion('inv','low')"><span class="dot warn"></span>Controlar productos con inventario bajo</button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+            <div class="card" id="legacy-prod-card" style="display:none;margin-top:18px">
+              <div class="card-t">Catálogo histórico</div>
+              <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Inventario</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">·</div>Sin productos</div></td></tr></tbody></table></div>
             </div>
           </div>
-          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
-            <button class="btn btn-ghost" onclick="aiDescProd()">Generar descripción con IA</button>
-            <button class="btn btn-gold" onclick="addProd()">Agregar al inventario</button>
-          </div>
-        </div>
 
-        </div>
-
-        <div id="prod-tab-inv-pane">
-        <div class="card" id="legacy-prod-card" style="display:none">
-          <div class="card-t">Catálogo histórico</div>
-          <div class="tw"><table><thead><tr><th>Producto</th><th>Cat.</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
-          <tbody id="p-tb"><tr><td colspan="8"><div class="empty"><div class="empty-i">·</div>Sin productos</div></td></tr></tbody></table></div>
-        </div>
-        <div class="div"><span>Inventario importado</span></div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="loadImportedData()">Actualizar datos</button></div>
-        <div id="imp-prod-state"></div>
-        <div class="g4" style="margin-bottom:20px">
-          <div class="stat"><div class="sl">Productos cargados <button class="info-dot" data-info="Cantidad de items guardados en el inventario nuevo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-cant" style="color:var(--blue)">0</div></div>
-          <div class="stat"><div class="sl">Valor a costo <button class="info-dot" data-info="Stock actual multiplicado por el costo total de cada producto." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-costo">$0</div></div>
-          <div class="stat"><div class="sl">Valor a venta <button class="info-dot" data-info="Stock actual multiplicado por el precio de venta local o web." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-venta">$0</div></div>
-          <div class="stat"><div class="sl">Estado del stock <button class="info-dot" data-info="Cantidad de productos en rojo, amarillo y verde según stock actual y stock mínimo." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-est" style="color:var(--gold)">0 / 0 / 0</div><div class="sn">Rojo / amarillo / verde</div></div>
-        </div>
-        <div class="stat" style="margin-bottom:14px"><div class="sl">Costo estimado de reposición <button class="info-dot" data-info="Unidades faltantes para volver al stock mínimo, multiplicadas por el costo total unitario. Solo suma productos con datos suficientes." onclick="toggleInfo(event,this)">!</button></div><div class="sv" id="ip-reorder-cost" style="color:var(--yel)">$0</div><div class="sn" id="ip-reorder-note">Sin faltantes calculables</div></div>
-        <div class="attention-note" id="inventory-filter-note"><span id="inventory-filter-text"></span><button class="btn btn-ghost btn-sm" onclick="clearInventoryFilter()">Ver todo</button></div>
-        <div class="card">
-          <div class="card-t">Inventario importado</div>
-          <div class="tw" style="max-height:420px;overflow-y:auto">
-            <table><thead><tr><th>Producto</th><th>Cat.</th><th>Color</th><th>Medida</th><th>Stock</th><th>Costo</th><th>Precio</th><th>Margen</th><th>Estado</th><th>Acción</th><th></th></tr></thead>
-            <tbody id="imp-inv-tb"><tr><td colspan="11"><div class="empty"><div class="empty-i">·</div>Sin inventario importado</div></td></tr></tbody></table>
+          <div class="advanced-wrap" id="prod-advanced">
+            <div id="prod-tab-carga-pane" style="display:none">
+              <div class="product-info-card product-create-intro">
+                <div><strong>Creación asistida o manual</strong><p>Puede crear un producto con el Asesor IA o completar los datos manualmente. Nada se guarda sin confirmación.</p></div>
+                <button class="btn btn-ghost" onclick="openProductAIHelp()">Crear con IA</button>
+              </div>
+              <div class="card" style="margin-bottom:20px">
+                <div class="card-t">Configuración de costos por defecto</div>
+                <div class="g4">
+                  <div class="field"><label>Packaging default ($)</label><input type="number" id="cfg-pkg" placeholder="0" min="0" oninput="saveCfg()"></div>
+                  <div class="field"><label>Envío default ($)</label><input type="number" id="cfg-env" placeholder="0" min="0" oninput="saveCfg()"></div>
+                  <div class="field"><label>Comisión plataforma %</label><input type="number" id="cfg-cplat" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
+                  <div class="field"><label>Comisión pago %</label><input type="number" id="cfg-cpago" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
+                  <div class="field"><label>Impuestos %</label><input type="number" id="cfg-imp" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
+                  <div class="field"><label>Descuento %</label><input type="number" id="cfg-desc" placeholder="0" min="0" max="100" oninput="saveCfg()"></div>
+                  <div class="field"><label>Margen deseado %</label><input type="number" id="cfg-mar" placeholder="30" min="0" max="100" oninput="saveCfg()"></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-t">Crear producto</div>
+                <div class="g2">
+                  <div>
+                    <div class="field"><label>Nombre *</label><input type="text" id="p-n" placeholder="Remera básica, Asesoría 1h..."></div>
+                    <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ropa, Servicios..."></div>
+                    <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Descripción breve del producto..."></textarea></div>
+                    <div class="field"><label>Inventario inicial</label><input type="number" id="p-st" placeholder="0" min="0"></div>
+                    <div class="field"><label>Inventario mínimo</label><input type="number" id="p-min" placeholder="0" min="0"></div>
+                  </div>
+                  <div>
+                    <div class="field"><label>Costo del producto ($)</label><input type="number" id="p-co" placeholder="0" min="0" oninput="calcCosto()"></div>
+                    <div class="field"><label>Packaging ($) <span style="color:var(--txt3)" id="p-pkg-hint"></span></label><input type="number" id="p-pkg" placeholder="0" min="0" oninput="calcCosto()"></div>
+                    <div class="field"><label>Costo de envío ($)</label><input type="number" id="p-env" placeholder="0" min="0" oninput="calcCosto()"></div>
+                    <div class="field"><label>Responsable del envío</label><select id="p-envp" onchange="calcCosto()"><option value="cliente">Cliente</option><option value="negocio">Negocio</option><option value="mixto">Mixto (50/50)</option></select></div>
+                    <div class="field"><label>Comisión plataforma %</label><input type="number" id="p-cplat" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
+                    <div class="field"><label>Comisión pago %</label><input type="number" id="p-cpago" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
+                    <div class="field"><label>Impuestos %</label><input type="number" id="p-imp" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
+                    <div class="field"><label>Descuento %</label><input type="number" id="p-desc" placeholder="0" min="0" max="100" oninput="calcCosto()"></div>
+                    <div class="field"><label>Margen deseado %</label><input type="number" id="p-mar" placeholder="30" min="0" max="100" oninput="calcCosto()"></div>
+                    <div class="field"><label>Precio de venta ($)</label><input type="number" id="p-pr" placeholder="0" min="0" oninput="markManualProductPrice();calcCosto()"></div>
+                    <div id="p-cost-result" class="cost-result" style="display:none">
+                      <div class="cost-row"><span class="lbl">Costo base total</span><span class="val" id="cr-costo">$0</span></div>
+                      <div class="cost-row"><span class="lbl">Precio mínimo rentable</span><span class="val" id="cr-min">$0</span></div>
+                      <div class="cost-row"><span class="lbl">Precio sugerido</span><span class="val" id="cr-sug" style="color:var(--gold)">$0</span></div>
+                      <div class="cost-row"><span class="lbl">Ganancia bruta</span><span class="val" id="cr-gan">$0</span></div>
+                      <div class="cost-row" style="font-weight:600"><span class="lbl" style="color:var(--txt)">Margen real</span><span class="val" id="cr-mar">0%</span></div>
+                    </div>
+                    <div id="p-cost-alert" class="cost-alert"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+                  <button class="btn btn-ghost" onclick="aiDescProd()">Generar descripción con IA</button>
+                  <button class="btn btn-gold" onclick="addProd()">Crear producto</button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        </div>
         </div>
       </div>
 
@@ -847,23 +974,24 @@
     </div>
   </div>
   <nav class="mobile-nav" aria-label="Navegación principal">
-    <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico">IN</span><span>Inicio</span></button>
-    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico">$</span><span>Dinero</span></button>
-    <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico">PR</span><span>Productos</span></button>
-    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico">GE</span><span>Gestión</span></button>
+    <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Inicio</span></button>
+    <button class="mobile-ni" data-p="sales" onclick="go('sales',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></button>
+    <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></button>
+    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></button>
   </nav>
   <details class="mobile-more">
     <summary>Más</summary>
     <div class="mobile-more-panel">
-      <button class="ni mobile-more-item" data-p="pub" onclick="go('pub',this);this.closest('details').open=false"><span class="ni-ico">A</span><span>Publicidad</span></button>
-      <button class="ni mobile-more-item" data-p="cont" onclick="go('cont',this);this.closest('details').open=false"><span class="ni-ico">C</span><span>Contenido</span></button>
-      <button class="ni mobile-more-item" data-p="met" onclick="go('met',this);this.closest('details').open=false"><span class="ni-ico">%</span><span>Métricas avanzadas</span></button>
-      <button class="ni mobile-more-item" data-p="import" onclick="go('import',this);this.closest('details').open=false"><span class="ni-ico">IM</span><span>Importaciones</span></button>
-      <button class="ni mobile-more-item" data-p="neg" onclick="go('neg',this);this.closest('details').open=false"><span class="ni-ico">MN</span><span>Mi Negocio</span></button>
-      <button class="ni mobile-more-item" onclick="openProfile();this.closest('details').open=false"><span class="ni-ico">CF</span><span>Configuración</span></button>
-      <button class="ni mobile-more-item" onclick="showSecondaryTool('Documentos');this.closest('details').open=false"><span class="ni-ico">DO</span><span>Documentos</span></button>
-      <button class="ni mobile-more-item" onclick="go('import',this);scrollToImportHistory();this.closest('details').open=false"><span class="ni-ico">HT</span><span>Historial técnico</span></button>
-      <button class="ni mobile-more-item" onclick="showSecondaryTool('Integraciones futuras');this.closest('details').open=false"><span class="ni-ico">IF</span><span>Integraciones futuras</span></button>
+      <button class="ni mobile-more-item" data-p="pub" onclick="go('pub',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></button>
+      <button class="ni mobile-more-item" data-p="cont" onclick="go('cont',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></button>
+      <button class="ni mobile-more-item" data-p="met" onclick="go('met',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></button>
+      <button class="ni mobile-more-item" data-p="import" onclick="go('import',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-purchase"></use></svg></span><span>Importaciones</span></button>
+      <button class="ni mobile-more-item" data-p="people" onclick="go('people',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></button>
+      <button class="ni mobile-more-item" data-p="neg" onclick="go('neg',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Mi Negocio</span></button>
+      <button class="ni mobile-more-item" onclick="openProfile();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></button>
+      <button class="ni mobile-more-item" onclick="showSecondaryTool('Documentos');this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Documentos</span></button>
+      <button class="ni mobile-more-item" onclick="go('import',this);scrollToImportHistory();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Historial técnico</span></button>
+      <button class="ni mobile-more-item" onclick="showSecondaryTool('Integraciones futuras');this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>Integraciones futuras</span></button>
     </div>
   </details>
   <button class="chat-fab" type="button" onclick="openAI()" aria-label="Abrir Asesor IA" title="Abrir Asesor IA">IA</button>
@@ -967,6 +1095,6 @@
 <script src="assets/js/core/validation.js"></script>
 <script src="assets/js/ui/toast.js"></script>
 <script src="assets/js/services/financeService.js"></script>
-<script src="assets/app.js"></script>
+<script src="assets/app.js?v=layout-fix-20260708"></script>
 </body>
 </html>
