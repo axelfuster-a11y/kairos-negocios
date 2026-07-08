@@ -2,7 +2,11 @@
 
 Esta carpeta contiene la base SQL de Kairós para importaciones y para el núcleo operativo del negocio.
 
-El frontend actual ya usa las tablas de importación desde el módulo `Carga inteligente`. Las tablas legacy siguen existiendo y no se eliminan.
+El frontend actual organiza la navegacion principal en cuatro modulos: `Inicio`, `Dinero`, `Productos` y `Gestion`.
+
+Supabase sigue siendo la base de datos de la app. Las migraciones existentes no deben editarse si ya fueron aplicadas; cualquier hardening futuro debe agregarse en una migracion nueva.
+
+Las funciones de importacion viven visualmente dentro de `Mas herramientas > Importaciones` y tambien alimentan los resumenes de `Inicio`, `Dinero` y `Productos`. Las tablas legacy siguen existiendo y no se eliminan.
 
 ## Migraciones
 
@@ -34,7 +38,7 @@ La migración también:
 
 ## Estado actual
 
-Las tablas de `001_import_base.sql` son usadas por `Carga inteligente`, pero no reemplazan todavía a:
+Las tablas de `001_import_base.sql` son usadas por importaciones y carga asistida, pero no reemplazan todavía a:
 
 - `transacciones`
 - `productos`
