@@ -839,6 +839,7 @@ tr:hover td{background:#171c20}
 #app:has(#page-sales.on) .badge.bb,#app:has(#page-fin.on) .badge.bb{background:#171e2b;color:#a8b1bf}
 @media(max-width:1250px){.finance-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.people-flow{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1100px){.module-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.module-layout,.finance-overview,.people-layout,.pos-panel{grid-template-columns:1fr}.pos-ticket{position:static}}
+@media(max-width:900px){.module-header{align-items:flex-start;flex-direction:column;width:calc(100vw - 28px)!important;max-width:100%;min-width:0}.module-header-actions{width:100%!important;max-width:100%;min-width:0}.module-header-actions .btn{flex:1 1 180px;justify-content:center}}
 @media(max-width:700px){.module-header{align-items:flex-start;flex-direction:column}.module-header-actions,.module-header-actions .btn{width:100%;justify-content:center}.module-summary-grid,.commerce-actions,.manual-sale-grid,.finance-chart,.finance-data-grid,.pos-toolbar,.pos-grid,.pos-sale-fields,.integration-actions{grid-template-columns:1fr}.manual-sale-name,.pos-received{grid-column:auto}.finance-chart{height:auto}.finance-bar{grid-template-columns:1fr auto;grid-template-rows:auto auto;text-align:left}.finance-bar-fill{height:10px!important}.module-shell .module-card-head{align-items:flex-start;flex-direction:column}.module-summary-card{min-height:auto}.metric-lines>div{align-items:flex-start;flex-direction:column}.metric-lines strong{text-align:left}}
 @media(max-width:520px){
   .sales-shell{gap:12px}
@@ -851,8 +852,12 @@ tr:hover td{background:#171c20}
   .sales-tabs>*{min-width:0}
   .sales-tab{flex:0 0 auto;min-height:38px;padding:8px 11px;font-size:12px;white-space:nowrap}
   .sales-tab .app-icon{display:none}
-  #page-sales .module-summary-grid{gap:10px}
+  #page-sales .module-summary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:0!important}
   #page-sales .module-summary-card{min-height:98px;padding:12px}
+  #page-fin .module-summary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:0!important}
+  #page-fin .module-summary-card{min-height:98px;padding:12px}
+  #page-people .module-summary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:0!important}
+  #page-people .module-summary-card{min-height:98px;padding:12px}
   #page-sales .module-summary-card .summary-icon{width:30px;height:30px;border-radius:10px}
   #page-sales .module-summary-card .summary-icon .app-icon{width:16px;height:16px}
   #page-sales .module-summary-card small{margin-top:8px;font-size:10px}
@@ -920,6 +925,14 @@ tr:hover td{background:#171c20}
   #page-prod.page.on,#page-sales.page.on,#page-people.page.on{width:100%!important;max-width:100%!important;overflow:hidden}
   #page-prod .products-header,#page-prod .products-header-actions,#page-prod .product-summary-grid,#page-prod .product-toolbar,#page-prod .products-layout,#page-prod .product-list-card,#page-prod .product-info-card{width:100%!important;max-width:100%!important;min-width:0!important}
   #page-prod .products-header-actions input{min-width:0!important}
+}
+
+@media(max-width:520px){
+  #page-prod .product-summary-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important;padding:0!important;margin:0!important}
+  #page-prod .product-summary-card{flex:none!important;min-width:0!important;min-height:86px!important;padding:10px!important}
+  #page-prod .product-summary-card span{font-size:8px!important;line-height:1.15}
+  #page-prod .product-summary-card strong{font-size:19px!important}
+  #page-prod .product-summary-card small{font-size:9px!important;line-height:1.25}
 }
 
 @media(max-width:600px){

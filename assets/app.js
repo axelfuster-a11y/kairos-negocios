@@ -167,7 +167,7 @@ async function doForgotPassword() {
   if (!email) { showAuthErr('Ingrese su email para recuperar la contraseña'); return }
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
   if (error) showAuthErr(error.message)
-  else showAuthOk('Te enviamos un email para recuperar tu contraseña.')
+  else showAuthOk('Se envió un correo electrónico para recuperar la contraseña.')
 }
 
 async function doReg() {
@@ -237,12 +237,18 @@ async function wFinish() {
 // ══════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════
+function resetPageScroll() {
+  document.querySelector('.content')?.scrollTo({ top: 0, left: 0 })
+  window.scrollTo({ top: 0, left: 0 })
+}
+
 function go(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'))
   document.querySelectorAll('.ni,.mobile-ni').forEach(n => n.classList.remove('on'))
   const target = document.getElementById('page-' + page)
   if (!target) return
   target.classList.add('on')
+  resetPageScroll()
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
   if (['leads', 'org'].includes(page)) document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
   if (page === 'dash') switchDashboardTab('summary')
@@ -528,7 +534,7 @@ async function openProfile() {
     document.getElementById('profile-summary-text').textContent = parts.join(' ')
   } catch (error) {
     console.error('[Kairós] openProfile:', error)
-    document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intentá nuevamente.'
+    document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intente nuevamente.'
   }
 }
 
@@ -1457,7 +1463,7 @@ async function loadTeamData() {
     teamData.available = false
     setTeamControlsDisabled(true)
     if (state) {
-      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Equipo todavía no está activado en esta base</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Los controles están bloqueados para no perder datos. Aplicá <strong>supabase/migrations/004_team_compensation.sql</strong> en Supabase SQL Editor; después volvé a esta pestaña y tocá Reintentar.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadTeamData()">Reintentar</button></div></div>`
+      state.innerHTML = `<div class="concept"><div class="ci">⚠</div><div><div class="clbl">Equipo todavía no está activado en esta base</div><div class="ctxt">${isTeamSchemaMissing(firstError) ? 'Los controles están bloqueados para no perder datos. Aplique <strong>supabase/migrations/004_team_compensation.sql</strong> en Supabase SQL Editor; después vuelva a esta pestaña y seleccione Reintentar.' : escapeHTML(firstError.message || 'No se pudo cargar el equipo.')}</div><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="loadTeamData()">Reintentar</button></div></div>`
     }
     if (isTeamSchemaMissing(firstError)) console.warn('[Kairós] Equipo pendiente de migración 004')
     else console.error('[Kairós] loadTeamData:', firstError)
@@ -1504,7 +1510,7 @@ async function renderTeamData() {
   document.getElementById('team-owner-cap').value = Number(teamData.settings.max_pago_duenio_pct) || 0
 
   const memberSelect = document.getElementById('team-payment-member')
-  memberSelect.innerHTML = '<option value="">Seleccioná...</option>' + active.map(member => `<option value="${member.id}">${escapeHTML(member.nombre)} · ${escapeHTML(teamTypeLabel(member.tipo))}</option>`).join('')
+  memberSelect.innerHTML = '<option value="">Seleccione...</option>' + active.map(member => `<option value="${member.id}">${escapeHTML(member.nombre)} · ${escapeHTML(teamTypeLabel(member.tipo))}</option>`).join('')
   syncTeamPaymentTypes()
 
   const membersTable = document.getElementById('team-members-tb')
@@ -1596,7 +1602,7 @@ async function saveTeamSettings() {
 async function recordTeamPayment() {
   const memberId = V('team-payment-member')
   const amount = numOrDefault('team-payment-amount')
-  if (!memberId) { toastErr('Seleccioná una persona'); return }
+  if (!memberId) { toastErr('Seleccione una persona'); return }
   if (amount <= 0) { toastErr('El monto debe ser mayor a cero'); return }
   const { data, error } = await sb.rpc('record_team_payment', {
     member_id: memberId,
@@ -1727,8 +1733,8 @@ async function addOrganizationItem() {
   const title = V('org-title').trim()
   const date = V('org-date')
   const amount = numOrDefault('org-amount-input')
-  if (!title) { toastErr('Indicá qué hay que hacer'); return }
-  if (!date) { toastErr('Elegí una fecha'); return }
+  if (!title) { toastErr('Indique qué se debe hacer'); return }
+  if (!date) { toastErr('Seleccione una fecha'); return }
   if (amount < 0) { toastErr('El monto no puede ser negativo'); return }
   const { error } = await sb.from('organization_items').insert({
     user_id: CU.id,
@@ -1794,6 +1800,13 @@ async function addProd() {
   })
   if (handleSupaError(error, 'addProd')) return
   if (!data?.ok) { toastErr(data?.error || 'No se pudo crear el producto'); return }
+  if (calc && data.inventory_item_id) {
+    const { error: marginError } = await sb.from('inventario_items').update({
+      ganancia_local: calc.ganancia,
+      margen_local_pct: calc.margenReal
+    }).eq('id', data.inventory_item_id).eq('user_id', CU.id)
+    if (handleSupaError(marginError, 'addProdMargin')) return
+  }
   ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
   document.getElementById('p-cost-result').style.display = 'none'
   document.getElementById('p-cost-alert').style.display = 'none'
@@ -1836,7 +1849,7 @@ async function renderProds() {
 async function aiDescProd() {
   const n = V('p-n').trim(); if (!n) { toastErr('Ingrese el nombre primero'); return }
   openAI()
-  document.getElementById('ai-inp').value = `Generá una descripción de producto atractiva (máximo 3 oraciones) para: "${n}"${V('p-c') ? ' categoría ' + V('p-c') : ''}. Solo la descripción, sin título ni formato.`
+  document.getElementById('ai-inp').value = `Genere una descripción de producto atractiva (máximo 3 oraciones) para: "${n}"${V('p-c') ? ' categoría ' + V('p-c') : ''}. Solo la descripción, sin título ni formato.`
   await sendAI()
 }
 
@@ -2003,7 +2016,7 @@ async function renderRefs() {
 
 async function aiIdeas() {
   const biz = await getBiz(); openAI()
-  document.getElementById('ai-inp').value = `Dame 5 ideas de contenido para ${biz?.rub || 'mi negocio'} (cliente: ${biz?.cli || 'general'}). Para cada una: tipo (educativo/venta/conexión), plataforma y ángulo en una línea.`
+  document.getElementById('ai-inp').value = `Genere 5 ideas de contenido para ${biz?.rub || 'el negocio'} (cliente: ${biz?.cli || 'general'}). Para cada una: tipo (educativo/venta/conexión), plataforma y ángulo en una línea.`
   await sendAI()
 }
 
@@ -2484,7 +2497,7 @@ function renderImportedInventory() {
   const tb = document.getElementById('imp-inv-tb')
   if (!tb) return
   tb.innerHTML = !allRows.length
-    ? `<tr><td colspan="9"><div class="product-empty"><strong>Todavía no hay productos cargados</strong><p>Creá tu primer producto para comenzar a gestionar precios, costos, inventario y rentabilidad.</p><button class="btn btn-gold" onclick="showProductQuestion('carga')">Crear producto</button></div></td></tr>`
+    ? `<tr><td colspan="9"><div class="product-empty"><strong>Todavía no hay productos registrados</strong><p>Cree el primer producto para comenzar a gestionar precios, costos, inventario y rentabilidad.</p><button class="btn btn-gold" onclick="showProductQuestion('carga')">Crear producto</button></div></td></tr>`
     : !rows.length
       ? `<tr><td colspan="9"><div class="empty"><div class="empty-i">·</div>No hay productos que coincidan con este filtro</div></td></tr>`
     : rows.map(p => {
@@ -2917,8 +2930,8 @@ function stripBotProductNoise(v) {
 function parseStockAdditionCommand(text) {
   const t = normalizeText(text)
   const patterns = [
-    /^(?:suma|sumale|agrega|agregale)\s+([\d.,]+)\s+(?:de\s+)?stock\s+(?:a|al|para)\s+(.+)$/,
-    /^(?:suma|sumale|agrega|agregale)\s+stock\s+([\d.,]+)\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:suma|agrega)\s+([\d.,]+)\s+(?:de\s+)?stock\s+(?:a|al|para)\s+(.+)$/,
+    /^(?:suma|agrega)\s+stock\s+([\d.,]+)\s+(?:a|al|para)\s+(.+)$/,
     /^(?:aumenta|incrementa)\s+(?:el\s+)?stock\s+de\s+(.+?)\s+en\s+([\d.,]+)$/,
     /^(?:repone|reponer)\s+([\d.,]+)\s+(.+)$/
   ]
@@ -2935,7 +2948,7 @@ function parseStockAdditionCommand(text) {
 
 function looksOperationalIntent(text) {
   const t = normalizeText(stripActionPrefix(text))
-  const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|sumale|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
+  const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
   const actionAtStart = /^(vendi|vender|vendimos|venta|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
   return stockIntent || actionAtStart
 }
@@ -3016,7 +3029,7 @@ function parseBotCommand(text) {
     const costoMatch = text.match(/\bcosto\s+\$?\s*([\d.,]+)/i) || text.match(/\ba\s+\$?\s*([\d.,]+)/i)
     return { action_type: 'reposicion', input_text: text, producto, cantidad: parseNumberValue(qtyMatch ? qtyMatch[1] : ''), costo_unitario: parseNumberValue(costoMatch ? costoMatch[1] : ''), medio_pago: medio }
   }
-  if (/^(ajusta|ajust[áa])\s+stock\b/.test(t)) {
+  if (/^ajusta\s+stock\b/.test(t)) {
     const m = text.match(/stock\s+de\s+(.+?)\s+a\s+([\d.,]+)/i)
     return { action_type: 'ajuste_stock', input_text: text, producto: m ? m[1].trim() : '', stock_final: parseNumberValue(m ? m[2] : '') }
   }
@@ -3384,7 +3397,7 @@ async function analyzeImportRows(rows, source = 'manual', forced = 'auto') {
 
 async function handleSmartMessage() {
   const msg = V('im-msg').trim()
-  if (!msg) { toastErr('Escribí un mensaje para analizar'); return }
+  if (!msg) { toastErr('Escriba un mensaje para analizar'); return }
   const command = parseBotCommand(msg)
   if (command) {
     try {
@@ -3403,7 +3416,7 @@ async function handleSmartMessage() {
 
 async function handleImportFile() {
   const file = document.getElementById('im-file').files[0]
-  if (!file) { toastErr('Seleccioná un archivo'); return }
+  if (!file) { toastErr('Seleccione un archivo'); return }
   if (!window.XLSX) { toastErr('No se pudo cargar el lector de archivos'); return }
   const buf = await file.arrayBuffer()
   const wb = XLSX.read(buf, { type: 'array' })
@@ -3623,7 +3636,7 @@ async function confirmBotAction(surface = botActionSurface) {
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
-      appendAIMessage('Acción confirmada. Actualicé los datos y te llevo a la sección correspondiente.', 'bot')
+      appendAIMessage('Acción confirmada. Se actualizaron los datos y se abrirá la sección correspondiente.', 'bot')
       goPage(botActionPage(actionType))
       closeAI()
     } else {
@@ -3686,7 +3699,7 @@ function resetAdvisorState() {
       <div class="ai-quick-actions">
         <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
         <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
-        <button class="ai-quick-action" onclick="seedAIExample('agregá producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
+        <button class="ai-quick-action" onclick="seedAIExample('agregar producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
         <button class="ai-quick-action" onclick="seedAIExample('sumar 10 de stock a nombre del producto')">Sumar stock</button>
       </div>`
   }
@@ -3808,7 +3821,7 @@ async function sendAI() {
       return
     }
 
-    const reply = data?.reply || 'No pude procesar tu consulta.'
+    const reply = data?.reply || 'No se pudo procesar la consulta.'
     aiH.push({ role: 'assistant', content: reply })
     if (aiH.length > 20) aiH = aiH.slice(-20)
 

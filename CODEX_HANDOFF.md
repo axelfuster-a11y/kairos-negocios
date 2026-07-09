@@ -325,7 +325,7 @@ main
 Commit base:
 d7133e47f5213c30769a2282f405a4e439291de2
 
-Leé primero CODEX_HANDOFF.md, revisá git status y no modifiques nada hasta entender el estado.
+Leer primero CODEX_HANDOFF.md, revisar git status y no modificar nada hasta entender el estado.
 
 Objetivo actual:
 [escribir acá el próximo objetivo]

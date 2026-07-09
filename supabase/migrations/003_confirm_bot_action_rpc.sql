@@ -137,7 +137,7 @@ begin
             or public.bot_normalize_alias(a.alias) = v_norm
           )
       ) then
-        raise exception 'Ese producto ya existe. Usa reposicion para sumar stock.';
+        raise exception 'Ese producto ya existe. Use reposicion para sumar stock.';
       end if;
 
       v_cost_total := v_cost;
@@ -206,15 +206,15 @@ begin
       for update;
 
       if not found then
-        raise exception 'No encontre ese producto. Revisa el nombre o crealo primero.';
+        raise exception 'No encontre ese producto. Revise el nombre o creelo primero.';
       end if;
 
       v_before := coalesce(v_item.stock_actual, 0);
       if v_preview_stock is null or v_before <> v_preview_stock then
-        raise exception 'El stock cambio antes de confirmar. Volve a intentar.';
+        raise exception 'El stock cambio antes de confirmar. Intente nuevamente.';
       end if;
       if v_before < v_qty then
-        raise exception 'No hay stock suficiente para confirmar esa venta. Revisa el inventario.';
+        raise exception 'No hay stock suficiente para confirmar esa venta. Revise el inventario.';
       end if;
 
       v_after := v_before - v_qty;
@@ -347,12 +347,12 @@ begin
       for update;
 
       if not found then
-        raise exception 'No encontre ese producto. Revisa el nombre o crealo primero.';
+        raise exception 'No encontre ese producto. Revise el nombre o creelo primero.';
       end if;
 
       v_before := coalesce(v_item.stock_actual, 0);
       if v_preview_stock is null or v_before <> v_preview_stock then
-        raise exception 'El stock cambio antes de confirmar. Volve a intentar.';
+        raise exception 'El stock cambio antes de confirmar. Intente nuevamente.';
       end if;
 
       v_after := v_before + v_qty;
@@ -425,12 +425,12 @@ begin
       for update;
 
       if not found then
-        raise exception 'No encontre ese producto. Revisa el nombre o crealo primero.';
+        raise exception 'No encontre ese producto. Revise el nombre o creelo primero.';
       end if;
 
       v_before := coalesce(v_item.stock_actual, 0);
       if v_preview_stock is null or v_before <> v_preview_stock then
-        raise exception 'El stock cambio antes de confirmar. Volve a intentar.';
+        raise exception 'El stock cambio antes de confirmar. Intente nuevamente.';
       end if;
       if v_before = v_after then
         raise exception 'El stock ya esta en ese valor';
