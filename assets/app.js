@@ -249,6 +249,7 @@ function go(page, el) {
   if (page === 'fin') { switchFinanceTab('summary'); renderFin() }
   if (page === 'sales') renderSales()
   if (page === 'prod') switchProductTab('inv')
+  if (page === 'people') loadTeamData()
   if (page === 'org') loadOrganizationData()
   if (['dash', 'fin', 'sales', 'prod', 'import'].includes(page)) loadImportedData()
 }
@@ -721,17 +722,41 @@ function setFinanceOverview({ ing, egr, gan, tf, sales }) {
   const incomeCount = document.getElementById('f-ing-n')?.textContent || '0 registros'
   const expenseCount = document.getElementById('f-egr-n')?.textContent || '0 registros'
   const coverage = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
+  const movementCount = (parseInt(incomeCount, 10) || 0) + (parseInt(expenseCount, 10) || 0)
+  const cashMargin = ing > 0 ? Math.round((gan / ing) * 100) : 0
+  const fixedGap = Math.max(0, tf - ing)
+  const teamPaid = teamData?.payments
+    ?.filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
+    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0) || 0
   S('finance-cash', money(gan))
   S('finance-income', money(ing))
   S('finance-expense', money(egr))
   S('finance-income-note', incomeCount)
   S('finance-expense-note', expenseCount)
   S('finance-fixed-coverage', tf > 0 ? coverage + '%' : 'Sin gastos')
+  S('finance-detail-cash', money(gan))
+  S('finance-detail-movements', movementCount)
+  S('finance-detail-cash-margin', ing > 0 ? cashMargin + '%' : '—')
+  S('finance-detail-income', money(ing))
+  S('finance-detail-expense', money(egr))
+  S('finance-detail-ratio', egr > 0 ? (ing / egr).toFixed(2) + 'x' : '—')
+  S('finance-detail-fixed', money(tf))
+  S('finance-detail-fixed-covered', tf > 0 ? coverage + '%' : 'Sin gastos')
+  S('finance-detail-fixed-gap', money(fixedGap))
+  S('finance-detail-sales-profit', money(sales.profit))
+  S('finance-detail-sales-count', `${sales.count} venta${sales.count === 1 ? '' : 's'}`)
+  S('finance-detail-team-paid', money(teamPaid))
   ;[
     ['finance-cash', gan >= 0 ? 'var(--green)' : 'var(--red)'],
     ['finance-income', 'var(--blue)'],
     ['finance-expense', 'var(--red)'],
-    ['finance-fixed-coverage', coverage >= 100 ? 'var(--green)' : coverage >= 60 ? 'var(--yel)' : 'var(--red)']
+    ['finance-fixed-coverage', coverage >= 100 ? 'var(--green)' : coverage >= 60 ? 'var(--yel)' : 'var(--red)'],
+    ['finance-detail-cash', gan >= 0 ? 'var(--green)' : 'var(--red)'],
+    ['finance-detail-cash-margin', cashMargin >= 20 ? 'var(--green)' : cashMargin >= 0 ? 'var(--yel)' : 'var(--red)'],
+    ['finance-detail-fixed-covered', coverage >= 100 ? 'var(--green)' : coverage >= 60 ? 'var(--yel)' : 'var(--red)'],
+    ['finance-detail-fixed-gap', fixedGap > 0 ? 'var(--yel)' : 'var(--green)'],
+    ['finance-detail-sales-profit', sales.profit >= 0 ? 'var(--green)' : 'var(--red)'],
+    ['finance-detail-team-paid', teamPaid > 0 ? 'var(--red)' : 'var(--txt2)']
   ].forEach(([id, color]) => {
     const el = document.getElementById(id)
     if (el) el.style.color = color
@@ -922,6 +947,38 @@ async function renderFin() {
 // ══════════════════════════════════════
 let teamData = { members: [], payments: [], settings: { reserva_minima: 0, max_pago_duenio_pct: 50 }, available: true }
 
+function updatePeopleCanvas({ activeCount = 0, totalTarget = 0, totalPaid = 0, cashResult = 0, reserve = 0, ownerSuggested = 0, ownerGap = 0 } = {}) {
+  S('people-team-count', activeCount)
+  S('people-team-target', money(totalTarget))
+  S('people-team-paid', money(totalPaid))
+  S('people-cash-result', money(cashResult))
+  S('people-reserve-view', money(reserve))
+  S('people-owner-suggested', money(ownerSuggested))
+  S('people-org-summary', activeCount ? `${activeCount} activo${activeCount === 1 ? '' : 's'}` : 'Ver')
+  const paidEl = document.getElementById('people-team-paid')
+  const cashEl = document.getElementById('people-cash-result')
+  const ownerEl = document.getElementById('people-owner-suggested')
+  if (paidEl) paidEl.style.color = totalPaid > 0 ? 'var(--red)' : 'var(--txt2)'
+  if (cashEl) cashEl.style.color = cashResult >= 0 ? 'var(--green)' : 'var(--red)'
+  if (ownerEl) ownerEl.style.color = ownerSuggested > 0 ? 'var(--gold)' : 'var(--txt2)'
+  const diagnosis = document.getElementById('people-team-diagnosis')
+  if (diagnosis) {
+    diagnosis.textContent = !activeCount
+      ? 'Todavía no hay integrantes activos. Agregue responsables para ordenar roles, costos y pagos del equipo.'
+      : ownerGap > 0
+        ? `Hay ${activeCount} integrante${activeCount === 1 ? '' : 's'} activo${activeCount === 1 ? '' : 's'} y ${money(ownerGap)} de trabajo del dueño pendiente. Revise caja disponible antes de registrar pagos adicionales.`
+        : `El equipo tiene ${activeCount} integrante${activeCount === 1 ? '' : 's'} activo${activeCount === 1 ? '' : 's'} y ${money(totalPaid)} pagados este mes. Mantenga actualizada la agenda para evitar tareas sin responsable.`
+  }
+  const next = document.getElementById('people-next-step')
+  if (next) {
+    next.textContent = !activeCount
+      ? 'Agregue al menos un integrante para calcular costo objetivo, pagos y responsables.'
+      : totalPaid <= 0
+        ? 'Registre los pagos del mes para comparar trabajo planificado contra trabajo pagado.'
+        : 'Revise tareas y vencimientos para distribuir responsabilidades del equipo.'
+  }
+}
+
 function teamTypeLabel(type) {
   const labels = { duenio: 'Dueño/a', socio: 'Socio/a', empleado: 'Empleado/a', colaborador: 'Colaborador/a' }
   return labels[type] || type || '—'
@@ -1008,6 +1065,7 @@ async function loadTeamData() {
     }
     if (isTeamSchemaMissing(firstError)) console.warn('[Kairós] Equipo pendiente de migración 004')
     else console.error('[Kairós] loadTeamData:', firstError)
+    updatePeopleCanvas()
     return
   }
   teamData.available = true
@@ -1036,6 +1094,7 @@ async function renderTeamData() {
   const cap = (Number(teamData.settings.max_pago_duenio_pct) || 0) / 100
   const cashAvailable = Math.max(0, cashResult - reserve)
   const ownerSuggested = Math.min(ownerGap, cashAvailable * cap)
+  updatePeopleCanvas({ activeCount: active.length, totalTarget, totalPaid, cashResult, reserve, ownerSuggested, ownerGap })
 
   S('team-count', active.length)
   S('team-target', money(totalTarget))

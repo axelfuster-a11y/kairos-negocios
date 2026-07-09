@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=layout-fix-20260708">
+<link rel="stylesheet" href="assets/styles.css?v=finance-team-20260708">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true">
@@ -396,14 +396,45 @@
             <button class="btn btn-gold btn-full" onclick="openAIWithBusinessSummary()">Ver análisis financiero</button>
           </aside>
         </div>
-        <div class="guided-menu">
-          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">$</span><span class="guided-menu-copy"><strong>Dinero ingresado y egresado</strong><span>Ingresos, egresos y resultado de caja.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showFinanceQuestion('summary')"><span class="guided-menu-icon">RV</span><span class="guided-menu-copy"><strong>Rentabilidad de ventas</strong><span>Lo vendido menos el costo de los productos.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showFinanceQuestion('movements')"><span class="guided-menu-icon">CP</span><span class="guided-menu-copy"><strong>Cobros y pagos pendientes</strong><span>Revisión y registro de movimientos pendientes.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showFinanceQuestion('fixed')"><span class="guided-menu-icon">GF</span><span class="guided-menu-copy"><strong>Estructura de gastos</strong><span>Gastos fijos y movimientos operativos.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="showFinanceQuestion('team')"><span class="guided-menu-icon">EQ</span><span class="guided-menu-copy"><strong>Costo del equipo</strong><span>Pagos por trabajo, sueldos y retiros separados.</span></span><span class="guided-chevron">›</span></button>
+        <div class="finance-data-grid">
+          <section class="module-card finance-data-card">
+            <div class="module-card-head"><div><div class="home-card-title">Detalle de caja</div><p>Lectura del dinero registrado durante el mes actual.</p></div><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span></div>
+            <div class="metric-lines">
+              <div><span>Resultado actual</span><strong id="finance-detail-cash">$0</strong></div>
+              <div><span>Movimientos con monto</span><strong id="finance-detail-movements">0</strong></div>
+              <div><span>Margen de caja</span><strong id="finance-detail-cash-margin">0%</strong></div>
+            </div>
+            <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('movements')">Revisar movimientos</button>
+          </section>
+          <section class="module-card finance-data-card">
+            <div class="module-card-head"><div><div class="home-card-title">Ingresos y egresos</div><p>Comparación entre entradas y salidas efectivamente registradas.</p></div><span class="summary-icon blue"><svg class="app-icon"><use href="#i-chart"></use></svg></span></div>
+            <div class="metric-lines">
+              <div><span>Ingresos registrados</span><strong id="finance-detail-income">$0</strong></div>
+              <div><span>Egresos registrados</span><strong id="finance-detail-expense">$0</strong></div>
+              <div><span>Relación ingreso/egreso</span><strong id="finance-detail-ratio">—</strong></div>
+            </div>
+            <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('summary')">Ver cálculo del mes</button>
+          </section>
+          <section class="module-card finance-data-card">
+            <div class="module-card-head"><div><div class="home-card-title">Gastos fijos</div><p>Referencia mensual para saber cuánto falta cubrir.</p></div><span class="summary-icon gold"><svg class="app-icon"><use href="#i-expense"></use></svg></span></div>
+            <div class="metric-lines">
+              <div><span>Total mensual</span><strong id="finance-detail-fixed">$0</strong></div>
+              <div><span>Cubierto con ingresos</span><strong id="finance-detail-fixed-covered">0%</strong></div>
+              <div><span>Faltante estimado</span><strong id="finance-detail-fixed-gap">$0</strong></div>
+            </div>
+            <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('fixed')">Administrar gastos fijos</button>
+          </section>
+          <section class="module-card finance-data-card">
+            <div class="module-card-head"><div><div class="home-card-title">Ventas y equipo</div><p>Impacto comercial y costo de trabajo conectado al resultado.</p></div><span class="summary-icon red"><svg class="app-icon"><use href="#i-users"></use></svg></span></div>
+            <div class="metric-lines">
+              <div><span>Ganancia de ventas</span><strong id="finance-detail-sales-profit">$0</strong></div>
+              <div><span>Ventas registradas</span><strong id="finance-detail-sales-count">0</strong></div>
+              <div><span>Trabajo pagado</span><strong id="finance-detail-team-paid">$0</strong></div>
+            </div>
+            <button class="btn btn-ghost btn-full" onclick="goPage('people')">Ver equipo</button>
+          </section>
         </div>
-        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('fin-advanced',this)" data-closed-label="Ver detalles de Dinero">Ver detalles de Dinero</button>
+        <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('fin-advanced',this)" data-closed-label="Ver tablas y formularios">Ver tablas y formularios</button>
         <div class="advanced-wrap" id="fin-advanced">
         <div class="section-tabs" role="tablist" aria-label="Secciones de Dinero">
           <button class="section-tab on" id="fin-tab-summary-btn" onclick="switchFinanceTab('summary')">Resumen</button>
@@ -670,12 +701,65 @@
 
       <!-- GESTION -->
       <div class="page" id="page-people">
-        <div class="ph"><div class="pt">Gestión</div><div class="ps">Clientes, equipo, tareas, pedidos, entregas y vencimientos en una entrada simple.</div></div>
-        <div class="guided-menu">
-          <button class="guided-menu-btn" onclick="goPage('leads')"><span class="guided-menu-icon">CL</span><span class="guided-menu-copy"><strong>Clientes y oportunidades</strong><span>Personas interesadas, contactos, propuestas y clientes confirmados.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="goPage('org')"><span class="guided-menu-icon">TA</span><span class="guided-menu-copy"><strong>Tareas y vencimientos</strong><span>Qué hay que hacer hoy, esta semana y quién es responsable.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="goFinanceDetail('team')"><span class="guided-menu-icon">EQ</span><span class="guided-menu-copy"><strong>Equipo y responsables</strong><span>Dueños, socios, empleados, roles, dedicación y pagos por trabajo.</span></span><span class="guided-chevron">›</span></button>
-          <button class="guided-menu-btn" onclick="goPage('org')"><span class="guided-menu-icon">EN</span><span class="guided-menu-copy"><strong>Pedidos y entregas</strong><span>Seguimiento de entregas, cobros, pagos y recordatorios operativos.</span></span><span class="guided-chevron">›</span></button>
+        <div class="module-shell people-shell">
+          <div class="module-header">
+            <div><div class="pt">Equipo</div><div class="ps">Responsables, tareas, pagos y capacidad operativa del negocio.</div></div>
+            <div class="module-header-actions">
+              <button class="btn btn-ghost" onclick="goPage('org')"><svg class="app-icon"><use href="#i-chart"></use></svg>Ver tareas</button>
+              <button class="btn btn-gold" onclick="goFinanceDetail('team')"><svg class="app-icon"><use href="#i-users"></use></svg>Gestionar equipo</button>
+            </div>
+          </div>
+
+          <div class="module-summary-grid">
+            <button class="module-summary-card" onclick="goFinanceDetail('team')"><span class="summary-icon"><svg class="app-icon"><use href="#i-users"></use></svg></span><small>Integrantes activos</small><strong id="people-team-count">0</strong><em>Personas con rol activo</em></button>
+            <button class="module-summary-card" onclick="goFinanceDetail('team')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Costo objetivo</small><strong id="people-team-target">$0</strong><em>Trabajo mensual estimado</em></button>
+            <button class="module-summary-card" onclick="goFinanceDetail('team')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-expense"></use></svg></span><small>Trabajo pagado</small><strong id="people-team-paid">$0</strong><em>Registrado este mes</em></button>
+            <button class="module-summary-card" onclick="goPage('org')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Agenda operativa</small><strong id="people-org-summary">Ver</strong><em>Tareas, pedidos y vencimientos</em></button>
+          </div>
+
+          <div class="module-layout people-layout">
+            <section class="module-main">
+              <div class="module-card people-command-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Canvas operativo</div><p>Una vista para decidir quién hace qué, cuánto cuesta el trabajo y qué tareas requieren seguimiento.</p></div>
+                  <span class="module-pill">Equipo y gestión</span>
+                </div>
+                <div class="people-flow">
+                  <button onclick="goFinanceDetail('team')"><span><svg class="app-icon"><use href="#i-users"></use></svg></span><strong>Roles y dedicación</strong><small>Integrantes, horas, comisión y participación.</small></button>
+                  <button onclick="goFinanceDetail('team')"><span class="warn"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><strong>Pagos y remuneraciones</strong><small>Sueldos, honorarios, bonos y retiros.</small></button>
+                  <button onclick="goPage('org')"><span class="blue"><svg class="app-icon"><use href="#i-chart"></use></svg></span><strong>Tareas y vencimientos</strong><small>Agenda de responsables, entregas y pagos.</small></button>
+                </div>
+              </div>
+
+              <div class="module-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Lectura del equipo</div><p id="people-team-diagnosis">Kairós mostrará una lectura cuando existan integrantes, pagos o configuración de reserva.</p></div>
+                </div>
+                <div class="metric-lines people-metrics">
+                  <div><span>Resultado de caja actual</span><strong id="people-cash-result">$0</strong></div>
+                  <div><span>Reserva mínima</span><strong id="people-reserve-view">$0</strong></div>
+                  <div><span>Pago sugerido al dueño</span><strong id="people-owner-suggested">$0</strong></div>
+                </div>
+              </div>
+            </section>
+
+            <aside class="module-side">
+              <div class="module-card">
+                <div class="home-card-title">Acciones del equipo</div>
+                <div class="compact-list">
+                  <button class="compact-action" onclick="goFinanceDetail('team')"><span class="dot good"></span><div><strong>Agregar integrante</strong><small>Registrar rol, horas y objetivo mensual.</small></div></button>
+                  <button class="compact-action" onclick="goFinanceDetail('team')"><span class="dot warn"></span><div><strong>Registrar pago</strong><small>Guardar remuneraciones y egresos asociados.</small></div></button>
+                  <button class="compact-action" onclick="goPage('leads')"><span class="dot info"></span><div><strong>Revisar oportunidades</strong><small>Clientes, propuestas y contactos activos.</small></div></button>
+                  <button class="compact-action" onclick="goPage('org')"><span class="dot warn"></span><div><strong>Ordenar pendientes</strong><small>Tareas, pedidos y vencimientos del equipo.</small></div></button>
+                </div>
+              </div>
+              <div class="module-card">
+                <div class="home-card-title">Próximo paso sugerido</div>
+                <p id="people-next-step">Complete integrantes y pagos para ver recomendaciones operativas.</p>
+                <button class="btn btn-gold btn-full" onclick="goFinanceDetail('team')">Completar datos del equipo</button>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
 
@@ -1095,6 +1179,6 @@
 <script src="assets/js/core/validation.js"></script>
 <script src="assets/js/ui/toast.js"></script>
 <script src="assets/js/services/financeService.js"></script>
-<script src="assets/app.js?v=layout-fix-20260708"></script>
+<script src="assets/app.js?v=finance-team-20260708"></script>
 </body>
 </html>
