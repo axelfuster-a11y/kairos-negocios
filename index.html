@@ -177,6 +177,18 @@
                   <span>Gastos fijos cubiertos</span><strong id="coverage-percent">0%</strong><small id="coverage-copy">Qué parte de los gastos mensuales ya está cubierta.</small><span class="resource-meter good" id="coverage-meter"><span></span></span>
                 </button>
               </div>
+              <div class="home-mobile-command">
+                <div class="quick-action-grid">
+                  <button class="quick-action" onclick="focusManualSale()"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('gasto')"><span><svg class="app-icon"><use href="#i-expense"></use></svg></span><strong>Registrar gasto</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('compra')"><span><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('producto')"><span><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong></button>
+                </div>
+                <button class="home-mobile-priority" onclick="openAIWithBusinessSummary()">
+                  <strong id="home-mobile-priority-title">Prioridad actual</strong>
+                  <span id="home-mobile-priority-detail">Revise alertas y movimientos recientes.</span>
+                </button>
+              </div>
               <div class="home-hidden-metrics"><span id="home-cash-answer"></span><span id="home-cash-number"></span><span id="home-sales-answer"></span><span id="home-alert-answer"></span><span id="home-alert-number"></span><span id="home-next-answer"></span><span id="cash-state"></span><span id="cash-percent"></span><span id="stock-state"></span><span id="stock-percent"></span><span id="sales-state"></span><span id="sales-percent"></span><span id="console-sales-margin"></span><span class="resource-meter good" id="home-stock-meter"><span></span></span><span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span></div>
             </div>
 
@@ -197,7 +209,7 @@
             <div class="home-card">
               <div class="home-card-title">Acciones rápidas</div>
               <div class="quick-action-grid">
-                <button class="quick-action" onclick="startDashboardAction('venta')"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
+                <button class="quick-action" onclick="focusManualSale()"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('gasto')"><span><svg class="app-icon"><use href="#i-expense"></use></svg></span><strong>Registrar gasto</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('compra')"><span><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('producto')"><span><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong></button>
@@ -313,12 +325,18 @@
             <div><div class="pt">Ventas</div><div class="ps">Registro comercial, compras, productos vendidos y rentabilidad.</div></div>
             <div class="module-header-actions">
               <button class="btn btn-ghost" onclick="startDashboardAction('compra')"><svg class="app-icon"><use href="#i-purchase"></use></svg>Registrar compra</button>
-              <button class="btn btn-gold" onclick="startDashboardAction('venta')"><svg class="app-icon"><use href="#i-sale"></use></svg>Registrar venta</button>
+              <button class="btn btn-gold" onclick="focusManualSale()"><svg class="app-icon"><use href="#i-sale"></use></svg>Registrar venta</button>
             </div>
           </div>
 
+          <div class="sales-tabs" role="tablist" aria-label="Vistas de ventas">
+            <button class="sales-tab active" id="sales-tab-history" type="button" onclick="switchSalesTab('history')"><svg class="app-icon"><use href="#i-chart"></use></svg>Datos de ventas</button>
+            <button class="sales-tab" id="sales-tab-pos" type="button" onclick="switchSalesTab('pos')"><svg class="app-icon"><use href="#i-sale"></use></svg>Mostrador</button>
+            <button class="sales-tab" id="sales-tab-manual" type="button" onclick="switchSalesTab('manual')"><svg class="app-icon"><use href="#i-purchase"></use></svg>Venta manual</button>
+          </div>
+
           <div class="module-summary-grid">
-            <button class="module-summary-card" onclick="startDashboardAction('venta')"><span class="summary-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ventas del mes</small><strong id="sales-total">$0</strong><em id="sales-count">0 operaciones</em></button>
+            <button class="module-summary-card" onclick="focusManualSale()"><span class="summary-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ventas del mes</small><strong id="sales-total">$0</strong><em id="sales-count">0 operaciones</em></button>
             <button class="module-summary-card" onclick="goPage('prod')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-box"></use></svg></span><small>Productos vendidos</small><strong id="sales-products">0</strong><em>Unidades y variantes registradas</em></button>
             <button class="module-summary-card" onclick="goPage('sales')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Ganancia comercial</small><strong id="sales-profit">$0</strong><em>Venta menos costo vendido</em></button>
             <button class="module-summary-card" onclick="goPage('fin')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Margen promedio</small><strong id="sales-margin">0%</strong><em>Rentabilidad sobre ventas</em></button>
@@ -338,7 +356,61 @@
                 </div>
               </div>
 
-              <div class="module-card">
+              <div class="module-card pos-card sales-tab-panel" data-sales-panel="pos" id="sale-pos-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Punto de venta</div><p>Seleccione productos del catalogo, arme el ticket y confirme la venta con descuento de inventario y registro financiero.</p></div>
+                  <span class="module-pill">Mostrador</span>
+                </div>
+                <div class="pos-panel">
+                  <div class="pos-catalog">
+                    <div class="pos-toolbar">
+                      <div class="field"><label>Buscar producto</label><input id="pos-search" type="search" placeholder="Nombre, SKU o categoria" oninput="renderSalesCatalog()"></div>
+                      <div class="field"><label>Categorias</label><div class="pos-category-pills" id="pos-category-pills"></div></div>
+                    </div>
+                    <div class="pos-grid" id="pos-grid"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Cargando productos</div></div>
+                  </div>
+                  <aside class="pos-ticket">
+                    <div class="pos-ticket-head">
+                      <div><strong>Ticket de venta</strong><small id="pos-ticket-count">Sin productos seleccionados</small></div>
+                      <button class="btn btn-ghost btn-sm" onclick="clearPosCart()">Vaciar</button>
+                    </div>
+                    <div class="pos-cart" id="pos-cart"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catalogo</div></div>
+                    <div class="pos-sale-fields">
+                      <div class="field"><label>Canal</label><select id="pos-channel"><option value="local">Local</option><option value="web">Web</option><option value="shopify">Shopify</option><option value="mercado_libre">Mercado Libre</option><option value="tiendanube">Tiendanube</option><option value="instagram">Instagram / WhatsApp</option></select></div>
+                      <div class="field"><label>Medio de pago</label><select id="pos-method" onchange="renderPosCart()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
+                      <div class="field"><label>Cliente</label><input id="pos-client" type="text" placeholder="Cliente no informado"></div>
+                      <div class="field"><label>Fecha</label><input id="pos-date" type="date"></div>
+                      <div class="field pos-received"><label>Importe recibido</label><input id="pos-received" type="number" min="0" placeholder="Solo si difiere del total" oninput="renderPosCart()"></div>
+                    </div>
+                    <div class="pos-total" id="pos-total">Total: $0</div>
+                    <div class="pos-note" id="pos-note">Use importe recibido para reflejar comisiones o diferencias de cobro, por ejemplo en Mercado Pago.</div>
+                    <button class="btn btn-gold btn-full" onclick="confirmPosSale()">Confirmar venta</button>
+                  </aside>
+                </div>
+              </div>
+
+              <div class="module-card manual-sale-card sales-tab-panel" data-sales-panel="manual" id="manual-sale-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Registro manual de venta</div><p>Seleccione productos existentes o registre un concepto manual cuando todavia no este en inventario.</p></div>
+                  <span class="module-pill">Venta directa</span>
+                </div>
+                <div class="manual-sale-grid">
+                  <div class="field"><label>Producto</label><select id="sale-product" onchange="syncManualSaleProduct()"><option value="">Producto manual / sin inventario</option></select></div>
+                  <div class="field"><label>Cantidad</label><input id="sale-qty" type="number" min="1" value="1" oninput="updateManualSalePreview()"></div>
+                  <div class="field"><label>Precio unitario</label><input id="sale-price" type="number" min="0" placeholder="0" oninput="updateManualSalePreview()"></div>
+                  <div class="field"><label>Cliente</label><input id="sale-client" type="text" placeholder="Cliente no informado"></div>
+                  <div class="field"><label>Medio de pago</label><select id="sale-method"><option value="">Sin informar</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
+                  <div class="field"><label>Fecha</label><input id="sale-date" type="date"></div>
+                  <div class="field manual-sale-name"><label>Producto manual</label><input id="sale-manual-product" type="text" placeholder="Ej. Servicio, producto nuevo" oninput="updateManualSalePreview()"></div>
+                </div>
+                <div class="manual-sale-preview" id="sale-preview">Seleccione un producto o complete un concepto manual.</div>
+                <div class="modal-actions">
+                  <button class="btn btn-ghost" onclick="startDashboardAction('venta')">Usar Asesor IA</button>
+                  <button class="btn btn-gold" onclick="addManualSale()">Guardar venta</button>
+                </div>
+              </div>
+
+              <div class="module-card sales-tab-panel" data-sales-panel="history">
                 <div class="module-card-head">
                   <div><div class="home-card-title">Ventas registradas</div><p>Listado de operaciones guardadas. Si no hay detalle disponible, Kairós conserva el total y el origen económico.</p></div>
                   <button class="btn btn-ghost btn-sm" onclick="renderSales()">Actualizar</button>
@@ -1062,10 +1134,14 @@
     <button class="mobile-ni" data-p="sales" onclick="go('sales',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></button>
     <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></button>
+    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></button>
+    <button class="mobile-ni" onclick="const m=document.querySelector('.mobile-more'); if(m)m.open=!m.open"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Más</span></button>
   </nav>
   <details class="mobile-more">
     <summary>Más</summary>
     <div class="mobile-more-panel">
+      <button class="ni mobile-more-item" onclick="openAI();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>IA</span></button>
+      <button class="ni mobile-more-item" onclick="openProfile();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></button>
       <button class="ni mobile-more-item" data-p="pub" onclick="go('pub',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></button>
       <button class="ni mobile-more-item" data-p="cont" onclick="go('cont',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></button>
       <button class="ni mobile-more-item" data-p="met" onclick="go('met',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></button>
@@ -1133,6 +1209,16 @@
     <div class="card" style="padding:14px;margin-bottom:16px">
       <div class="card-t">Resumen del negocio</div>
       <div id="profile-summary-text" style="font-size:13px;color:var(--txt2);line-height:1.6">Completá los datos de Mi Negocio para ver un resumen.</div>
+    </div>
+    <div class="card integrations-card" style="padding:14px;margin-bottom:16px">
+      <div class="card-t">Integraciones de catalogo</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Productos sera el catalogo maestro de Kairos. Las conexiones web quedaran preparadas para importar productos, completar datos faltantes y recibir ventas externas con revision previa.</div>
+      <div class="integration-actions">
+        <button class="btn btn-ghost" disabled>Conectar Shopify - proximamente</button>
+        <button class="btn btn-ghost" disabled>Conectar Mercado Libre - proximamente</button>
+        <button class="btn btn-ghost" disabled>Conectar Tiendanube - proximamente</button>
+      </div>
+      <!-- Integraciones futuras: sync por Edge Function, con preview antes de escribir. Shopify usaria SHOPIFY_SHOP_DOMAIN, SHOPIFY_ACCESS_TOKEN y GET /admin/api/{version}/products.json para traer catalogo. Meta se sincroniza luego via el canal nativo de Shopify. -->
     </div>
     <div class="modal-actions" style="flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="closeProfile();goPage('neg')">Editar negocio</button>

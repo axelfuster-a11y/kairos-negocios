@@ -408,6 +408,11 @@ function toggleInfo(event, button) {
   button.classList.toggle('on')
 }
 
+function toggleMobileMore() {
+  const more = document.querySelector('.mobile-more')
+  if (more) more.open = !more.open
+}
+
 document.addEventListener('click', event => {
   if (!event.target.closest('.info-dot')) document.querySelectorAll('.info-dot.on').forEach(el => el.classList.remove('on'))
 })
@@ -790,6 +795,389 @@ function saleDate(row) {
   return row.fecha || (row.created_at ? String(row.created_at).slice(0, 10) : '—')
 }
 
+function saleItemCost(item) {
+  return Number(item?.costo_total ?? item?.costo_unitario) || 0
+}
+
+function saleItemPrice(item) {
+  return Number(item?.precio_venta_local || item?.precio_venta_web) || 0
+}
+
+function saleItemLabel(item) {
+  return [item?.producto, item?.color, item?.medida].filter(Boolean).join(' ') || item?.producto || ''
+}
+
+let posCart = {}
+let salesTab = 'history'
+let posCategories = new Set()
+
+function switchSalesTab(tab = 'pos') {
+  salesTab = ['pos', 'manual', 'history'].includes(tab) ? tab : 'pos'
+  document.querySelector('.sales-shell')?.setAttribute('data-sales-tab', salesTab)
+  document.querySelectorAll('.sales-tab').forEach(btn => btn.classList.toggle('active', btn.id === `sales-tab-${salesTab}`))
+  document.querySelectorAll('.sales-tab-panel').forEach(panel => {
+    panel.hidden = panel.dataset.salesPanel !== salesTab
+  })
+  if (salesTab === 'pos') renderSalesCatalog()
+  if (salesTab === 'manual') {
+    populateManualSaleProducts()
+    updateManualSalePreview()
+  }
+}
+
+function renderPosCategoryOptions() {
+  const wrap = document.getElementById('pos-category-pills')
+  if (!wrap) return
+  const categories = [...new Set((importedData.inventory || []).map(item => item.categoria).filter(Boolean))].sort()
+  posCategories = new Set([...posCategories].filter(cat => categories.includes(cat)))
+  const allActive = posCategories.size === 0
+  wrap.innerHTML = `<button type="button" class="${allActive ? 'active' : ''}" data-cat="">Todas</button>` + categories.map(cat => {
+    const active = posCategories.has(cat) ? 'active' : ''
+    return `<button type="button" class="${active}" data-cat="${escapeHTML(cat)}">${escapeHTML(cat)}</button>`
+  }).join('')
+  wrap.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => togglePosCategory(btn.dataset.cat || '')))
+}
+
+function togglePosCategory(category) {
+  if (!category) posCategories.clear()
+  else if (posCategories.has(category)) posCategories.delete(category)
+  else posCategories.add(category)
+  renderSalesCatalog()
+}
+
+function posProductRows() {
+  const query = V('pos-search').trim().toLowerCase()
+  return (importedData.inventory || []).filter(item => {
+    const label = saleItemLabel(item)
+    const haystack = `${label} ${item.sku || ''} ${item.categoria || ''}`.toLowerCase()
+    const matchCategory = !posCategories.size || posCategories.has(item.categoria)
+    return matchCategory && (!query || haystack.includes(query))
+  })
+}
+
+function renderSalesCatalog() {
+  renderPosCategoryOptions()
+  const grid = document.getElementById('pos-grid')
+  if (!grid) return
+  const rows = posProductRows()
+  if (!rows.length) {
+    grid.innerHTML = '<div class="empty" style="padding:14px"><div class="empty-i">.</div>No hay productos que coincidan con la busqueda</div>'
+    renderPosCart()
+    return
+  }
+  grid.innerHTML = rows.map(item => {
+    const id = item.id
+    const label = saleItemLabel(item)
+    const price = saleItemPrice(item)
+    const stock = Number(item.stock_actual) || 0
+    const qty = posCart[id] || 0
+    const disabled = !price || stock <= 0
+    const badge = !price ? 'Sin precio' : stock <= 0 ? 'Sin inventario' : `${stock} disponibles`
+    return `<article class="pos-product ${disabled ? 'disabled' : ''}">
+      <div class="pos-product-media"><span>${escapeHTML((label || 'P').slice(0, 1).toUpperCase())}</span>${qty ? `<strong>${qty}</strong>` : ''}</div>
+      <div class="pos-product-body">
+        <small>${escapeHTML(item.sku || item.categoria || 'Producto')}</small>
+        <h4>${escapeHTML(label || 'Producto sin nombre')}</h4>
+        <div><b>${price ? money(price) : 'Sin precio'}</b><em>${escapeHTML(badge)}</em></div>
+        <button class="btn btn-ghost btn-sm" ${disabled ? 'disabled' : ''} onclick="addPosItem('${id}')">Agregar</button>
+      </div>
+    </article>`
+  }).join('')
+  renderPosCart()
+}
+
+function getPosCartItems() {
+  return Object.entries(posCart).map(([id, cantidad]) => {
+    const item = (importedData.inventory || []).find(row => row.id === id)
+    return item ? { item, cantidad } : null
+  }).filter(Boolean)
+}
+
+function addPosItem(id) {
+  const item = (importedData.inventory || []).find(row => row.id === id)
+  if (!item) return
+  const stock = Number(item.stock_actual) || 0
+  const next = (posCart[id] || 0) + 1
+  if (next > stock) { toastErr(`Inventario insuficiente para ${saleItemLabel(item)}`); return }
+  posCart[id] = next
+  renderSalesCatalog()
+}
+
+function changePosQty(id, delta) {
+  const item = (importedData.inventory || []).find(row => row.id === id)
+  if (!item) return
+  const next = Math.max(0, (posCart[id] || 0) + delta)
+  if (next > (Number(item.stock_actual) || 0)) { toastErr(`Inventario insuficiente para ${saleItemLabel(item)}`); return }
+  if (next) posCart[id] = next
+  else delete posCart[id]
+  renderSalesCatalog()
+}
+
+function clearPosCart() {
+  posCart = {}
+  const received = document.getElementById('pos-received')
+  if (received) received.value = ''
+  renderSalesCatalog()
+}
+
+function renderPosCart() {
+  const cart = document.getElementById('pos-cart')
+  const countEl = document.getElementById('pos-ticket-count')
+  const totalEl = document.getElementById('pos-total')
+  const noteEl = document.getElementById('pos-note')
+  if (!cart) return
+  const rows = getPosCartItems()
+  const count = rows.reduce((sum, row) => sum + row.cantidad, 0)
+  const total = rows.reduce((sum, row) => sum + row.cantidad * saleItemPrice(row.item), 0)
+  const received = numOrDefault('pos-received')
+  if (countEl) countEl.textContent = count ? `${count} producto${count === 1 ? '' : 's'} seleccionados` : 'Sin productos seleccionados'
+  cart.innerHTML = rows.length
+    ? rows.map(({ item, cantidad }) => `<div class="pos-cart-row">
+        <div><strong>${escapeHTML(saleItemLabel(item))}</strong><small>${money(saleItemPrice(item))} c/u</small></div>
+        <div class="pos-qty"><button onclick="changePosQty('${item.id}',-1)">-</button><span>${cantidad}</span><button onclick="changePosQty('${item.id}',1)">+</button></div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catalogo</div>'
+  if (totalEl) totalEl.textContent = `Total de venta: ${money(total)}`
+  if (noteEl) {
+    const method = V('pos-method')
+    noteEl.textContent = received > 0 && received !== total
+      ? `Finanzas registrara ${money(received)} como importe recibido. Diferencia: ${money(total - received)}.`
+      : method === 'mercado_pago'
+        ? 'Si Mercado Pago acredita menos que el total vendido, complete el importe recibido antes de confirmar.'
+        : 'Use importe recibido solo cuando el dinero acreditado difiera del total vendido.'
+  }
+}
+
+async function confirmPosSale() {
+  const rows = getPosCartItems()
+  if (!rows.length) { toastErr('Seleccione al menos un producto'); return }
+  const total = rows.reduce((sum, row) => sum + row.cantidad * saleItemPrice(row.item), 0)
+  const received = numOrDefault('pos-received')
+  const channel = V('pos-channel') || 'local'
+  const method = V('pos-method')
+  const notes = [`Canal: ${channel}`]
+  if (received > 0 && received !== total) notes.push(`Importe recibido: ${money(received)} sobre ${money(total)}`)
+  const result = await registerSale({
+    fecha: V('pos-date') || today(),
+    cliente: V('pos-client').trim(),
+    medio_pago: method,
+    monto_recibido: received > 0 ? received : null,
+    origen: 'pos',
+    notas: notes.join('. '),
+    items: rows.map(({ item, cantidad }) => ({
+      inventory_item_id: item.id,
+      producto_texto: saleItemLabel(item),
+      cantidad,
+      precio_unitario: saleItemPrice(item),
+      costo_unitario: saleItemCost(item)
+    }))
+  })
+  if (handleSupaError(result.error, 'confirmPosSale')) return
+  clearPosCart()
+  ;['pos-client', 'pos-received'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '' })
+  await refreshAfterSale()
+  toast('Venta confirmada desde el punto de venta')
+}
+
+function populateManualSaleProducts() {
+  const select = document.getElementById('sale-product')
+  if (!select) return
+  const current = select.value
+  const rows = importedData.inventory || []
+  select.innerHTML = '<option value="">Producto manual / sin inventario</option>' + rows.map(item => {
+    const stock = Number(item.stock_actual) || 0
+    const price = saleItemPrice(item)
+    return `<option value="${item.id}">${escapeHTML(saleItemLabel(item))} - ${stock} disp. - ${price ? money(price) : 'sin precio'}</option>`
+  }).join('')
+  if (current && rows.some(item => item.id === current)) select.value = current
+}
+
+function selectedManualSaleProduct() {
+  const id = V('sale-product')
+  return (importedData.inventory || []).find(item => item.id === id) || null
+}
+
+function syncManualSaleProduct() {
+  const item = selectedManualSaleProduct()
+  const manual = document.getElementById('sale-manual-product')
+  const price = document.getElementById('sale-price')
+  if (item) {
+    if (manual) manual.value = ''
+    if (price && !Number(price.value)) price.value = saleItemPrice(item) || ''
+  }
+  updateManualSalePreview()
+}
+
+function updateManualSalePreview() {
+  const el = document.getElementById('sale-preview')
+  if (!el) return
+  const item = selectedManualSaleProduct()
+  const qty = Math.max(1, Math.trunc(numOrDefault('sale-qty', 1)))
+  const price = numOrDefault('sale-price')
+  const total = qty * price
+  const cost = item ? qty * saleItemCost(item) : 0
+  const product = item ? saleItemLabel(item) : V('sale-manual-product').trim()
+  if (!product) {
+    el.textContent = 'Seleccione un producto o complete un concepto manual.'
+    el.className = 'manual-sale-preview'
+    return
+  }
+  const stock = item ? Number(item.stock_actual) || 0 : null
+  const stockNote = item && qty > stock ? ` Atencion: inventario disponible ${stock}.` : ''
+  const margin = total > 0 ? ((total - cost) / total) * 100 : 0
+  el.textContent = `${qty} x ${product} = ${money(total)}. Ganancia estimada: ${cost ? money(total - cost) + ' (' + fmtDec(margin) + '%)' : 'sin costo asociado'}.${stockNote}`
+  el.className = `manual-sale-preview ${stockNote ? 'warn' : total > 0 ? 'good' : ''}`
+}
+
+function resetManualSaleForm() {
+  ;['sale-product', 'sale-method'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '' })
+  ;['sale-price', 'sale-client', 'sale-manual-product'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '' })
+  const qty = document.getElementById('sale-qty')
+  if (qty) qty.value = 1
+  const date = document.getElementById('sale-date')
+  if (date) date.value = today()
+  updateManualSalePreview()
+}
+
+async function refreshAfterSale() {
+  invalidateUnifiedFinances()
+  invalidateSalesSummary()
+  await Promise.all([loadImportedData(true), renderSales(), renderFin(), renderDash(), renderMet()])
+}
+
+async function registerSale(payload) {
+  const items = (payload.items || []).map(item => ({
+    ...item,
+    cantidad: Math.max(1, Math.trunc(Number(item.cantidad) || 1)),
+    precio_unitario: Number(item.precio_unitario) || 0,
+    costo_unitario: Number(item.costo_unitario) || 0
+  }))
+  if (!items.length) return { error: 'Agregue al menos un producto' }
+  if (items.some(item => !String(item.producto_texto || '').trim() && !item.inventory_item_id)) return { error: 'Falta el producto' }
+  if (items.some(item => item.precio_unitario <= 0)) return { error: 'El precio debe ser mayor a 0' }
+
+  for (const item of items) {
+    if (!item.inventory_item_id) continue
+    const inv = (importedData.inventory || []).find(row => row.id === item.inventory_item_id)
+    if (inv && item.cantidad > (Number(inv.stock_actual) || 0)) return { error: `Inventario insuficiente para ${saleItemLabel(inv)}` }
+  }
+
+  const total = items.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0)
+  const cost = items.reduce((sum, item) => sum + item.cantidad * item.costo_unitario, 0)
+  const profit = total - cost
+  const received = Number(payload.monto_recibido) > 0 ? Number(payload.monto_recibido) : total
+  const saleDateValue = payload.fecha || today()
+  const notes = [payload.notas || null, received !== total ? `Importe recibido: ${money(received)}. Diferencia de cobro: ${money(total - received)}.` : null].filter(Boolean).join(' ')
+  const { data: sale, error: saleErr } = await sb.from('ventas').insert({
+    user_id: CU.id,
+    fecha: saleDateValue,
+    cliente: payload.cliente || null,
+    medio_pago: payload.medio_pago || null,
+    total,
+    costo_total: cost,
+    ganancia: profit,
+    margen_pct: total > 0 ? (profit / total) * 100 : 0,
+    origen: payload.origen || 'manual',
+    notas: notes || null
+  }).select('id').single()
+  if (saleErr) return { error: saleErr }
+
+  const saleItems = items.map(item => ({
+    user_id: CU.id,
+    venta_id: sale.id,
+    inventory_item_id: item.inventory_item_id || null,
+    producto_texto: item.producto_texto || null,
+    cantidad: item.cantidad,
+    precio_unitario: item.precio_unitario,
+    costo_unitario: item.costo_unitario,
+    subtotal: item.cantidad * item.precio_unitario,
+    ganancia: item.cantidad * (item.precio_unitario - item.costo_unitario)
+  }))
+  const { error: itemsErr } = await sb.from('venta_items').insert(saleItems)
+  if (itemsErr) return { error: itemsErr }
+
+  for (const item of items) {
+    if (!item.inventory_item_id) continue
+    const inv = (importedData.inventory || []).find(row => row.id === item.inventory_item_id)
+    if (!inv) continue
+    const before = Number(inv.stock_actual) || 0
+    const after = before - item.cantidad
+    const { error: stockErr } = await sb.from('inventario_items').update({
+      stock_actual: after,
+      estado_stock: stockState(after, inv.stock_minimo)
+    }).eq('id', item.inventory_item_id).eq('user_id', CU.id)
+    if (stockErr) return { error: stockErr }
+    await sb.from('stock_movements').insert({
+      user_id: CU.id,
+      inventory_item_id: item.inventory_item_id,
+      tipo: 'venta',
+      cantidad: -item.cantidad,
+      stock_antes: before,
+      stock_despues: after,
+      motivo: 'Venta registrada',
+      referencia_tipo: 'venta',
+      referencia_id: sale.id,
+      origen: payload.origen || 'manual'
+    })
+  }
+
+  const { error: movementErr } = await sb.from('movimientos_financieros').insert({
+    user_id: CU.id,
+    fecha: saleDateValue,
+    descripcion: `Venta registrada${items.length === 1 ? ': ' + (items[0].producto_texto || '') : ''}`,
+    monto: received,
+    tipo: 'ingreso',
+    medio_pago: payload.medio_pago || null,
+    categoria: 'ventas',
+    mes: saleDateValue.slice(0, 7),
+    origen: payload.origen || 'manual'
+  })
+  if (movementErr) return { error: movementErr }
+  return { saleId: sale.id, total, profit }
+}
+
+async function addManualSale() {
+  const item = selectedManualSaleProduct()
+  const qty = Math.max(1, Math.trunc(numOrDefault('sale-qty', 1)))
+  const price = numOrDefault('sale-price')
+  const manualProduct = V('sale-manual-product').trim()
+  const productText = item ? saleItemLabel(item) : manualProduct
+  if (!productText) { toastErr('Seleccione un producto o escriba un producto manual'); return }
+  if (price <= 0) { toastErr('Ingrese un precio mayor a 0'); return }
+  const result = await registerSale({
+    fecha: V('sale-date') || today(),
+    cliente: V('sale-client').trim(),
+    medio_pago: V('sale-method'),
+    origen: 'manual',
+    notas: item ? null : 'Producto sin inventario asociado',
+    items: [{
+      inventory_item_id: item?.id || null,
+      producto_texto: productText,
+      cantidad: qty,
+      precio_unitario: price,
+      costo_unitario: item ? saleItemCost(item) : 0
+    }]
+  })
+  if (handleSupaError(result.error, 'addManualSale')) return
+  resetManualSaleForm()
+  await refreshAfterSale()
+  toast(item ? 'Venta registrada' : 'Venta registrada con advertencia: producto sin inventario')
+}
+
+async function focusManualSale() {
+  goPage('sales')
+  await loadImportedData()
+  switchSalesTab('pos')
+  populateManualSaleProducts()
+  renderSalesCatalog()
+  const date = document.getElementById('sale-date')
+  if (date && !date.value) date.value = today()
+  const posDate = document.getElementById('pos-date')
+  if (posDate && !posDate.value) posDate.value = today()
+  updateManualSalePreview()
+  setTimeout(() => document.getElementById('sale-pos-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+}
+
 async function renderSales() {
   if (!CU) return
   const [sales, finance, rowsResult, itemsResult] = await Promise.all([
@@ -802,6 +1190,14 @@ async function renderSales() {
   if (itemsResult.error) console.error('[Kairós] renderSales venta_items:', itemsResult.error)
   const rows = rowsResult.data || []
   const itemCount = (itemsResult.data || []).reduce((sum, item) => sum + (Number(item.cantidad) || 1), 0)
+  populateManualSaleProducts()
+  renderSalesCatalog()
+  switchSalesTab(salesTab)
+  const saleDateInput = document.getElementById('sale-date')
+  if (saleDateInput && !saleDateInput.value) saleDateInput.value = today()
+  const posDateInput = document.getElementById('pos-date')
+  if (posDateInput && !posDateInput.value) posDateInput.value = today()
+  updateManualSalePreview()
   S('sales-total', money(sales.total))
   S('sales-count', `${sales.count} operaci${sales.count === 1 ? 'ón' : 'ones'}`)
   S('sales-products', itemCount)
@@ -1837,6 +2233,8 @@ async function renderDash() {
   if (!missions.length) missions.push({ mark: 'OK', title: 'Mantener los registros al día', detail: 'No hay alertas críticas. Registre ventas y gastos cuando ocurran.', action: "openAIWithBusinessSummary()", tag: 'Estable' })
   const visibleMissions = missions.slice(0, 3)
   S('mission-count', `${visibleMissions.length} prioridad${visibleMissions.length === 1 ? '' : 'es'}`)
+  S('home-mobile-priority-title', `${visibleMissions.length} prioridad${visibleMissions.length === 1 ? '' : 'es'}`)
+  S('home-mobile-priority-detail', visibleMissions[0]?.title || 'Revise alertas y movimientos recientes.')
   document.getElementById('home-missions').innerHTML = visibleMissions.map(m => `<button class="mission-row" onclick="${m.action}"><span class="mission-mark">${m.mark}</span><span><strong>${m.title}</strong><small>${m.detail}</small></span><span class="mission-xp">${m.tag}</span></button>`).join('')
   renderAnnualSummary(finance.all)
 }
@@ -2444,6 +2842,23 @@ function parseNumberValue(v) {
   return Number.isFinite(n) ? n : NaN
 }
 
+function parseMoneyPhrase(v) {
+  if (v === null || v === undefined || v === '') return null
+  const text = normalizeText(v)
+  const base = parseNumberValue(text)
+  if (!Number.isFinite(base)) return base
+  if (/\b(mil|k)\b/.test(text)) return base * 1000
+  if (/\b(millon|millones|m)\b/.test(text)) return base * 1000000
+  return base
+}
+
+function stripActionPrefix(text) {
+  return String(text || '')
+    .replace(/^\s*(registrar|registra|anotar|anota)\s+venta\s*:?\s*/i, '')
+    .replace(/^\s*venta\s*:?\s*/i, 'venta ')
+    .trim()
+}
+
 function formatDateValue(v) {
   if (!v) return null
   if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
@@ -2519,16 +2934,47 @@ function parseStockAdditionCommand(text) {
 }
 
 function looksOperationalIntent(text) {
-  const t = normalizeText(text)
+  const t = normalizeText(stripActionPrefix(text))
   const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|sumale|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
-  const actionAtStart = /^(vendi|vender|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
+  const actionAtStart = /^(vendi|vender|vendimos|venta|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
   return stockIntent || actionAtStart
 }
 
+function parseSaleItemText(part) {
+  let text = String(part || '').trim()
+  if (!text) return null
+  const qtyMatch = text.match(/^\s*([\d.,]+)\s+/)
+  const cantidad = qtyMatch ? Math.max(1, Math.trunc(parseNumberValue(qtyMatch[1]) || 1)) : 1
+  if (qtyMatch) text = text.replace(/^\s*[\d.,]+\s+/, '')
+  const priceMatch = text.match(/\b(?:a|por)\s+\$?\s*([\d.,]+(?:\s*(?:mil|k|millon|millones|m))?)/i)
+  const precio = priceMatch ? parseMoneyPhrase(priceMatch[1]) : null
+  text = text
+    .replace(/\b(?:a|por)\s+\$?\s*[\d.,]+(?:\s*(?:mil|k|millon|millones|m))?(?:\s*pesos?)?/gi, ' ')
+    .replace(/\b(unidades?|u)\b/gi, ' ')
+  const producto = stripBotProductNoise(text)
+  return producto ? { producto, cantidad, precio_unitario: precio } : null
+}
+
+function parseSaleCommand(text) {
+  const clean = stripActionPrefix(text)
+  const t = normalizeText(clean)
+  if (!/^(vendi|vender|vendimos|venta)\b/.test(t)) return null
+  let body = clean.replace(/^\s*(vend[íi]|vendi|vender|vendimos|venta)\s+/i, '')
+  const medio = detectMedio(clean)
+  body = body.replace(/\s+en\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b.*$/i, '')
+  const parts = body.split(/\s*,\s*|\s+y\s+/i).map(parseSaleItemText).filter(Boolean)
+  if (!parts.length) return null
+  if (parts.length === 1) return { action_type: 'venta_stock', input_text: text, producto: parts[0].producto, cantidad: parts[0].cantidad, precio_unitario: parts[0].precio_unitario, medio_pago: medio }
+  return { action_type: 'venta_multi', input_text: text, items: parts, medio_pago: medio }
+}
+
 function parseBotCommand(text) {
-  const t = normalizeText(text)
-  const medio = detectMedio(text)
-  const stockAdd = parseStockAdditionCommand(text)
+  const clean = stripActionPrefix(text)
+  const sale = parseSaleCommand(clean)
+  if (sale) return { ...sale, input_text: text }
+  const t = normalizeText(clean)
+  const medio = detectMedio(clean)
+  const stockAdd = parseStockAdditionCommand(clean)
   if (stockAdd) return stockAdd
   if (/^(agrega|agreg[áa]|crear|crea)\b/.test(t) && /\bproducto\b/.test(t)) {
     let producto = text.replace(/^.*?\bproducto\s+/i, '')
@@ -2615,6 +3061,44 @@ async function findInventoryDuplicate(productText) {
   return { exists: false, item: null, ambiguous: false }
 }
 
+async function resolveSalePreviewItems(command, preview) {
+  const rawItems = command.action_type === 'venta_multi'
+    ? command.items
+    : [{ producto: command.producto, cantidad: command.cantidad, precio_unitario: command.precio_unitario }]
+  const resolved = []
+  for (const raw of rawItems) {
+    const cantidad = raw.cantidad === null ? 1 : Math.max(1, Math.trunc(Number(raw.cantidad) || 1))
+    if (!raw.producto) {
+      preview.errors.push('Falta producto')
+      continue
+    }
+    const match = await findInventoryMatch(raw.producto)
+    if (match.status === 'ambiguous') {
+      preview.warnings.push(`Hay mas de un producto parecido para "${raw.producto}".`)
+      preview.canConfirm = false
+      continue
+    }
+    const item = match.item
+    if (match.status === 'none') preview.warnings.push(`"${raw.producto}" no esta en inventario. Se registrara como venta manual sin descontar inventario.`)
+    const price = Number.isFinite(raw.precio_unitario) && raw.precio_unitario > 0
+      ? raw.precio_unitario
+      : item ? saleItemPrice(item) : 0
+    if (!price) preview.errors.push(`Falta precio para "${raw.producto}".`)
+    if (item && cantidad > (Number(item.stock_actual) || 0)) {
+      preview.warnings.push(`Inventario insuficiente para "${saleItemLabel(item)}".`)
+      preview.canConfirm = false
+    }
+    resolved.push({
+      inventory_item_id: item?.id || null,
+      producto_texto: item ? saleItemLabel(item) : raw.producto,
+      cantidad,
+      precio_unitario: price,
+      costo_unitario: item ? saleItemCost(item) : 0
+    })
+  }
+  return resolved
+}
+
 function stockState(stock, min) {
   if (stock === null || stock === undefined || !Number.isFinite(Number(stock))) return 'sin_datos'
   const s = Number(stock), m = Number(min) || 0
@@ -2646,7 +3130,21 @@ async function buildBotActionPreview(command) {
       else if (!Number.isFinite(val) || val < 0) preview.errors.push(`${lbl} invalido`)
     })
     addRow(command.producto || 'Sin producto', Number.isFinite(command.stock) ? command.stock : '—', Number.isFinite(command.precio) ? '$' + fmt(command.precio) : '—', 'Crear inventario, alias y stock inicial')
-  } else if (['venta_stock', 'reposicion', 'ajuste_stock'].includes(command.action_type)) {
+  } else if (['venta_stock', 'venta_multi'].includes(command.action_type)) {
+    const saleItems = await resolveSalePreviewItems(command, preview)
+    preview.sale_items = saleItems
+    const total = saleItems.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0)
+    const cost = saleItems.reduce((sum, item) => sum + item.cantidad * item.costo_unitario, 0)
+    preview.total = total
+    preview.ganancia = total - cost
+    preview.rows = saleItems.map(item => ({
+      action: command.action_type,
+      detail: item.producto_texto,
+      qty: item.cantidad,
+      amount: money(item.cantidad * item.precio_unitario),
+      expected: item.inventory_item_id ? 'Registrar venta, ingreso y salida de inventario' : 'Registrar venta con advertencia'
+    }))
+  } else if (['reposicion', 'ajuste_stock'].includes(command.action_type)) {
     const match = await findInventoryMatch(command.producto)
     preview.match = match
     if (match.status === 'none') preview.errors.push('No encontré ese producto. Revise el nombre o créelo primero.')
@@ -2690,12 +3188,12 @@ async function buildBotActionPreview(command) {
 function botActionPage(actionType) {
   if (['crear_producto', 'reposicion', 'ajuste_stock'].includes(actionType)) return 'prod'
   if (actionType === 'gasto') return 'fin'
-  if (actionType === 'venta_stock') return 'fin'
+  if (['venta_stock', 'venta_multi'].includes(actionType)) return 'sales'
   return 'dash'
 }
 
 function botActionTitle(actionType) {
-  const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
+  const map = { crear_producto: 'Crear producto', venta_stock: 'Registrar venta', venta_multi: 'Registrar venta', gasto: 'Registrar gasto', reposicion: 'Reponer stock', ajuste_stock: 'Ajustar stock' }
   return map[actionType] || 'Acción operativa'
 }
 
@@ -3069,6 +3567,38 @@ async function confirmBotAction(surface = botActionSurface) {
   btn.disabled = true; btn.textContent = 'Ejecutando...'
   const previewData = JSON.parse(JSON.stringify(botActionPreview))
   const actionType = botActionPreview.action_type
+  if (['venta_stock', 'venta_multi'].includes(actionType)) {
+    try {
+      const result = await registerSale({
+        fecha: today(),
+        medio_pago: botActionPreview.medio_pago || '',
+        origen: 'bot',
+        notas: botActionPreview.input_text,
+        items: botActionPreview.sale_items || []
+      })
+      if (result.error) throw result.error
+      botActionPreview = null
+      botActionSurface = 'import'
+      btn.disabled = true; btn.textContent = 'Accion confirmada'
+      await refreshAfterSale()
+      if (surface === 'ai') {
+        const old = document.getElementById('ai-bot-action-preview')
+        if (old) old.remove()
+        appendAIMessage(`Venta confirmada por ${money(result.total)}. Actualice ventas, caja e inventario.`, 'bot')
+        goPage('sales')
+        closeAI()
+      } else {
+        document.getElementById('im-bot-preview-card').style.display = 'none'
+      }
+      toast('Venta registrada')
+    } catch (e) {
+      const friendly = friendlyBotError(e)
+      btn.disabled = false; btn.textContent = 'Confirmar accion'
+      if (surface === 'ai') appendAIMessage(friendly, 'think')
+      toastErr(friendly)
+    }
+    return
+  }
   const { data: action, error: actionErr } = await sb.from('bot_actions').insert({
     user_id: CU.id,
     input_text: botActionPreview.input_text,
@@ -3089,7 +3619,7 @@ async function confirmBotAction(surface = botActionSurface) {
     btn.disabled = true; btn.textContent = 'Acción confirmada'
     invalidateUnifiedFinances()
     invalidateSalesSummary()
-    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderSales(), renderMet()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
