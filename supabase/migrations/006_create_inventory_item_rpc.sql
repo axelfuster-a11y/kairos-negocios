@@ -51,7 +51,7 @@ begin
     where a.user_id = v_uid
       and a.normalized_alias = public.bot_normalize_alias(v_product)
   ) then
-    raise exception 'Ese producto ya existe. Usa reposicion para sumar stock.';
+    raise exception 'Ese producto ya existe. Use reposicion para sumar stock.';
   end if;
 
   v_total_cost := coalesce(unit_cost, 0) + coalesce(extra_cost, 0);

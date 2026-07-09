@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kairós — El momento justo para tu negocio</title>
+<title>Kairós — El momento justo para el negocio</title>
 <link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=finance-team-20260708">
+<link rel="stylesheet" href="assets/styles.css?v=qa-audit-20260709">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true">
@@ -36,11 +36,11 @@
   <div class="auth-card">
     <div class="auth-k">K</div>
     <div class="auth-name">Kairós</div>
-    <div class="auth-sub">Creá tu nueva contraseña</div>
+    <div class="auth-sub">Cree su nueva contraseña</div>
     <div id="reset-err" class="auth-msg auth-err"></div>
     <div id="reset-ok" class="auth-msg auth-ok"></div>
     <div class="field"><label>Nueva contraseña <span style="color:var(--txt3)">(mín. 6 caracteres)</span></label><input type="password" id="reset-pass" placeholder="••••••••"></div>
-    <div class="field"><label>Repetí la contraseña</label><input type="password" id="reset-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReset()"></div>
+    <div class="field"><label>Repita la contraseña</label><input type="password" id="reset-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReset()"></div>
     <button class="btn btn-gold btn-full" id="reset-btn" onclick="doReset()">Guardar nueva contraseña</button>
   </div>
 </div>
@@ -49,7 +49,7 @@
   <div class="auth-card">
     <div class="auth-k">K</div>
     <div class="auth-name">Kairós</div>
-    <div class="auth-sub">El momento justo para tu negocio</div>
+    <div class="auth-sub">El momento justo para el negocio</div>
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="swTab('login')">Ingresar</button>
       <button class="auth-tab" onclick="swTab('reg')">Crear cuenta</button>
@@ -57,20 +57,20 @@
     <div id="auth-err" class="auth-msg auth-err"></div>
     <div id="auth-ok" class="auth-msg auth-ok"></div>
     <div id="tab-login">
-      <div class="field"><label>Correo electrónico</label><input type="email" id="l-email" placeholder="tu@email.com"></div>
+      <div class="field"><label>Correo electrónico</label><input type="email" id="l-email" placeholder="correo@empresa.com"></div>
       <div class="field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-gold btn-full" id="login-btn" onclick="doLogin()">Ingresar a Kairós</button>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:12px"><span style="color:var(--gold);cursor:pointer" onclick="doForgotPassword()">Olvidé mi contraseña</span></p>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:16px">¿No tiene cuenta? <span style="color:var(--gold);cursor:pointer" onclick="swTab('reg')">Crear una gratis</span></p>
     </div>
     <div id="tab-reg" style="display:none">
-      <div class="field"><label>Tu nombre</label><input type="text" id="r-name" placeholder="Juan García"></div>
-      <div class="field"><label>Correo electrónico</label><input type="email" id="r-email" placeholder="tu@email.com"></div>
+      <div class="field"><label>Nombre</label><input type="text" id="r-name" placeholder="Juan García"></div>
+      <div class="field"><label>Correo electrónico</label><input type="email" id="r-email" placeholder="correo@empresa.com"></div>
       <div class="field"><label>Contraseña</label><input type="password" id="r-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doReg()"></div>
       <button class="btn btn-gold btn-full" id="reg-btn" onclick="doReg()">Crear cuenta gratis</button>
       <p style="text-align:center;font-size:12px;color:var(--txt3);margin-top:16px">¿Ya tiene cuenta? <span style="color:var(--gold);cursor:pointer" onclick="swTab('login')">Ingresar</span></p>
     </div>
-    <p style="text-align:center;font-size:11px;color:var(--txt3);margin-top:24px;line-height:1.6">Tus datos se mantienen privados dentro de tu cuenta.</p>
+    <p style="text-align:center;font-size:11px;color:var(--txt3);margin-top:24px;line-height:1.6">Los datos se mantienen privados dentro de la cuenta.</p>
   </div>
 </div>
 
@@ -147,7 +147,7 @@
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="home-header">
-          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Este es el estado de tu negocio hoy</div></div>
+          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Este es el estado del negocio hoy</div></div>
           <button class="business-switcher" onclick="openProfile()"><span id="home-business-name">Tienda Axel</span><small>Perfil del negocio</small></button>
         </div>
         <div class="home-dashboard" aria-label="Panel principal del negocio">
@@ -156,7 +156,7 @@
               <div class="home-card-head">
                 <div>
                   <div class="home-card-title">Estado general</div>
-                  <p>Kairós organiza tus datos para mostrar qué funciona, qué requiere atención y cuál es el próximo paso.</p>
+                  <p>Kairós organiza los datos para mostrar qué funciona, qué requiere atención y cuál es el próximo paso.</p>
                 </div>
                 <div class="command-state" id="command-state">
                   <div class="command-state-top"><span class="command-light"></span>Estado actual</div>
@@ -165,16 +165,28 @@
               </div>
               <div class="home-metric-grid">
                 <button class="home-metric-card metric-cash" onclick="goFinanceDetail('summary')">
-                  <span class="metric-help" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Te dice con qué plata cuenta el negocio.">!</span>
+                  <span class="metric-help" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Indica con qué dinero cuenta el negocio.">!</span>
                   <span>Caja operativa</span><strong id="command-cash-value">$0</strong><small id="command-cash-trend">Ingresos menos gastos registrados</small><span class="resource-meter" id="home-cash-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-profit" onclick="goFinanceDetail('summary')">
-                  <span class="metric-help" data-info="Ganancia generada por las ventas del mes. Te muestra si vender está dejando margen.">!</span>
+                  <span class="metric-help" data-info="Ganancia generada por las ventas del mes. Indica si vender está dejando margen.">!</span>
                   <span>Ganancia por ventas</span><strong id="console-sales-profit">$0</strong><small id="home-sales-number">Registre ventas para conocer este dato.</small><span class="resource-meter" id="home-sales-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-coverage" onclick="goFinanceDetail('fixed')">
-                  <span class="metric-help" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Te dice si el negocio ya pagó el mes.">!</span>
+                  <span class="metric-help" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Indica si el negocio ya cubrió el mes.">!</span>
                   <span>Gastos fijos cubiertos</span><strong id="coverage-percent">0%</strong><small id="coverage-copy">Qué parte de los gastos mensuales ya está cubierta.</small><span class="resource-meter good" id="coverage-meter"><span></span></span>
+                </button>
+              </div>
+              <div class="home-mobile-command">
+                <div class="quick-action-grid">
+                  <button class="quick-action" onclick="focusManualSale()"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('gasto')"><span><svg class="app-icon"><use href="#i-expense"></use></svg></span><strong>Registrar gasto</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('compra')"><span><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong></button>
+                  <button class="quick-action" onclick="startDashboardAction('producto')"><span><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong></button>
+                </div>
+                <button class="home-mobile-priority" onclick="openAIWithBusinessSummary()">
+                  <strong id="home-mobile-priority-title">Prioridad actual</strong>
+                  <span id="home-mobile-priority-detail">Revise alertas y movimientos recientes.</span>
                 </button>
               </div>
               <div class="home-hidden-metrics"><span id="home-cash-answer"></span><span id="home-cash-number"></span><span id="home-sales-answer"></span><span id="home-alert-answer"></span><span id="home-alert-number"></span><span id="home-next-answer"></span><span id="cash-state"></span><span id="cash-percent"></span><span id="stock-state"></span><span id="stock-percent"></span><span id="sales-state"></span><span id="sales-percent"></span><span id="console-sales-margin"></span><span class="resource-meter good" id="home-stock-meter"><span></span></span><span class="resource-meter good" id="home-next-meter"><span style="width:100%"></span></span></div>
@@ -197,7 +209,7 @@
             <div class="home-card">
               <div class="home-card-title">Acciones rápidas</div>
               <div class="quick-action-grid">
-                <button class="quick-action" onclick="startDashboardAction('venta')"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
+                <button class="quick-action" onclick="focusManualSale()"><span><svg class="app-icon"><use href="#i-sale"></use></svg></span><strong>Registrar venta</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('gasto')"><span><svg class="app-icon"><use href="#i-expense"></use></svg></span><strong>Registrar gasto</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('compra')"><span><svg class="app-icon"><use href="#i-purchase"></use></svg></span><strong>Registrar compra</strong></button>
                 <button class="quick-action" onclick="startDashboardAction('producto')"><span><svg class="app-icon"><use href="#i-box"></use></svg></span><strong>Crear producto</strong></button>
@@ -213,7 +225,7 @@
             </div>
             <div class="home-card home-missions-card">
               <div class="home-card-title">Próxima acción recomendada</div>
-              <div class="mission-list" id="home-missions"><div class="mission-row"><span class="mission-mark">...</span><span><strong>Analizando tu negocio</strong><small>Un momento, estamos ordenando los próximos pasos.</small></span></div></div>
+              <div class="mission-list" id="home-missions"><div class="mission-row"><span class="mission-mark">...</span><span><strong>Analizando el negocio</strong><small>Un momento, se están ordenando los próximos pasos.</small></span></div></div>
             </div>
           </aside>
         </div>
@@ -281,7 +293,7 @@
             <div class="card-t">Identidad</div>
             <div class="field"><label>Nombre del negocio</label><input type="text" id="b-nom" oninput="saveBiz()"></div>
             <div class="field"><label>Rubro</label><input type="text" id="b-rub" oninput="saveBiz()"></div>
-            <div class="field"><label>Modalidad de venta</label><select id="b-loc" onchange="saveBiz()"><option value="">Seleccioná...</option><option value="si">Sí</option><option value="no">No, online</option><option value="mixto">Mixto</option></select></div>
+            <div class="field"><label>Modalidad de venta</label><select id="b-loc" onchange="saveBiz()"><option value="">Seleccione...</option><option value="si">Sí</option><option value="no">No, online</option><option value="mixto">Mixto</option></select></div>
             <div class="field"><label>Canales de venta</label><input type="text" id="b-can" placeholder="Instagram, WhatsApp..." oninput="saveBiz()"></div>
           </div>
           <div class="card">
@@ -313,12 +325,18 @@
             <div><div class="pt">Ventas</div><div class="ps">Registro comercial, compras, productos vendidos y rentabilidad.</div></div>
             <div class="module-header-actions">
               <button class="btn btn-ghost" onclick="startDashboardAction('compra')"><svg class="app-icon"><use href="#i-purchase"></use></svg>Registrar compra</button>
-              <button class="btn btn-gold" onclick="startDashboardAction('venta')"><svg class="app-icon"><use href="#i-sale"></use></svg>Registrar venta</button>
+              <button class="btn btn-gold" onclick="focusManualSale()"><svg class="app-icon"><use href="#i-sale"></use></svg>Registrar venta</button>
             </div>
           </div>
 
+          <div class="sales-tabs" role="tablist" aria-label="Vistas de ventas">
+            <button class="sales-tab active" id="sales-tab-history" type="button" onclick="switchSalesTab('history')"><svg class="app-icon"><use href="#i-chart"></use></svg>Datos de ventas</button>
+            <button class="sales-tab" id="sales-tab-pos" type="button" onclick="switchSalesTab('pos')"><svg class="app-icon"><use href="#i-sale"></use></svg>Mostrador</button>
+            <button class="sales-tab" id="sales-tab-manual" type="button" onclick="switchSalesTab('manual')"><svg class="app-icon"><use href="#i-purchase"></use></svg>Venta manual</button>
+          </div>
+
           <div class="module-summary-grid">
-            <button class="module-summary-card" onclick="startDashboardAction('venta')"><span class="summary-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ventas del mes</small><strong id="sales-total">$0</strong><em id="sales-count">0 operaciones</em></button>
+            <button class="module-summary-card" onclick="focusManualSale()"><span class="summary-icon"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ventas del mes</small><strong id="sales-total">$0</strong><em id="sales-count">0 operaciones</em></button>
             <button class="module-summary-card" onclick="goPage('prod')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-box"></use></svg></span><small>Productos vendidos</small><strong id="sales-products">0</strong><em>Unidades y variantes registradas</em></button>
             <button class="module-summary-card" onclick="goPage('sales')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Ganancia comercial</small><strong id="sales-profit">$0</strong><em>Venta menos costo vendido</em></button>
             <button class="module-summary-card" onclick="goPage('fin')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Margen promedio</small><strong id="sales-margin">0%</strong><em>Rentabilidad sobre ventas</em></button>
@@ -338,7 +356,61 @@
                 </div>
               </div>
 
-              <div class="module-card">
+              <div class="module-card pos-card sales-tab-panel" data-sales-panel="pos" id="sale-pos-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Punto de venta</div><p>Seleccione productos del catalogo, arme el ticket y confirme la venta con descuento de inventario y registro financiero.</p></div>
+                  <span class="module-pill">Mostrador</span>
+                </div>
+                <div class="pos-panel">
+                  <div class="pos-catalog">
+                    <div class="pos-toolbar">
+                      <div class="field"><label>Buscar producto</label><input id="pos-search" type="search" placeholder="Nombre, SKU o categoria" oninput="renderSalesCatalog()"></div>
+                      <div class="field"><label>Categorias</label><div class="pos-category-pills" id="pos-category-pills"></div></div>
+                    </div>
+                    <div class="pos-grid" id="pos-grid"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Cargando productos</div></div>
+                  </div>
+                  <aside class="pos-ticket">
+                    <div class="pos-ticket-head">
+                      <div><strong>Ticket de venta</strong><small id="pos-ticket-count">Sin productos seleccionados</small></div>
+                      <button class="btn btn-ghost btn-sm" onclick="clearPosCart()">Vaciar</button>
+                    </div>
+                    <div class="pos-cart" id="pos-cart"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catalogo</div></div>
+                    <div class="pos-sale-fields">
+                      <div class="field"><label>Canal</label><select id="pos-channel"><option value="local">Local</option><option value="web">Web</option><option value="shopify">Shopify</option><option value="mercado_libre">Mercado Libre</option><option value="tiendanube">Tiendanube</option><option value="instagram">Instagram / WhatsApp</option></select></div>
+                      <div class="field"><label>Medio de pago</label><select id="pos-method" onchange="renderPosCart()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
+                      <div class="field"><label>Cliente</label><input id="pos-client" type="text" placeholder="Cliente no informado"></div>
+                      <div class="field"><label>Fecha</label><input id="pos-date" type="date"></div>
+                      <div class="field pos-received"><label>Importe recibido</label><input id="pos-received" type="number" min="0" placeholder="Solo si difiere del total" oninput="renderPosCart()"></div>
+                    </div>
+                    <div class="pos-total" id="pos-total">Total: $0</div>
+                    <div class="pos-note" id="pos-note">Use importe recibido para reflejar comisiones o diferencias de cobro, por ejemplo en Mercado Pago.</div>
+                    <button class="btn btn-gold btn-full" onclick="confirmPosSale()">Confirmar venta</button>
+                  </aside>
+                </div>
+              </div>
+
+              <div class="module-card manual-sale-card sales-tab-panel" data-sales-panel="manual" id="manual-sale-card">
+                <div class="module-card-head">
+                  <div><div class="home-card-title">Registro manual de venta</div><p>Seleccione productos existentes o registre un concepto manual cuando todavia no este en inventario.</p></div>
+                  <span class="module-pill">Venta directa</span>
+                </div>
+                <div class="manual-sale-grid">
+                  <div class="field"><label>Producto</label><select id="sale-product" onchange="syncManualSaleProduct()"><option value="">Producto manual / sin inventario</option></select></div>
+                  <div class="field"><label>Cantidad</label><input id="sale-qty" type="number" min="1" value="1" oninput="updateManualSalePreview()"></div>
+                  <div class="field"><label>Precio unitario</label><input id="sale-price" type="number" min="0" placeholder="0" oninput="updateManualSalePreview()"></div>
+                  <div class="field"><label>Cliente</label><input id="sale-client" type="text" placeholder="Cliente no informado"></div>
+                  <div class="field"><label>Medio de pago</label><select id="sale-method"><option value="">Sin informar</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
+                  <div class="field"><label>Fecha</label><input id="sale-date" type="date"></div>
+                  <div class="field manual-sale-name"><label>Producto manual</label><input id="sale-manual-product" type="text" placeholder="Ej. Servicio, producto nuevo" oninput="updateManualSalePreview()"></div>
+                </div>
+                <div class="manual-sale-preview" id="sale-preview">Seleccione un producto o complete un concepto manual.</div>
+                <div class="modal-actions">
+                  <button class="btn btn-ghost" onclick="startDashboardAction('venta')">Usar Asesor IA</button>
+                  <button class="btn btn-gold" onclick="addManualSale()">Guardar venta</button>
+                </div>
+              </div>
+
+              <div class="module-card sales-tab-panel" data-sales-panel="history">
                 <div class="module-card-head">
                   <div><div class="home-card-title">Ventas registradas</div><p>Listado de operaciones guardadas. Si no hay detalle disponible, Kairós conserva el total y el origen económico.</p></div>
                   <button class="btn btn-ghost btn-sm" onclick="renderSales()">Actualizar</button>
@@ -555,7 +627,7 @@
             </div>
             <div class="card">
               <div class="card-t">Registrar pago</div>
-              <div class="field"><label>Integrante</label><select id="team-payment-member" onchange="syncTeamPaymentTypes()"><option value="">Seleccioná...</option></select></div>
+              <div class="field"><label>Integrante</label><select id="team-payment-member" onchange="syncTeamPaymentTypes()"><option value="">Seleccione...</option></select></div>
               <div class="g2">
                 <div class="field"><label>Tipo de pago</label><select id="team-payment-type"><option value="sueldo">Sueldo</option><option value="honorario">Honorario</option><option value="bono">Bono</option><option value="comision">Comisión</option><option value="retiro_duenio">Retiro del dueño</option><option value="distribucion_utilidad">Distribución de utilidad</option><option value="otro">Otro</option></select></div>
                 <div class="field"><label>Monto ($)</label><input type="number" id="team-payment-amount" min="0" placeholder="0"></div>
@@ -620,7 +692,7 @@
               <aside class="product-side-panel">
                 <div class="product-info-card">
                   <div class="home-card-title">Diagnóstico de productos</div>
-                  <p>Hay productos que no pueden calcular rentabilidad porque faltan datos de costo o precio. Completá esa información para obtener un análisis más preciso.</p>
+                  <p>Hay productos que no pueden calcular rentabilidad porque faltan datos de costo o precio. Complete esa información para obtener un análisis más preciso.</p>
                   <button class="btn btn-gold btn-full" onclick="showProductQuestion('inv','pricing')">Completar datos pendientes</button>
                 </div>
                 <div class="product-info-card">
@@ -823,7 +895,7 @@
 
       <!-- CARGA INTELIGENTE -->
       <div class="page" id="page-import">
-        <div class="ph"><div class="pt">IA e importaciones</div><div class="ps">Prepará datos con revisión previa antes de guardarlos en el sistema.</div></div>
+        <div class="ph"><div class="pt">IA e importaciones</div><div class="ps">Prepare datos con revisión previa antes de guardarlos en el sistema.</div></div>
         <div class="concept"><div class="ci">IA</div><div><div class="clbl">Flujo seguro</div><div class="ctxt">Nada se guarda sin confirmación. Kairós analiza el dato, muestra errores o avisos y recién después carga en Supabase.</div></div></div>
 
         <div class="g2" style="margin-bottom:20px">
@@ -851,7 +923,7 @@
               <div class="field"><label>Fecha</label><input type="date" id="im-f-fecha"></div>
               <div class="field"><label>Descripción</label><input type="text" id="im-f-desc" placeholder="Venta, alquiler..."></div>
               <div class="field"><label>Monto</label><input type="number" id="im-f-monto" min="0" placeholder="0"></div>
-              <div class="field"><label>Tipo</label><select id="im-f-tipo"><option value="">Seleccioná...</option><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>
+              <div class="field"><label>Tipo</label><select id="im-f-tipo"><option value="">Seleccione...</option><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>
               <div class="field"><label>Medio de pago</label><input type="text" id="im-f-medio" placeholder="efectivo, transferencia..."></div>
               <div class="field"><label>Categoría</label><input type="text" id="im-f-cat" placeholder="ventas, alquiler..."></div>
             </div>
@@ -1001,7 +1073,7 @@
           <div class="card">
             <div class="card-t">Ángulos</div>
             <div class="field"><label>Ángulo principal</label><input type="text" id="an-p" placeholder="El que habla directo..." oninput="saveAng()"></div>
-            <div class="field"><label>Tono</label><select id="an-t" onchange="saveAng()"><option value="">Seleccioná...</option><option>Educativo y cercano</option><option>Directo</option><option>Inspiracional</option><option>Con humor</option><option>Premium</option></select></div>
+            <div class="field"><label>Tono</label><select id="an-t" onchange="saveAng()"><option value="">Seleccione...</option><option>Educativo y cercano</option><option>Directo</option><option>Inspiracional</option><option>Con humor</option><option>Premium</option></select></div>
             <div class="field"><label>Palabras SÍ</label><input type="text" id="an-s" placeholder="resultados, concreto..." oninput="saveAng()"></div>
             <div class="field"><label>Palabras NO</label><input type="text" id="an-n" placeholder="quizás, podría..." oninput="saveAng()"></div>
           </div>
@@ -1062,10 +1134,14 @@
     <button class="mobile-ni" data-p="sales" onclick="go('sales',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></button>
     <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></button>
+    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></button>
+    <button class="mobile-ni" onclick="const m=document.querySelector('.mobile-more'); if(m)m.open=!m.open"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Más</span></button>
   </nav>
   <details class="mobile-more">
     <summary>Más</summary>
     <div class="mobile-more-panel">
+      <button class="ni mobile-more-item" onclick="openAI();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>IA</span></button>
+      <button class="ni mobile-more-item" onclick="openProfile();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></button>
       <button class="ni mobile-more-item" data-p="pub" onclick="go('pub',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></button>
       <button class="ni mobile-more-item" data-p="cont" onclick="go('cont',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></button>
       <button class="ni mobile-more-item" data-p="met" onclick="go('met',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></button>
@@ -1093,7 +1169,7 @@
     <div class="ai-quick-actions">
       <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
       <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
-      <button class="ai-quick-action" onclick="seedAIExample('agregá producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
+      <button class="ai-quick-action" onclick="seedAIExample('agregar producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
       <button class="ai-quick-action" onclick="seedAIExample('sumar 10 de stock a nombre del producto')">Sumar stock</button>
     </div>
   </div>
@@ -1116,7 +1192,7 @@
 <div class="modal-ov" id="profile-ov" onclick="closeProfile()">
   <div class="modal-card" style="width:min(620px,100%)" onclick="event.stopPropagation()">
     <div class="modal-head">
-      <div><div class="modal-title">Perfil y configuración</div><div style="font-size:12px;color:var(--txt3)">Tu cuenta y un resumen breve del negocio.</div></div>
+      <div><div class="modal-title">Perfil y configuración</div><div style="font-size:12px;color:var(--txt3)">Cuenta y resumen breve del negocio.</div></div>
       <button class="btn btn-ghost btn-sm" onclick="closeProfile()">×</button>
     </div>
     <div class="card" style="padding:14px;margin-bottom:16px">
@@ -1132,7 +1208,17 @@
     </div>
     <div class="card" style="padding:14px;margin-bottom:16px">
       <div class="card-t">Resumen del negocio</div>
-      <div id="profile-summary-text" style="font-size:13px;color:var(--txt2);line-height:1.6">Completá los datos de Mi Negocio para ver un resumen.</div>
+      <div id="profile-summary-text" style="font-size:13px;color:var(--txt2);line-height:1.6">Complete los datos de Mi Negocio para ver un resumen.</div>
+    </div>
+    <div class="card integrations-card" style="padding:14px;margin-bottom:16px">
+      <div class="card-t">Integraciones de catalogo</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Productos sera el catalogo maestro de Kairos. Las conexiones web quedaran preparadas para importar productos, completar datos faltantes y recibir ventas externas con revision previa.</div>
+      <div class="integration-actions">
+        <button class="btn btn-ghost" disabled>Conectar Shopify - proximamente</button>
+        <button class="btn btn-ghost" disabled>Conectar Mercado Libre - proximamente</button>
+        <button class="btn btn-ghost" disabled>Conectar Tiendanube - proximamente</button>
+      </div>
+      <!-- Integraciones futuras: sync por Edge Function, con preview antes de escribir. Shopify usaria SHOPIFY_SHOP_DOMAIN, SHOPIFY_ACCESS_TOKEN y GET /admin/api/{version}/products.json para traer catalogo. Meta se sincroniza luego via el canal nativo de Shopify. -->
     </div>
     <div class="modal-actions" style="flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="closeProfile();goPage('neg')">Editar negocio</button>
@@ -1179,6 +1265,6 @@
 <script src="assets/js/core/validation.js"></script>
 <script src="assets/js/ui/toast.js"></script>
 <script src="assets/js/services/financeService.js"></script>
-<script src="assets/app.js?v=finance-team-20260708"></script>
+<script src="assets/app.js?v=qa-audit-20260709"></script>
 </body>
 </html>

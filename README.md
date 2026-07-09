@@ -1,6 +1,6 @@
 # Kairos Negocios
 
-Kairos Negocios es una aplicacion web estatica para administrar un negocio chico desde un centro de mando simple. Usa HTML, CSS, JavaScript puro y Supabase para autenticacion, datos, RPC y la funcion de Asesor IA.
+Kairos Negocios es una aplicacion web estatica para administrar un negocio pequeño desde un centro de mando simple. Usa HTML, CSS, JavaScript puro y Supabase para autenticacion, datos, RPC y la funcion de Asesor IA.
 
 ## Modulos actuales
 
