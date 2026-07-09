@@ -1,5 +1,9 @@
 # Supabase Schema Notes
 
+## Estado de interfaz - 2026-07-09
+
+La navegacion principal actual es: Inicio, Productos, Ventas, Finanzas y Equipo. Las tablas legacy y nuevas se conservan por compatibilidad. Productos concentra catalogo e inventario; Ventas opera compras/ventas; Finanzas consolida caja, ingresos, egresos, gastos fijos, equipo y movimientos.
+
 Este archivo documenta el schema que el frontend actual de Kairós espera encontrar en Supabase.
 No es una migración SQL. La intención es dejar explícitas las tablas, columnas y zonas de uso antes de agregar importaciones.
 

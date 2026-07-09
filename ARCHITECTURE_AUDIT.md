@@ -1,5 +1,11 @@
 # Auditoria arquitectonica de Kairos
 
+## Nota de estado - 2026-07-09
+
+Este informe conserva hallazgos historicos de arquitectura. La interfaz visible actual ya no esta organizada en cuatro modulos ni usa `Dinero` como modulo principal. Despues del PR https://github.com/axelfuster-a11y/kairos-negocios/pull/15, la navegacion principal publicada en `main` es: Inicio, Productos, Ventas, Finanzas y Equipo.
+
+El criterio actual de producto separa Ventas y Finanzas: Ventas opera el flujo comercial y Finanzas consolida los datos economicos, graficos, caja, egresos, gastos fijos, equipo y movimientos.
+
 Fecha: 2026-06-28
 Rama auditada: `refactor-simple-professional-ui`
 Commit base: `66e6fb3 Simplify navigation into four core modules`

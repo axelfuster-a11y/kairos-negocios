@@ -13,7 +13,7 @@ git diff --check
 
 - App loads without console `ReferenceError`.
 - Login, logout, and session-dependent screens still behave as expected.
-- Main modules open: Inicio, Dinero, Productos, Gestion.
+- Main modules open: Inicio, Productos, Ventas, Finanzas, Equipo.
 - Mas herramientas opens.
 - Asesor IA opens.
 - Affected buttons, forms, modals, and filters work.
@@ -22,6 +22,7 @@ git diff --check
 ## Mobile and Desktop
 
 - Check one mobile viewport and one desktop viewport.
+- Check tablet/mobile navigation for Inicio, Productos, Ventas and Finanzas.
 - Text fits inside buttons, cards, tables, and modals.
 - Navigation remains usable.
 - Important alerts and primary actions are visible.
@@ -63,5 +64,6 @@ git diff --check
 ## Documentation
 
 - README, handoff, architecture notes, Supabase notes, and QA docs are updated when behavior changes.
+- CHANGELOG.md is updated for user-facing module, navigation, data-display, or QA changes.
 - PR explains what changed and what did not change.
 - Manual QA notes include tested screens and known gaps.

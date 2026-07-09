@@ -2,11 +2,11 @@
 
 Esta carpeta contiene la base SQL de Kairós para importaciones y para el núcleo operativo del negocio.
 
-El frontend actual organiza la navegacion principal en cuatro modulos: `Inicio`, `Dinero`, `Productos` y `Gestion`.
+El frontend actual organiza la navegacion principal en cinco modulos: `Inicio`, `Productos`, `Ventas`, `Finanzas` y `Equipo`.
 
 Supabase sigue siendo la base de datos de la app. Las migraciones existentes no deben editarse si ya fueron aplicadas; cualquier hardening futuro debe agregarse en una migracion nueva.
 
-Las funciones de importacion viven visualmente dentro de `Mas herramientas > Importaciones` y tambien alimentan los resumenes de `Inicio`, `Dinero` y `Productos`. Las tablas legacy siguen existiendo y no se eliminan.
+Las funciones de importacion viven visualmente dentro de `Mas herramientas > Importaciones` y tambien alimentan los resumenes de `Inicio`, `Productos`, `Ventas` y `Finanzas`. Las tablas legacy siguen existiendo y no se eliminan.
 
 ## Migraciones
 

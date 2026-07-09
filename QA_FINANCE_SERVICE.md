@@ -1,5 +1,9 @@
 # QA FinanceService
 
+## Nota de estado - 2026-07-09
+
+Este QA corresponde al refactor incremental de `FinanceService` previo al rediseño visual completo. En la interfaz actual publicada en `main`, `Dinero` fue reemplazado visualmente por `Finanzas` y `Ventas` quedo como modulo independiente. Los criterios de validacion financiera siguen siendo utiles porque la logica, Supabase y los servicios base se mantienen.
+
 ## 1. Resultado general
 
 **No aprobado para seguir con InventoryService todavía.**

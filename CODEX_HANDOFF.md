@@ -1,5 +1,19 @@
 # Kairós Negocios - handoff para continuar en Codex
 
+## Estado actual - 2026-07-09
+
+- Rama principal: `main`.
+- Ultimo merge publicado: `f7b28a7 Redisenar modulos principales de Kairos`.
+- Pull request publicado: https://github.com/axelfuster-a11y/kairos-negocios/pull/15
+- Navegacion principal actual: Inicio, Productos, Ventas, Finanzas y Equipo.
+- Estetica actual: tema oscuro profesional, fondo azul/negro desaturado, superficies oscuras, acentos verde, dorado, rojo y azul.
+- Productos concentra catalogo, inventario, costos, precios, margen y reposicion.
+- Ventas concentra operacion comercial, compras, productos vendidos, ganancia comercial y margen.
+- Finanzas concentra caja, ingresos, egresos, gastos fijos, resultado economico, graficos, equipo y movimientos.
+- Equipo concentra responsables, pagos, tareas, capacidad operativa y accesos a clientes/agenda.
+
+Las secciones siguientes contienen contexto historico del proyecto. Algunas menciones a `Dinero`, `Gestion` o a una navegacion de cuatro modulos describen una etapa anterior y no representan la interfaz visible actual.
+
 ## Contexto rápido
 
 Proyecto: **Kairós Negocios**
