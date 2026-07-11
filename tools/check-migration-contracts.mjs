@@ -7,7 +7,7 @@ const files = readdirSync(migrationDir)
   .filter(file => /^\d{3}_.+\.sql$/.test(file))
   .sort()
 
-assert.ok(files.length >= 8, 'Expected migrations 001 through 008')
+assert.ok(files.length >= 9, 'Expected migrations 001 through 009')
 
 const numbers = files.map(file => Number(file.slice(0, 3)))
 assert.equal(new Set(numbers).size, numbers.length, 'Migration numbers must be unique')
@@ -28,6 +28,8 @@ const requiredTables = [
   'venta_items',
   'team_payments',
   'audit_events',
+  'cash_registers',
+  'cash_sessions',
 ]
 for (const table of requiredTables) {
   assert.match(sql, new RegExp(`create table if not exists public\\.${table}|create table public\\.${table}`), `Missing table contract: ${table}`)
@@ -40,6 +42,10 @@ const requiredFunctions = [
   'confirm_import_batch',
   'create_inventory_item',
   'get_integrity_summary',
+  'open_cash_session',
+  'record_cash_adjustment',
+  'get_cash_session_summary',
+  'close_cash_session',
 ]
 for (const fn of requiredFunctions) {
   assert.match(sql, new RegExp(`function public\\.${fn}\\s*\\(`), `Missing RPC: ${fn}`)
@@ -88,3 +94,17 @@ for (const file of frontendFiles) {
 }
 
 console.log(`Migration contracts ok: ${files.length} migrations checked`)
+
+
+const cash = readFileSync(join(migrationDir, '009_cash_sessions.sql'), 'utf8').toLowerCase()
+for (const contract of [
+  /uq_open_cash_session_per_business/,
+  /cash_session_id/,
+  /lower\(coalesce\(new\.medio_pago, ''\)\) = 'efectivo'/,
+  /v_expected := v_session\.saldo_inicial \+ v_income - v_expense/,
+  /v_difference := counted_cash - v_expected/,
+  /adjustment_amount is null or adjustment_amount <= 0/,
+  /estado = 'cerrada'/,
+]) {
+  assert.match(cash, contract, `Cash session contract missing: ${contract}`)
+}
