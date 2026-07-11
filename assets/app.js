@@ -252,7 +252,7 @@ function go(page, el) {
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
   if (['leads', 'org'].includes(page)) document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
   if (page === 'dash') switchDashboardTab('summary')
-  if (page === 'fin') { switchFinanceTab('summary'); renderFin() }
+  if (page === 'fin') { switchFinanceTab('summary'); renderFin(); loadCashSession() }
   if (page === 'sales') renderSales()
   if (page === 'prod') switchProductTab('inv')
   if (page === 'people') loadTeamData()
@@ -3903,3 +3903,175 @@ async function doReset() {
 // INIT
 // ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init)
+
+
+// ══════════════════════════════════════
+// CASH SESSION — apertura, movimientos y cierre simple
+// ══════════════════════════════════════
+let cashSessionState = { session: null, summary: null, loading: false, available: true }
+
+function setCashLoading(loading) {
+  cashSessionState.loading = loading
+  const btn = document.getElementById('cash-open-btn')
+  if (btn) {
+    btn.disabled = loading
+    btn.textContent = loading ? 'Procesando...' : 'Abrir caja'
+  }
+}
+
+function renderCashSession() {
+  const openPanel = document.getElementById('cash-open-panel')
+  const activePanel = document.getElementById('cash-active-panel')
+  const unavailable = document.getElementById('cash-unavailable')
+  if (!openPanel || !activePanel) return
+
+  unavailable.hidden = cashSessionState.available
+  if (!cashSessionState.available) {
+    openPanel.hidden = true
+    activePanel.hidden = true
+    S('cash-status-pill', 'Pendiente')
+    S('cash-status-copy', 'El control de caja todavía no está habilitado en la base de datos.')
+    return
+  }
+
+  const isOpen = Boolean(cashSessionState.session)
+  openPanel.hidden = isOpen
+  activePanel.hidden = !isOpen
+  S('cash-status-pill', isOpen ? 'Caja abierta' : 'Caja cerrada')
+  S('cash-status-copy', isOpen
+    ? 'Kairós está controlando los movimientos en efectivo de esta sesión.'
+    : 'Abrí la caja para controlar automáticamente el efectivo que entra y sale.')
+
+  if (!isOpen) return
+  const summary = cashSessionState.summary || {}
+  S('cash-opening-view', money(summary.opening_amount || cashSessionState.session.saldo_inicial || 0))
+  S('cash-income-view', money(summary.cash_income || 0))
+  S('cash-expense-view', money(summary.cash_expense || 0))
+  S('cash-expected-view', money(summary.expected_cash || cashSessionState.session.saldo_inicial || 0))
+}
+
+async function loadCashSession() {
+  if (!CU || cashSessionState.loading) return
+  setCashLoading(true)
+  try {
+    const { data, error } = await sb.from('cash_sessions')
+      .select('*')
+      .eq('user_id', CU.id)
+      .eq('estado', 'abierta')
+      .order('abierta_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      if (/cash_sessions|schema cache|does not exist/i.test(error.message || '')) {
+        cashSessionState = { session: null, summary: null, loading: false, available: false }
+        renderCashSession()
+        return
+      }
+      throw error
+    }
+
+    cashSessionState.available = true
+    cashSessionState.session = data || null
+    cashSessionState.summary = null
+
+    if (data) {
+      const result = await sb.rpc('get_cash_session_summary', { session_id: data.id })
+      if (result.error) throw result.error
+      cashSessionState.summary = result.data || null
+    }
+    renderCashSession()
+  } catch (error) {
+    console.error('[Kairós] loadCashSession:', error)
+    toast('No pudimos cargar el estado de caja')
+  } finally {
+    setCashLoading(false)
+  }
+}
+
+async function openCashSession() {
+  if (!CU || cashSessionState.loading) return
+  const amount = Number(V('cash-opening-amount') || 0)
+  if (!Number.isFinite(amount) || amount < 0) {
+    toast('Ingresá un efectivo inicial válido')
+    return
+  }
+  setCashLoading(true)
+  const { data, error } = await sb.rpc('open_cash_session', {
+    opening_amount: amount,
+    opening_notes: V('cash-opening-notes').trim() || null,
+    register_id: null,
+  })
+  setCashLoading(false)
+  if (error) {
+    toast(error.message || 'No pudimos abrir la caja')
+    return
+  }
+  toast('Caja abierta')
+  await loadCashSession()
+}
+
+async function recordCashAdjustment() {
+  const session = cashSessionState.session
+  const amount = Number(V('cash-adjustment-amount'))
+  const description = V('cash-adjustment-description').trim()
+  if (!session) return
+  if (!Number.isFinite(amount) || amount <= 0) {
+    toast('Ingresá un monto mayor a cero')
+    return
+  }
+  if (!description) {
+    toast('Contanos qué movimiento estás registrando')
+    return
+  }
+
+  const { error } = await sb.rpc('record_cash_adjustment', {
+    session_id: session.id,
+    adjustment_type: V('cash-adjustment-type'),
+    adjustment_amount: amount,
+    adjustment_description: description,
+    adjustment_date: today(),
+  })
+  if (error) {
+    toast(error.message || 'No pudimos registrar el movimiento')
+    return
+  }
+  document.getElementById('cash-adjustment-amount').value = ''
+  document.getElementById('cash-adjustment-description').value = ''
+  toast('Movimiento de caja registrado')
+  await Promise.all([loadCashSession(), renderFin(), loadImportedData()])
+}
+
+async function closeCashSession() {
+  const session = cashSessionState.session
+  const counted = Number(V('cash-counted-amount'))
+  if (!session) return
+  if (!Number.isFinite(counted) || counted < 0) {
+    toast('Ingresá el efectivo que contaste')
+    return
+  }
+
+  const { data, error } = await sb.rpc('close_cash_session', {
+    session_id: session.id,
+    counted_cash: counted,
+    closing_notes: V('cash-closing-notes').trim() || null,
+  })
+  if (error) {
+    toast(error.message || 'No pudimos cerrar la caja')
+    return
+  }
+
+  const result = document.getElementById('cash-close-result')
+  if (result) {
+    const difference = Number(data?.difference || 0)
+    result.hidden = false
+    result.className = 'cash-close-result ' + (difference === 0 ? 'ok' : 'warn')
+    result.textContent = difference === 0
+      ? 'Caja exacta: el efectivo contado coincide.'
+      : `Diferencia de caja: ${money(difference)}.`
+  }
+  cashSessionState.session = null
+  cashSessionState.summary = null
+  renderCashSession()
+  toast('Caja cerrada')
+}
