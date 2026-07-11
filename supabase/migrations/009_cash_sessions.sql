@@ -70,8 +70,9 @@ begin
 end;
 $do$;
 
-create unique index if not exists uq_open_cash_session_per_register
-  on public.cash_sessions(user_id, cash_register_id)
+drop index if exists public.uq_open_cash_session_per_register;
+create unique index if not exists uq_open_cash_session_per_business
+  on public.cash_sessions(user_id)
   where estado = 'abierta';
 
 create index if not exists idx_cash_sessions_user_opened
@@ -145,10 +146,9 @@ begin
   if exists (
     select 1 from public.cash_sessions
     where user_id = v_uid
-      and cash_register_id = v_register_id
       and estado = 'abierta'
   ) then
-    raise exception 'Esta caja ya tiene una sesión abierta';
+    raise exception 'Ya existe una sesión de caja abierta. Cerrala antes de abrir otra.';
   end if;
 
   insert into public.cash_sessions(
