@@ -987,3 +987,13 @@ tr:hover td{background:#171c20}
   #page-dash .movement-item small{font-size:10.5px;line-height:1.25}
   #page-dash .advanced-toggle{width:100%;margin:12px 0 0;min-height:38px}
 }
+
+
+/* Flujo diario simple: Hoy, Vender, Productos, Dinero y Gestión */
+.home-modules{display:none}
+.management-menu{margin-top:6px}
+.home-card p,.module-card p,.ps{font-size:13px;line-height:1.5}
+.mobile-ni{min-height:58px}
+@media(max-width:700px){
+  .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
