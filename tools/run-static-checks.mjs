@@ -4,6 +4,7 @@ const checks = [
   'tools/check-js-syntax.mjs',
   'tools/check-html-ids.mjs',
   'tools/check-inline-handlers.mjs',
+  'tools/check-migration-contracts.mjs',
 ]
 
 for (const check of checks) {
@@ -12,4 +13,3 @@ for (const check of checks) {
 }
 
 console.log('Static checks ok')
-
