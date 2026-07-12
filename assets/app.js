@@ -410,7 +410,7 @@ function openAIWithBusinessSummary() {
 
 function toggleInfo(event, button) {
   event.stopPropagation()
-  document.querySelectorAll('.info-dot.on').forEach(el => { if (el !== button) el.classList.remove('on') })
+  document.querySelectorAll('.info-dot.on,.metric-help.on').forEach(el => { if (el !== button) el.classList.remove('on') })
   button.classList.toggle('on')
 }
 
@@ -420,7 +420,7 @@ function toggleMobileMore() {
 }
 
 document.addEventListener('click', event => {
-  if (!event.target.closest('.info-dot')) document.querySelectorAll('.info-dot.on').forEach(el => el.classList.remove('on'))
+  if (!event.target.closest('.info-dot,.metric-help')) document.querySelectorAll('.info-dot.on,.metric-help.on').forEach(el => el.classList.remove('on'))
 })
 
 function startDashboardAction(action) {
