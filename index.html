@@ -453,6 +453,58 @@
           <button class="module-summary-card" onclick="showFinanceQuestion('fixed')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Gastos fijos cubiertos</small><strong id="finance-fixed-coverage">0%</strong><em>Según ingresos del mes</em></button>
         </div>
 
+        <section class="module-card cash-control-card" id="cash-control-card">
+          <div class="module-card-head">
+            <div>
+              <div class="home-card-title">Caja del día</div>
+              <p id="cash-status-copy">Abrí la caja para controlar automáticamente el efectivo que entra y sale.</p>
+            </div>
+            <span class="module-pill" id="cash-status-pill">Caja cerrada</span>
+          </div>
+
+          <div class="cash-open-panel" id="cash-open-panel">
+            <div class="cash-form-row">
+              <div class="field"><label>Efectivo inicial</label><input id="cash-opening-amount" type="number" min="0" value="0" placeholder="0"></div>
+              <div class="field cash-notes-field"><label>Nota opcional</label><input id="cash-opening-notes" type="text" placeholder="Ej. Fondo de cambio"></div>
+              <button class="btn btn-gold" id="cash-open-btn" onclick="openCashSession()">Abrir caja</button>
+            </div>
+            <p class="cash-help">Desde ese momento, las ventas y movimientos en efectivo se suman automáticamente.</p>
+          </div>
+
+          <div class="cash-active-panel" id="cash-active-panel" hidden>
+            <div class="cash-metrics">
+              <div><small>Saldo inicial</small><strong id="cash-opening-view">$0</strong></div>
+              <div><small>Entró en efectivo</small><strong id="cash-income-view">$0</strong></div>
+              <div><small>Salió en efectivo</small><strong id="cash-expense-view">$0</strong></div>
+              <div class="cash-expected"><small>Debería haber</small><strong id="cash-expected-view">$0</strong></div>
+            </div>
+            <div class="cash-actions-grid">
+              <div class="cash-adjustment-box">
+                <div class="home-card-title">Movimiento de caja</div>
+                <div class="cash-form-row">
+                  <div class="field"><label>Tipo</label><select id="cash-adjustment-type"><option value="ingreso">Ingreso</option><option value="retiro">Retiro</option><option value="gasto">Gasto</option></select></div>
+                  <div class="field"><label>Monto</label><input id="cash-adjustment-amount" type="number" min="0" placeholder="0"></div>
+                  <div class="field cash-notes-field"><label>Descripción</label><input id="cash-adjustment-description" type="text" placeholder="Ej. Cambio, envío o compra menor"></div>
+                  <button class="btn btn-ghost" onclick="recordCashAdjustment()">Registrar</button>
+                </div>
+              </div>
+              <div class="cash-close-box">
+                <div class="home-card-title">Cerrar caja</div>
+                <div class="cash-form-row">
+                  <div class="field"><label>Efectivo contado</label><input id="cash-counted-amount" type="number" min="0" placeholder="Contá el dinero real"></div>
+                  <div class="field cash-notes-field"><label>Nota opcional</label><input id="cash-closing-notes" type="text" placeholder="Aclaraciones del cierre"></div>
+                  <button class="btn btn-gold" onclick="closeCashSession()">Cerrar y comparar</button>
+                </div>
+                <div class="cash-close-result" id="cash-close-result" hidden></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cash-unavailable" id="cash-unavailable" hidden>
+            El control de caja estará disponible cuando se aplique la migración correspondiente.
+          </div>
+        </section>
+
         <div class="module-layout finance-overview">
           <section class="module-card">
             <div class="module-card-head">
