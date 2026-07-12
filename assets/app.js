@@ -3903,7 +3903,8 @@ async function doReset() {
 // INIT
 // ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', init)
-\n// ══════════════════════════════════════
+
+// ══════════════════════════════════════
 // CASH SESSION — apertura, movimientos y cierre simple
 // ══════════════════════════════════════
 let cashSessionState = { session: null, summary: null, loading: false, available: true }
