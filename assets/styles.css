@@ -997,3 +997,32 @@ tr:hover td{background:#171c20}
 @media(max-width:700px){
   .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
+\n\n/* Caja diaria simple */
+.cash-control-card{margin-bottom:18px;border-color:rgba(201,168,76,.3)}
+.cash-form-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.cash-form-row .field{margin:0;min-width:150px;flex:1}
+.cash-form-row .cash-notes-field{flex:2}
+.cash-help{font-size:13px;color:var(--txt2);margin-top:12px}
+.cash-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.cash-metrics>div{background:var(--bg2);border:1px solid var(--bor);border-radius:12px;padding:14px}
+.cash-metrics small,.cash-metrics strong{display:block}
+.cash-metrics small{color:var(--txt2);font-size:12px;margin-bottom:6px}
+.cash-metrics strong{font-size:21px}
+.cash-metrics .cash-expected{border-color:rgba(201,168,76,.4)}
+.cash-metrics .cash-expected strong{color:var(--gold2)}
+.cash-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cash-adjustment-box,.cash-close-box{background:var(--bg2);border:1px solid var(--bor);border-radius:12px;padding:14px}
+.cash-adjustment-box .home-card-title,.cash-close-box .home-card-title{margin-bottom:12px}
+.cash-close-result{margin-top:12px;padding:10px 12px;border-radius:9px;font-size:13px}
+.cash-close-result.ok{background:var(--gdim2);color:var(--green)}
+.cash-close-result.warn{background:var(--ydim);color:var(--yel)}
+.cash-unavailable{padding:14px;border-radius:10px;background:var(--ydim);color:var(--yel)}
+@media(max-width:900px){
+  .cash-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cash-actions-grid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .cash-metrics{grid-template-columns:1fr 1fr}
+  .cash-form-row{display:grid;grid-template-columns:1fr}
+  .cash-form-row .field,.cash-form-row .btn{width:100%}
+}
