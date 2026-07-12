@@ -7,6 +7,7 @@ const checks = [
   'tools/check-migration-contracts.mjs',
   'tools/check-daily-flow.mjs',
   'tools/check-cash-ui.mjs',
+  'tools/check-mobile-help-channels.mjs',
 ]
 
 for (const check of checks) {
