@@ -121,15 +121,14 @@
     <nav class="sidebar">
       <div class="sidebar-brand"><span><svg class="app-icon"><use href="#i-ai"></use></svg></span><strong>Kairós</strong></div>
       <div class="ns-title">Principal</div>
-      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Inicio</span></div>
+      <div class="ni on" data-p="dash" onclick="go('dash',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Hoy</span></div>
+      <div class="ni" data-p="sales" onclick="go('sales',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Vender</span></div>
       <div class="ni" data-p="prod" onclick="go('prod',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></div>
-      <div class="ni" data-p="sales" onclick="go('sales',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></div>
-      <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></div>
-      <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></div>
-      <div class="ni" onclick="openAI()"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>IA</span></div>
-      <div class="ni" onclick="openProfile()"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></div>
-      <details class="sidebar-more">
-        <summary>Más herramientas</summary>
+      <div class="ni" data-p="fin" onclick="go('fin',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Dinero</span></div>
+      <details class="sidebar-more management-menu">
+        <summary>Gestión</summary>
+        <div class="ni" data-p="people" onclick="go('people',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></div>
+        <div class="ni" onclick="openAI()"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>Preguntale a Kairós</span></div>
         <div class="ni" data-p="pub" onclick="go('pub',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></div>
         <div class="ni" data-p="cont" onclick="go('cont',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></div>
         <div class="ni" data-p="met" onclick="go('met',this)"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></div>
@@ -147,7 +146,7 @@
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="home-header">
-          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Este es el estado del negocio hoy</div></div>
+          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Mirá cómo está tu negocio y qué conviene hacer ahora.</div></div>
           <button class="business-switcher" onclick="openProfile()"><span id="home-business-name">Tienda Axel</span><small>Perfil del negocio</small></button>
         </div>
         <div class="home-dashboard" aria-label="Panel principal del negocio">
@@ -155,8 +154,8 @@
             <div class="home-card home-status-card">
               <div class="home-card-head">
                 <div>
-                  <div class="home-card-title">Estado general</div>
-                  <p>Kairós organiza los datos para mostrar qué funciona, qué requiere atención y cuál es el próximo paso.</p>
+                  <div class="home-card-title">Lo importante de hoy</div>
+                  <p>Kairós ordena tus ventas, gastos y productos para mostrarte qué necesita atención.</p>
                 </div>
                 <div class="command-state" id="command-state">
                   <div class="command-state-top"><span class="command-light"></span>Estado actual</div>
@@ -166,11 +165,11 @@
               <div class="home-metric-grid">
                 <button class="home-metric-card metric-cash" onclick="goFinanceDetail('summary')">
                   <span class="metric-help" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Indica con qué dinero cuenta el negocio.">!</span>
-                  <span>Caja operativa</span><strong id="command-cash-value">$0</strong><small id="command-cash-trend">Ingresos menos gastos registrados</small><span class="resource-meter" id="home-cash-meter"><span></span></span>
+                  <span>Dinero disponible</span><strong id="command-cash-value">$0</strong><small id="command-cash-trend">Ingresos menos gastos registrados</small><span class="resource-meter" id="home-cash-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-profit" onclick="goFinanceDetail('summary')">
                   <span class="metric-help" data-info="Ganancia generada por las ventas del mes. Indica si vender está dejando margen.">!</span>
-                  <span>Ganancia por ventas</span><strong id="console-sales-profit">$0</strong><small id="home-sales-number">Registre ventas para conocer este dato.</small><span class="resource-meter" id="home-sales-meter"><span></span></span>
+                  <span>Ganancia del mes</span><strong id="console-sales-profit">$0</strong><small id="home-sales-number">Registrá ventas para conocer este dato.</small><span class="resource-meter" id="home-sales-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-coverage" onclick="goFinanceDetail('fixed')">
                   <span class="metric-help" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Indica si el negocio ya cubrió el mes.">!</span>
@@ -200,7 +199,7 @@
             </div>
 
             <div class="home-card home-diagnosis-card">
-              <div class="home-card-head compact"><div><div class="home-card-title">Diagnóstico de Kairós</div><p id="command-status-copy">Kairós detectó buena rotación en los productos principales, pero algunos necesitan reposición. Revise inventario antes de realizar nuevas compras.</p></div></div>
+              <div class="home-card-head compact"><div><div class="home-card-title">Qué te recomendamos hacer</div><p id="command-status-copy">Kairós detectó buena rotación en los productos principales, pero algunos necesitan reposición. Revisá el inventario antes de realizar nuevas compras.</p></div></div>
               <button class="btn btn-gold" onclick="openAIWithBusinessSummary()">Ver análisis completo</button>
             </div>
           </section>
@@ -221,7 +220,7 @@
             </div>
             <div class="home-card">
               <div class="home-card-title">Últimos movimientos</div>
-              <div class="movement-list" id="home-movements"><div class="movement-item"><span class="module-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><div><strong>Sin movimientos recientes</strong><small>Registre ventas o gastos para completar esta sección.</small></div></div></div>
+              <div class="movement-list" id="home-movements"><div class="movement-item"><span class="module-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><div><strong>Sin movimientos recientes</strong><small>Registrá una venta o un gasto para empezar a ver tu actividad.</small></div></div></div>
             </div>
             <div class="home-card home-missions-card">
               <div class="home-card-title">Próxima acción recomendada</div>
@@ -448,7 +447,7 @@
         </div>
 
         <div class="module-summary-grid">
-          <button class="module-summary-card" onclick="showFinanceQuestion('summary')"><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Caja operativa</small><strong id="finance-cash">$0</strong><em>Ingresos menos egresos registrados</em></button>
+          <button class="module-summary-card" onclick="showFinanceQuestion('summary')"><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><small>Dinero disponible</small><strong id="finance-cash">$0</strong><em>Ingresos menos egresos registrados</em></button>
           <button class="module-summary-card" onclick="showFinanceQuestion('summary')"><span class="summary-icon blue"><svg class="app-icon"><use href="#i-sale"></use></svg></span><small>Ingresos del mes</small><strong id="finance-income">$0</strong><em id="finance-income-note">0 registros</em></button>
           <button class="module-summary-card" onclick="showFinanceQuestion('movements')"><span class="summary-icon red"><svg class="app-icon"><use href="#i-expense"></use></svg></span><small>Egresos del mes</small><strong id="finance-expense">$0</strong><em id="finance-expense-note">0 registros</em></button>
           <button class="module-summary-card" onclick="showFinanceQuestion('fixed')"><span class="summary-icon gold"><svg class="app-icon"><use href="#i-chart"></use></svg></span><small>Gastos fijos cubiertos</small><strong id="finance-fixed-coverage">0%</strong><em>Según ingresos del mes</em></button>
@@ -1130,18 +1129,16 @@
     </div>
   </div>
   <nav class="mobile-nav" aria-label="Navegación principal">
-    <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Inicio</span></button>
-    <button class="mobile-ni" data-p="sales" onclick="go('sales',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Ventas</span></button>
+    <button class="mobile-ni on" data-p="dash" onclick="go('dash',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-home"></use></svg></span><span>Hoy</span></button>
+    <button class="mobile-ni" data-p="sales" onclick="go('sales',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-sale"></use></svg></span><span>Vender</span></button>
     <button class="mobile-ni" data-p="prod" onclick="go('prod',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-box"></use></svg></span><span>Productos</span></button>
-    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Finanzas</span></button>
-    <button class="mobile-ni" data-p="people" onclick="go('people',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-users"></use></svg></span><span>Equipo</span></button>
-    <button class="mobile-ni" onclick="const m=document.querySelector('.mobile-more'); if(m)m.open=!m.open"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Más</span></button>
+    <button class="mobile-ni" data-p="fin" onclick="go('fin',this)"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-wallet"></use></svg></span><span>Dinero</span></button>
+    <button class="mobile-ni" onclick="const m=document.querySelector('.mobile-more'); if(m)m.open=!m.open"><span class="mobile-ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Gestión</span></button>
   </nav>
   <details class="mobile-more">
-    <summary>Más</summary>
+    <summary>Gestión</summary>
     <div class="mobile-more-panel">
       <button class="ni mobile-more-item" onclick="openAI();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-ai"></use></svg></span><span>IA</span></button>
-      <button class="ni mobile-more-item" onclick="openProfile();this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-settings"></use></svg></span><span>Configuración</span></button>
       <button class="ni mobile-more-item" data-p="pub" onclick="go('pub',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Publicidad</span></button>
       <button class="ni mobile-more-item" data-p="cont" onclick="go('cont',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-file"></use></svg></span><span>Contenido</span></button>
       <button class="ni mobile-more-item" data-p="met" onclick="go('met',this);this.closest('details').open=false"><span class="ni-ico"><svg class="app-icon"><use href="#i-chart"></use></svg></span><span>Métricas avanzadas</span></button>
@@ -1165,7 +1162,7 @@
     <button class="btn btn-ghost btn-sm" onclick="closeAI()">✕</button>
   </div>
   <div class="ai-msgs" id="ai-msgs">
-    <div class="ai-msg ai-bot">Puede consultar sobre el negocio o preparar una acción para revisar y confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
+    <div class="ai-msg ai-bot">Preguntame sobre tu negocio o pedime que prepare una acción. Siempre vas a poder revisarla antes de confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
     <div class="ai-quick-actions">
       <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
       <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
