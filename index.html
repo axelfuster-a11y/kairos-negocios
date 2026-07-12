@@ -94,13 +94,15 @@
     <div class="wstep" id="ws3">
       <div class="wtitle">Canales de venta actuales</div>
       <div class="wsub">Seleccione todos los canales que utiliza actualmente.</div>
-      <div id="w-canales" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Instagram" style="width:auto;accent-color:var(--gold)"> Instagram</label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="MercadoLibre" style="width:auto;accent-color:var(--gold)"> MercadoLibre</label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="WhatsApp" style="width:auto;accent-color:var(--gold)"> WhatsApp</label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Tienda Nube" style="width:auto;accent-color:var(--gold)"> Tienda Nube</label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Shopify" style="width:auto;accent-color:var(--gold)"> Shopify</label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bor);border-radius:9px;cursor:pointer;font-size:13px"><input type="checkbox" value="Local físico" style="width:auto;accent-color:var(--gold)"> Local físico</label>
+      <div id="w-canales" class="channel-options" aria-label="Canales de venta; podés seleccionar varios">
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Instagram" style="width:auto;accent-color:var(--gold)"> Instagram</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Facebook"> Facebook</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="MercadoLibre" style="width:auto;accent-color:var(--gold)"> MercadoLibre</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="WhatsApp" style="width:auto;accent-color:var(--gold)"> WhatsApp</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Tienda Nube" style="width:auto;accent-color:var(--gold)"> Tienda Nube</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Shopify" style="width:auto;accent-color:var(--gold)"> Shopify</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Web propia"> Página web propia</label>
+        <label class="channel-option"><input class="channel-checkbox" type="checkbox" name="sales_channels" value="Local físico" style="width:auto;accent-color:var(--gold)"> Local físico</label>
       </div>
       <div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="wBack(3)" style="flex:1">← Atrás</button><button class="btn btn-gold" id="w-finish-btn" onclick="wFinish()" style="flex:2">Entrar a Kairós</button></div>
     </div>
@@ -164,15 +166,15 @@
               </div>
               <div class="home-metric-grid">
                 <button class="home-metric-card metric-cash" onclick="goFinanceDetail('summary')">
-                  <span class="metric-help" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Indica con qué dinero cuenta el negocio.">!</span>
+                  <span class="metric-help" role="button" tabindex="0" aria-label="Ver explicación" onclick="toggleInfo(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfo(event,this)}" data-info="Dinero disponible hoy según los ingresos y gastos registrados. Indica con qué dinero cuenta el negocio.">!</span>
                   <span>Dinero disponible</span><strong id="command-cash-value">$0</strong><small id="command-cash-trend">Ingresos menos gastos registrados</small><span class="resource-meter" id="home-cash-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-profit" onclick="goFinanceDetail('summary')">
-                  <span class="metric-help" data-info="Ganancia generada por las ventas del mes. Indica si vender está dejando margen.">!</span>
+                  <span class="metric-help" role="button" tabindex="0" aria-label="Ver explicación" onclick="toggleInfo(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfo(event,this)}" data-info="Ganancia generada por las ventas del mes. Indica si vender está dejando margen.">!</span>
                   <span>Ganancia del mes</span><strong id="console-sales-profit">$0</strong><small id="home-sales-number">Registrá ventas para conocer este dato.</small><span class="resource-meter" id="home-sales-meter"><span></span></span>
                 </button>
                 <button class="home-metric-card metric-coverage" onclick="goFinanceDetail('fixed')">
-                  <span class="metric-help" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Indica si el negocio ya cubrió el mes.">!</span>
+                  <span class="metric-help" role="button" tabindex="0" aria-label="Ver explicación" onclick="toggleInfo(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInfo(event,this)}" data-info="Porcentaje de gastos fijos mensuales ya cubiertos con ingresos registrados. Indica si el negocio ya cubrió el mes.">!</span>
                   <span>Gastos fijos cubiertos</span><strong id="coverage-percent">0%</strong><small id="coverage-copy">Qué parte de los gastos mensuales ya está cubierta.</small><span class="resource-meter good" id="coverage-meter"><span></span></span>
                 </button>
               </div>
