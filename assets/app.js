@@ -1387,10 +1387,10 @@ async function registerSale(payload) {
   return {
     saleId: data?.saleId,
     movementId: data?.movementId,
-    total: Number(data?.total) || total,
-    received: Number(data?.received) || received,
-    difference: Number(data?.difference) || Math.max(total - received, 0),
-    profit: Number(data?.profit) || (received - cost)
+    total: data?.total == null ? total : Number(data.total),
+    received: data?.received == null ? received : Number(data.received),
+    difference: data?.difference == null ? Math.max(total - received, 0) : Number(data.difference),
+    profit: data?.profit == null ? received - cost : Number(data.profit)
   }
 }
 
