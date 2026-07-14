@@ -213,7 +213,17 @@ async function enterApp() {
 // ══════════════════════════════════════
 // WIZARD
 // ══════════════════════════════════════
-function openWiz() { document.getElementById('wizard').classList.add('on') }
+function syncWizardChannels(biz = null) {
+  const saved = new Set(String(biz?.can || V('b-can') || '').split(',').map(v => normalizeText(v)).filter(Boolean))
+  document.querySelectorAll('#w-canales input').forEach(input => {
+    const value = normalizeText(input.value)
+    input.checked = saved.has(value) || (value === 'local fisico' && saved.has('local físico'))
+  })
+}
+function openWiz() {
+  syncWizardChannels()
+  document.getElementById('wizard').classList.add('on')
+}
 function closeWiz() { document.getElementById('wizard').classList.remove('on') }
 function setWDot(n) { document.querySelectorAll('.wdot').forEach((d, i) => d.classList.toggle('on', i < n)) }
 function wNext(s) {
@@ -371,6 +381,14 @@ function updateProductSummary(rows) {
   S('prod-avg-margin', priced.length ? `${fmtDec(priced.reduce((sum, value) => sum + value, 0) / priced.length)}%` : '—')
   S('prod-missing-cost', missingCost)
   S('prod-missing-price', missingPrice)
+  const diagnosis = document.getElementById('product-diagnosis-text')
+  const btn = document.getElementById('product-diagnosis-btn')
+  if (diagnosis) {
+    if (!rows.length) diagnosis.textContent = 'Todavía no hay productos cargados. Cree el primer producto para empezar a medir precios, costos e inventario.'
+    else if (missingCost || missingPrice) diagnosis.textContent = 'Hay productos que no pueden calcular rentabilidad porque faltan datos de costo o precio. Complete esa información para obtener un análisis más preciso.'
+    else diagnosis.textContent = 'Todos los productos tienen costo y precio de venta cargados. Revise inventario bajo y margen antes de comprar o publicar más.'
+  }
+  if (btn) btn.textContent = (missingCost || missingPrice) ? 'Completar datos pendientes' : rows.length ? 'Revisar inventario y márgenes' : 'Crear producto'
 }
 
 function exportProducts() {
@@ -497,6 +515,7 @@ async function saveBiz(force = false) {
 function loadBizForm(b) {
   if (!b) return
   ;[['b-nom', 'nom'], ['b-rub', 'rub'], ['b-loc', 'loc'], ['b-can', 'can'], ['b-prob', 'prob'], ['b-dif', 'dif'], ['b-cli', 'cli'], ['b-don', 'don'], ['b-prod', 'prod'], ['b-prec', 'prec']].forEach(([id, k]) => { const e = document.getElementById(id); if (e) e.value = b[k] || '' })
+  syncWizardChannels(b)
   setTbBiz(b)
 }
 
@@ -504,6 +523,7 @@ function setTbBiz(b) {
   document.getElementById('tb-biz').innerHTML = b?.nom
     ? `<strong>${escapeHTML(b.nom)}</strong>${b.rub ? ' · ' + escapeHTML(b.rub) : ''}`
     : '<span style="color:var(--txt3)">Sin negocio configurado</span>'
+  S('home-business-name', b?.nom || 'Mi negocio')
 }
 
 async function openProfile() {
@@ -536,10 +556,242 @@ async function openProfile() {
     console.error('[Kairós] openProfile:', error)
     document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intente nuevamente.'
   }
+  await loadShopifyConnection()
 }
 
 function closeProfile() {
   document.getElementById('profile-ov').classList.remove('on')
+}
+
+const KAIROS_EXPORT_VERSION = 1
+const KAIROS_EXPORT_TABLES = [
+  { name: 'negocios', mode: 'upsert' },
+  { name: 'configuracion_costos', mode: 'upsert' },
+  { name: 'movimientos_financieros' },
+  { name: 'inventario_items' },
+  { name: 'ventas' },
+  { name: 'venta_items' },
+  { name: 'stock_movements' },
+  { name: 'inventory_aliases' },
+  { name: 'bot_actions' },
+  { name: 'import_batches' },
+  { name: 'import_rows' },
+  { name: 'organization_items' },
+  { name: 'team_members' },
+  { name: 'team_settings', mode: 'upsert' },
+  { name: 'team_payments' },
+  { name: 'leads' },
+  { name: 'campanas' },
+  { name: 'contenido' },
+  { name: 'referentes' },
+  { name: 'gastos_fijos' },
+  { name: 'transacciones' },
+  { name: 'productos' },
+  { name: 'angulos' },
+]
+const KAIROS_IMPORT_ORDER = [
+  'negocios', 'configuracion_costos', 'inventario_items', 'movimientos_financieros', 'ventas',
+  'venta_items', 'stock_movements', 'inventory_aliases', 'bot_actions', 'import_batches',
+  'import_rows', 'organization_items', 'team_members', 'team_settings', 'team_payments',
+  'leads', 'campanas', 'contenido', 'referentes', 'gastos_fijos', 'transacciones', 'productos', 'angulos'
+]
+let pendingKairosImport = null
+
+function missingExportTable(error) {
+  const msg = String(error?.message || '').toLowerCase()
+  return error?.code === '42P01' || msg.includes('does not exist') || msg.includes('could not find the table')
+}
+
+function exportFileName(businessName) {
+  const clean = String(businessName || 'cuenta')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'cuenta'
+  return `kairos-${clean}-${today()}.json`
+}
+
+async function exportKairosAccount() {
+  if (!CU) return
+  const btnText = 'Exportar cuenta'
+  const warnings = []
+  const tables = {}
+  let businessName = ''
+  for (const table of KAIROS_EXPORT_TABLES) {
+    const { data, error } = await sb.from(table.name).select('*').eq('user_id', CU.id)
+    if (error) {
+      if (missingExportTable(error)) warnings.push(`${table.name}: tabla no disponible`)
+      else warnings.push(`${table.name}: ${error.message}`)
+      tables[table.name] = []
+      continue
+    }
+    tables[table.name] = data || []
+    if (table.name === 'negocios') businessName = data?.[0]?.nom || ''
+  }
+  const payload = {
+    app: 'kairos-negocios',
+    version: KAIROS_EXPORT_VERSION,
+    exported_at: new Date().toISOString(),
+    source_user: { email: CU.email || null },
+    warnings,
+    tables,
+    excluded: ['shopify_connection_secrets', 'shopify_oauth_states', 'tokens y credenciales externas']
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = exportFileName(businessName)
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  toast(warnings.length ? `Cuenta exportada con ${warnings.length} aviso${warnings.length === 1 ? '' : 's'}` : 'Cuenta exportada')
+  const btn = [...document.querySelectorAll('button')].find(b => b.textContent === btnText)
+  if (btn) btn.blur()
+}
+
+function kairosImportCounts(payload) {
+  const tables = payload?.tables || {}
+  return KAIROS_EXPORT_TABLES
+    .map(t => [t.name, Array.isArray(tables[t.name]) ? tables[t.name].length : 0])
+    .filter(([, count]) => count > 0)
+}
+
+async function previewKairosImport(event) {
+  const file = event?.target?.files?.[0]
+  const box = document.getElementById('kairos-import-preview')
+  pendingKairosImport = null
+  if (!file || !box) return
+  try {
+    const payload = JSON.parse(await file.text())
+    if (payload?.app !== 'kairos-negocios' || !payload?.tables) throw new Error('El archivo no corresponde a una exportación de Kairós')
+    const counts = kairosImportCounts(payload)
+    pendingKairosImport = payload
+    const total = counts.reduce((sum, [, count]) => sum + count, 0)
+    box.classList.add('on')
+    box.innerHTML = `
+      <strong>Vista previa de importación</strong>
+      <div>Archivo: ${escapeHTML(file.name)}</div>
+      <div>Registros detectados: ${total}</div>
+      <div>Los datos se copiaran al usuario actual. No se importan tokens ni credenciales externas.</div>
+      <ul>${counts.slice(0, 12).map(([name, count]) => `<li>${escapeHTML(name)}: ${count}</li>`).join('')}${counts.length > 12 ? `<li>y ${counts.length - 12} tabla${counts.length - 12 === 1 ? '' : 's'} más</li>` : ''}</ul>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-gold btn-sm" onclick="confirmKairosImport()">Importar datos</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelKairosImport()">Cancelar</button>
+      </div>`
+  } catch (error) {
+    box.classList.add('on')
+    box.innerHTML = `<strong>No se pudo leer el archivo</strong><div>${escapeHTML(error.message || 'Archivo inválido')}</div>`
+  }
+}
+
+function cancelKairosImport() {
+  pendingKairosImport = null
+  const input = document.getElementById('kairos-import-file')
+  const box = document.getElementById('kairos-import-preview')
+  if (input) input.value = ''
+  if (box) { box.classList.remove('on'); box.innerHTML = '' }
+}
+
+function remapKairosRow(table, row, idMaps) {
+  const copy = { ...row, user_id: CU.id }
+  if (copy.id) copy.id = idMaps[table]?.[copy.id] || crypto.randomUUID()
+  if (copy.venta_id) copy.venta_id = idMaps.ventas?.[copy.venta_id] || copy.venta_id
+  if (copy.inventory_item_id) copy.inventory_item_id = idMaps.inventario_items?.[copy.inventory_item_id] || copy.inventory_item_id
+  if (copy.batch_id) copy.batch_id = idMaps.import_batches?.[copy.batch_id] || copy.batch_id
+  if (copy.team_member_id) copy.team_member_id = idMaps.team_members?.[copy.team_member_id] || copy.team_member_id
+  if (copy.movimiento_financiero_id) copy.movimiento_financiero_id = idMaps.movimientos_financieros?.[copy.movimiento_financiero_id] || copy.movimiento_financiero_id
+  if (copy.referencia_id) copy.referencia_id = idMaps.ventas?.[copy.referencia_id] || idMaps.movimientos_financieros?.[copy.referencia_id] || copy.referencia_id
+  return copy
+}
+
+async function confirmKairosImport() {
+  if (!pendingKairosImport || !CU) return
+  if (!confirm('¿Importar estos datos en la cuenta actual? Esta acción agregará registros y actualizará configuraciones principales.')) return
+  const tables = pendingKairosImport.tables || {}
+  const idMaps = {}
+  for (const table of KAIROS_EXPORT_TABLES) {
+    const rows = Array.isArray(tables[table.name]) ? tables[table.name] : []
+    idMaps[table.name] = {}
+    rows.forEach(row => { if (row?.id) idMaps[table.name][row.id] = crypto.randomUUID() })
+  }
+  const errors = []
+  for (const tableName of KAIROS_IMPORT_ORDER) {
+    const config = KAIROS_EXPORT_TABLES.find(t => t.name === tableName) || {}
+    const rows = Array.isArray(tables[tableName]) ? tables[tableName] : []
+    if (!rows.length) continue
+    const mapped = rows.map(row => remapKairosRow(tableName, row, idMaps))
+    const query = config.mode === 'upsert'
+      ? sb.from(tableName).upsert(mapped.map(row => ({ ...row, user_id: CU.id, id: undefined })), { onConflict: 'user_id' })
+      : sb.from(tableName).insert(mapped)
+    const { error } = await query
+    if (error) errors.push(`${tableName}: ${error.message}`)
+  }
+  cancelKairosImport()
+  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderSales(), renderProds(), renderMet()])
+  if (errors.length) {
+    console.error('[Kairós] Importación parcial:', errors)
+    toastErr(`Importación parcial: ${errors.length} tabla${errors.length === 1 ? '' : 's'} con error`)
+  } else {
+    toast('Datos importados')
+  }
+}
+
+function normalizeShopifyDomain(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+}
+
+async function loadShopifyConnection() {
+  const status = document.getElementById('shopify-status-text')
+  const btn = document.getElementById('shopify-connect-btn')
+  if (!status || !btn || !CU) return
+  status.textContent = 'Revisando conexión...'
+  const { data, error } = await sb.from('shopify_connections')
+    .select('shop_domain,status,connected_at,last_sync_at')
+    .eq('user_id', CU.id)
+    .order('connected_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) {
+    status.textContent = 'La conexión con Shopify todavía no está disponible en esta cuenta.'
+    btn.textContent = 'Conectar Shopify'
+    return
+  }
+  if (!data) {
+    status.textContent = 'Sin conexión activa.'
+    btn.textContent = 'Conectar Shopify'
+    return
+  }
+  const syncText = data.last_sync_at ? ` Última sincronización: ${new Date(data.last_sync_at).toLocaleDateString('es-AR')}.` : ''
+  status.textContent = `${data.shop_domain} - ${data.status === 'connected' ? 'conectado' : data.status}.${syncText}`
+  btn.textContent = 'Reconectar Shopify'
+}
+
+async function connectShopify() {
+  const raw = V('shopify-domain-input')
+  const shop = normalizeShopifyDomain(raw)
+  if (!shop) { toastErr('Ingrese el dominio de Shopify'); return }
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+    toastErr('Ingrese un dominio valido de Shopify, por ejemplo tienda.myshopify.com')
+    return
+  }
+  const btn = document.getElementById('shopify-connect-btn')
+  if (btn) btn.disabled = true
+  try {
+    const { data, error } = await sb.functions.invoke('shopify-oauth-start', {
+      body: { shop, returnTo: window.location.href }
+    })
+    if (error) throw error
+    if (!data?.authorizationUrl) throw new Error('No se recibió la URL de autorización')
+    window.location.href = data.authorizationUrl
+  } catch (error) {
+    console.error('[Kairós] connectShopify:', error)
+    toastErr(error.message || 'No se pudo iniciar la conexión con Shopify')
+    if (btn) btn.disabled = false
+  }
 }
 
 function setDashTitle() {
@@ -729,16 +981,13 @@ function movementTotals(items) { return window.KairosFinanceService.movementTota
 async function loadUnifiedFinances(force = false) { return window.KairosFinanceService.loadUnifiedFinances(force) }
 async function loadSalesSummary(force = false) { return window.KairosFinanceService.loadSalesSummary(force) }
 
-function setFinanceOverview({ ing, egr, gan, tf, sales }) {
+function setFinanceOverview({ ing, egr, gan, tf, sales, teamPaid = 0 }) {
   const incomeCount = document.getElementById('f-ing-n')?.textContent || '0 registros'
   const expenseCount = document.getElementById('f-egr-n')?.textContent || '0 registros'
   const coverage = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
   const movementCount = (parseInt(incomeCount, 10) || 0) + (parseInt(expenseCount, 10) || 0)
   const cashMargin = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const fixedGap = Math.max(0, tf - ing)
-  const teamPaid = teamData?.payments
-    ?.filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
-    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0) || 0
   S('finance-cash', money(gan))
   S('finance-income', money(ing))
   S('finance-expense', money(egr))
@@ -776,14 +1025,18 @@ function setFinanceOverview({ ing, egr, gan, tf, sales }) {
   if (chart) {
     const max = Math.max(ing, egr, Math.abs(gan), tf, 1)
     const bars = [
-      { label: 'Ingresos', value: ing, cls: 'income' },
-      { label: 'Egresos', value: egr, cls: 'expense' },
-      { label: 'Resultado', value: gan, cls: gan >= 0 ? 'profit' : 'loss' },
-      { label: 'Gastos fijos', value: tf, cls: 'fixed' }
+      { label: 'Dinero ingresado', value: ing, cls: 'income', note: incomeCount },
+      { label: 'Dinero gastado', value: egr, cls: 'expense', note: expenseCount },
+      { label: 'Resultado del mes', value: gan, cls: gan >= 0 ? 'profit' : 'loss', note: gan >= 0 ? 'Caja positiva' : 'Caja negativa' },
+      { label: 'Gastos fijos', value: tf, cls: 'fixed', note: tf > 0 ? `${coverage}% cubierto` : 'Sin configurar' }
     ]
     chart.innerHTML = bars.map(item => {
-      const height = Math.max(8, Math.round((Math.abs(item.value) / max) * 100))
-      return `<div class="finance-bar ${item.cls}"><div class="finance-bar-fill" style="height:${height}%"></div><strong>${money(item.value)}</strong><span>${item.label}</span></div>`
+      const width = Math.max(4, Math.round((Math.abs(item.value) / max) * 100))
+      return `<div class="finance-flow-row ${item.cls}">
+        <div class="finance-flow-head"><span>${escapeHTML(item.label)}</span><strong>${money(item.value)}</strong></div>
+        <div class="finance-flow-track"><div class="finance-flow-fill" style="width:${width}%"></div></div>
+        <small>${escapeHTML(item.note)}</small>
+      </div>`
     }).join('')
   }
   const diagnosis = document.getElementById('finance-diagnosis')
@@ -794,6 +1047,19 @@ function setFinanceOverview({ ing, egr, gan, tf, sales }) {
       : gan >= 0
         ? `El resultado de caja es positivo y las ventas aportan ${money(sales.profit)} de ganancia comercial. ${fixedCopy}`
         : `El resultado de caja es negativo. Revise egresos, gastos fijos y margen comercial antes de asumir nuevas obligaciones. ${fixedCopy}`
+  }
+  const priority = document.getElementById('finance-priority-list')
+  if (priority) {
+    const actions = []
+    if (!ing && !egr) actions.push(['warn', 'Registrar el primer movimiento', 'Agregue ingresos o egresos para iniciar la lectura financiera.', "showFinanceQuestion('movements')"])
+    if (gan < 0) actions.push(['bad', 'Revisar egresos', 'El resultado de caja está negativo este mes.', "showFinanceQuestion('movements')"])
+    if (tf <= 0) actions.push(['warn', 'Configurar gastos fijos', 'Defina alquiler, servicios y compromisos mensuales.', "showFinanceQuestion('fixed')"])
+    else if (coverage < 100) actions.push(['warn', 'Cubrir gastos fijos', `Falta ${money(fixedGap)} para cubrir el mes.`, "showFinanceQuestion('fixed')"])
+    if (!sales.count) actions.push(['ok', 'Registrar ventas', 'Conecte las ventas con caja y rentabilidad.', "goPage('sales')"])
+    actions.push(['ok', 'Ver detalle del mes', 'Abrir tablas y formularios cuando necesite auditar datos.', "showFinanceQuestion('summary')"])
+    priority.innerHTML = actions.slice(0, 3).map(([state, title, text, action]) =>
+      `<button onclick="${action}"><span class="dot ${state === 'bad' ? 'bad' : state === 'warn' ? 'warn' : ''}"></span><strong>${escapeHTML(title)}</strong><small>${escapeHTML(text)}</small></button>`
+    ).join('')
   }
 }
 
@@ -851,6 +1117,37 @@ function togglePosCategory(category) {
   renderSalesCatalog()
 }
 
+function bindPosControls() {
+  const grid = document.getElementById('pos-grid')
+  if (grid && !grid.dataset.bound) {
+    grid.dataset.bound = '1'
+    grid.addEventListener('click', event => {
+      const btn = event.target.closest('[data-pos-add]')
+      if (btn) addPosItem(btn.dataset.posAdd)
+    })
+  }
+  const cart = document.getElementById('pos-cart')
+  if (cart && !cart.dataset.bound) {
+    cart.dataset.bound = '1'
+    cart.addEventListener('click', event => {
+      const btn = event.target.closest('[data-pos-qty]')
+      if (btn) changePosQty(btn.dataset.posQty, Number(btn.dataset.delta) || 0)
+    })
+  }
+  const confirm = document.getElementById('pos-confirm-sale')
+  if (confirm && !confirm.dataset.bound) {
+    confirm.dataset.bound = '1'
+    confirm.addEventListener('click', confirmPosSale)
+  }
+  ;['pos-method', 'pos-received'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el && !el.dataset.bound) {
+      el.dataset.bound = '1'
+      el.addEventListener(id === 'pos-method' ? 'change' : 'input', renderPosCart)
+    }
+  })
+}
+
 function posProductRows() {
   const query = V('pos-search').trim().toLowerCase()
   return (importedData.inventory || []).filter(item => {
@@ -862,6 +1159,7 @@ function posProductRows() {
 }
 
 function renderSalesCatalog() {
+  bindPosControls()
   renderPosCategoryOptions()
   const grid = document.getElementById('pos-grid')
   if (!grid) return
@@ -879,13 +1177,14 @@ function renderSalesCatalog() {
     const qty = posCart[id] || 0
     const disabled = !price || stock <= 0
     const badge = !price ? 'Sin precio' : stock <= 0 ? 'Sin inventario' : `${stock} disponibles`
+    const image = productImageUrl(item)
     return `<article class="pos-product ${disabled ? 'disabled' : ''}">
-      <div class="pos-product-media"><span>${escapeHTML((label || 'P').slice(0, 1).toUpperCase())}</span>${qty ? `<strong>${qty}</strong>` : ''}</div>
+      <div class="pos-product-media">${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(label || 'Producto')}">` : `<span>${escapeHTML((label || 'P').slice(0, 1).toUpperCase())}</span>`}${qty ? `<strong>${qty}</strong>` : ''}</div>
       <div class="pos-product-body">
         <small>${escapeHTML(item.sku || item.categoria || 'Producto')}</small>
         <h4>${escapeHTML(label || 'Producto sin nombre')}</h4>
         <div><b>${price ? money(price) : 'Sin precio'}</b><em>${escapeHTML(badge)}</em></div>
-        <button class="btn btn-ghost btn-sm" ${disabled ? 'disabled' : ''} onclick="addPosItem('${id}')">Agregar</button>
+        <button class="btn btn-ghost btn-sm" ${disabled ? 'disabled' : ''} data-pos-add="${id}">Agregar</button>
       </div>
     </article>`
   }).join('')
@@ -936,13 +1235,13 @@ function renderPosCart() {
   const count = rows.reduce((sum, row) => sum + row.cantidad, 0)
   const total = rows.reduce((sum, row) => sum + row.cantidad * saleItemPrice(row.item), 0)
   const received = numOrDefault('pos-received')
-  if (countEl) countEl.textContent = count ? `${count} producto${count === 1 ? '' : 's'} seleccionados` : 'Sin productos seleccionados'
+  if (countEl) countEl.textContent = count ? `${count} producto${count === 1 ? '' : 's'} seleccionado${count === 1 ? '' : 's'}` : 'Sin productos seleccionados'
   cart.innerHTML = rows.length
     ? rows.map(({ item, cantidad }) => `<div class="pos-cart-row">
         <div><strong>${escapeHTML(saleItemLabel(item))}</strong><small>${money(saleItemPrice(item))} c/u</small></div>
-        <div class="pos-qty"><button onclick="changePosQty('${item.id}',-1)">-</button><span>${cantidad}</span><button onclick="changePosQty('${item.id}',1)">+</button></div>
+        <div class="pos-qty"><button data-pos-qty="${item.id}" data-delta="-1">-</button><span>${cantidad}</span><button data-pos-qty="${item.id}" data-delta="1">+</button></div>
       </div>`).join('')
-    : '<div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catalogo</div>'
+    : '<div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catálogo</div>'
   if (totalEl) totalEl.textContent = `Total de venta: ${money(total)}`
   if (noteEl) {
     const method = V('pos-method')
@@ -1048,7 +1347,8 @@ function resetManualSaleForm() {
 async function refreshAfterSale() {
   invalidateUnifiedFinances()
   invalidateSalesSummary()
-  await Promise.all([loadImportedData(true), renderSales(), renderFin(), renderDash(), renderMet()])
+  await loadImportedData()
+  await Promise.all([renderSales(), renderFin(), renderDash(), renderMet()])
 }
 
 async function registerSale(payload) {
@@ -1190,12 +1490,13 @@ async function renderSales() {
     loadSalesSummary(),
     loadUnifiedFinances(),
     sb.from('ventas').select('*').eq('user_id', CU.id).order('fecha', { ascending: false }).limit(80),
-    sb.from('venta_items').select('id,cantidad').eq('user_id', CU.id).limit(1000)
+    sb.from('venta_items').select('id,cantidad,producto_texto,subtotal,venta_id').eq('user_id', CU.id).limit(5000)
   ])
   if (rowsResult.error) console.error('[Kairós] renderSales ventas:', rowsResult.error)
   if (itemsResult.error) console.error('[Kairós] renderSales venta_items:', itemsResult.error)
   const rows = rowsResult.data || []
-  const itemCount = (itemsResult.data || []).reduce((sum, item) => sum + (Number(item.cantidad) || 1), 0)
+  const saleItems = itemsResult.data || []
+  const itemCount = saleItems.reduce((sum, item) => sum + (Number(item.cantidad) || 1), 0)
   populateManualSaleProducts()
   renderSalesCatalog()
   switchSalesTab(salesTab)
@@ -1220,16 +1521,17 @@ async function renderSales() {
       : rows.map(row => {
         const total = Number(row.total) || 0
         const cost = Number(row.costo_total) || 0
-        const profit = Number(row.ganancia) || (total - cost)
-        const margin = Number(row.margen_pct) || (total > 0 ? (profit / total) * 100 : 0)
+        const hasCost = cost > 0
+        const profit = hasCost ? (Number(row.ganancia) || (total - cost)) : null
+        const margin = hasCost ? (Number(row.margen_pct) || (total > 0 ? (profit / total) * 100 : 0)) : null
         return `<tr>
           <td>${escapeHTML(saleDate(row))}</td>
-          <td><strong>${escapeHTML(row.cliente || 'Cliente no informado')}</strong><span class="product-sub">${escapeHTML(row.medio_pago || 'Medio sin informar')}</span></td>
+          <td><strong>${escapeHTML(row.cliente || 'Cliente no informado')}</strong></td>
           <td>${money(total)}</td>
           <td>${cost > 0 ? money(cost) : 'Sin dato'}</td>
-          <td style="color:${profit >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${money(profit)}</td>
-          <td><span class="badge ${margin >= 25 ? 'bg' : margin >= 0 ? 'by' : 'br'}">${fmtDec(margin)}%</span></td>
-          <td><span class="badge bb">${escapeHTML(row.origen || 'manual')}</span></td>
+          <td style="color:${profit === null ? 'var(--yel)' : profit >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${profit === null ? 'No calculado' : money(profit)}</td>
+          <td>${margin === null ? '<span class="badge by">No calculado</span>' : `<span class="badge ${margin >= 25 ? 'bg' : margin >= 0 ? 'by' : 'br'}">${fmtDec(margin)}%</span>`}</td>
+          <td><span class="badge bb">${escapeHTML(row.origen || 'manual')}</span><span class="product-sub">${escapeHTML(row.medio_pago || 'Medio sin informar')}</span></td>
         </tr>`
       }).join('')
   }
@@ -1243,13 +1545,38 @@ async function renderSales() {
       ? purchases.map(item => `<div class="compact-row"><span class="dot warn"></span><div><strong>${escapeHTML(item.descripcion || 'Compra registrada')}</strong><small>${escapeHTML(financeDateKey(item) || 'Sin fecha')} · ${money(item.monto)}</small></div></div>`).join('')
       : '<div class="empty" style="padding:14px"><div class="empty-i">·</div>No se detectaron compras o reposiciones en los movimientos recientes</div>'
   }
+  const rankingEl = document.getElementById('sales-ranking')
+  if (rankingEl) {
+    const productTotals = new Map()
+    saleItems.forEach(item => {
+      const key = item.producto_texto || 'Producto sin nombre'
+      const current = productTotals.get(key) || { qty: 0, total: 0 }
+      current.qty += Number(item.cantidad) || 0
+      current.total += Number(item.subtotal) || 0
+      productTotals.set(key, current)
+    })
+    const channelTotals = new Map()
+    rows.forEach(row => {
+      const key = row.origen || 'manual'
+      const current = channelTotals.get(key) || { count: 0, total: 0 }
+      current.count += 1
+      current.total += Number(row.total) || 0
+      channelTotals.set(key, current)
+    })
+    const topProducts = [...productTotals.entries()].sort((a, b) => b[1].qty - a[1].qty).slice(0, 3)
+    const topChannels = [...channelTotals.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 3)
+    rankingEl.innerHTML = rows.length
+      ? `<div class="compact-section-title">Productos más vendidos</div>${topProducts.map(([name, data]) => `<div class="compact-row"><span class="dot ok"></span><div><strong>${escapeHTML(name)}</strong><small>${data.qty} unidades · ${money(data.total)}</small></div></div>`).join('') || '<div class="empty" style="padding:10px">Sin detalle de productos</div>'}
+         <div class="compact-section-title">Canales principales</div>${topChannels.map(([name, data]) => `<div class="compact-row"><span class="dot"></span><div><strong>${escapeHTML(name)}</strong><small>${data.count} ventas · ${money(data.total)}</small></div></div>`).join('')}`
+      : '<div class="empty" style="padding:14px"><div class="empty-i">·</div>Sin ventas suficientes</div>'
+  }
   const diagnosis = document.getElementById('sales-diagnosis')
   if (diagnosis) {
     diagnosis.textContent = !sales.count
       ? 'Aún no hay ventas confirmadas para analizar. Registre ventas para calcular ganancia, margen y productos vendidos.'
       : sales.margin >= 25
-        ? `La operación comercial muestra margen saludable: ${fmtDec(sales.margin)}% sobre ${money(sales.total)} vendidos. Mantenga actualizados costos y compras para sostener este dato.`
-        : `El margen comercial requiere revisión: ${fmtDec(sales.margin)}% sobre ${money(sales.total)} vendidos. Revise precios, costos y reposición antes de escalar ventas.`
+        ? `La operación comercial muestra margen saludable: ${fmtDec(sales.margin)}% sobre ${money(sales.marginBase || sales.total)} con costo conocido. Mantenga actualizados costos y compras para sostener este dato.`
+        : `El margen comercial requiere revisión: ${fmtDec(sales.margin)}% sobre ${money(sales.marginBase || sales.total)} con costo conocido. Revise precios, costos y reposición antes de escalar ventas.`
   }
 }
 
@@ -1304,14 +1631,22 @@ async function delGF(id) {
 }
 
 async function renderFin() {
-  const [finance, sales, fixedResult] = await Promise.all([
+  const { m, y } = getMes()
+  const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const [finance, sales, fixedResult, teamPaymentsResult] = await Promise.all([
     loadUnifiedFinances(),
     loadSalesSummary(),
-    sb.from('gastos_fijos').select('*').eq('user_id', CU.id)
+    sb.from('gastos_fijos').select('*').eq('user_id', CU.id),
+    sb.from('team_payments').select('tipo,monto').eq('user_id', CU.id).gte('fecha', monthStart).lt('fecha', monthEnd)
   ])
   if (fixedResult.error) console.error('[Kairós] renderFin gastos fijos:', fixedResult.error)
+  if (teamPaymentsResult.error && !isTeamSchemaMissing(teamPaymentsResult.error)) console.error('[Kairós] renderFin pagos equipo:', teamPaymentsResult.error)
   const all = finance.month
   const allGF = fixedResult.data || []
+  const teamPaid = (teamPaymentsResult.data || [])
+    .filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
+    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0)
   const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
   const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
   const tf = allGF.reduce((a, b) => a + (Number(b.mon) || 0), 0)
@@ -1326,7 +1661,7 @@ async function renderFin() {
   document.getElementById('f-sales-margin').style.color = sales.margin >= 25 ? 'var(--green)' : sales.margin >= 0 ? 'var(--yel)' : 'var(--red)'
   const pct = tf > 0 ? Math.min(100, Math.round((ing / tf) * 100)) : 0
   const bar = document.getElementById('f-eq-b'); bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--yel)' : 'var(--red)'
-  setFinanceOverview({ ing, egr, gan, tf, sales })
+  setFinanceOverview({ ing, egr, gan, tf, sales, teamPaid })
   document.getElementById('tx-tb').innerHTML = !finance.recent.length
     ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">·</div>Sin movimientos</div></td></tr>'
     : finance.recent.map(t => `<tr>
@@ -1771,6 +2106,30 @@ async function deleteOrganizationItem(id) {
 // ══════════════════════════════════════
 // PRODUCTOS
 // ══════════════════════════════════════
+function cleanImageUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  try {
+    const url = new URL(raw)
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
+function productImageUrl(item) {
+  const direct = cleanImageUrl(item?.imagen_url || item?.image_url)
+  if (direct) return direct
+  const match = String(item?.notas || '').match(/(?:^|\n)Imagen:\s*(https?:\/\/\S+)/i)
+  return cleanImageUrl(match?.[1])
+}
+
+function notesWithProductImage(notes, imageUrl) {
+  const cleanNotes = String(notes || '').replace(/(?:^|\n)Imagen:\s*https?:\/\/\S+\s*/i, '\n').trim()
+  const cleanUrl = cleanImageUrl(imageUrl)
+  return [cleanUrl ? `Imagen: ${cleanUrl}` : '', cleanNotes].filter(Boolean).join('\n')
+}
+
 async function addProd() {
   const n = V('p-n').trim(); if (!n) { toastErr('Ingrese el nombre'); return }
   const co = numOrDefault('p-co')
@@ -1789,7 +2148,7 @@ async function addProd() {
   const { data, error } = await sb.rpc('create_inventory_item', {
     product_name: n,
     product_category: V('p-c').trim() || null,
-    product_notes: V('p-d').trim() || null,
+    product_notes: notesWithProductImage(V('p-d'), V('p-img')) || null,
     current_stock: stock,
     minimum_stock: stockMin,
     unit_cost: co,
@@ -1807,11 +2166,13 @@ async function addProd() {
     }).eq('id', data.inventory_item_id).eq('user_id', CU.id)
     if (handleSupaError(marginError, 'addProdMargin')) return
   }
-  ;['p-n', 'p-c', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  ;['p-n', 'p-c', 'p-img', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
   document.getElementById('p-cost-result').style.display = 'none'
   document.getElementById('p-cost-alert').style.display = 'none'
-  await Promise.all([loadImportedData(), renderDash()])
+  await loadImportedData()
+  await renderDash()
   switchProductTab('inv')
+  renderImportedInventory()
   toast('Producto agregado al inventario')
 }
 
@@ -2089,14 +2450,14 @@ async function renderMet() {
 async function renderDash() {
   /*
    * Metricas del negocio:
-   * - Ingresos y egresos unifican transacciones historicas y movimientos
+   * - Ingresos y egresos unifican transacciones históricas y movimientos
    *   operativos, usando fecha o created_at cuando la fecha falta.
    * - Resultado de caja = ingresos cobrados - egresos pagados.
    * - Ganancia de ventas = importe vendido - costo de los productos vendidos.
    * - Gastos fijos a cubrir usa la suma de gastos_fijos.mon y se compara con
    *   los ingresos del mes. No se presenta como punto de equilibrio contable.
    * - La pestaña Carga inteligente mantiene el desglose por fuente.
-   * - Leads activos son los contactos que todavia no llegaron a cliente.
+   * - Leads activos son los contactos que todavía no llegaron a cliente.
    * - El bloque importado cuenta como alertas los inventario_items en rojo.
    */
   const [finance, sales, leadResult, prodResult, inventoryResult, fixedResult, biz] = await Promise.all([
@@ -2119,7 +2480,7 @@ async function renderDash() {
   const inventory = inventoryResult.data || []
   const fixedCosts = fixedResult.data
   const b = biz
-  S('home-business-name', b?.nom || 'Tienda Axel')
+  S('home-business-name', b?.nom || 'Mi negocio')
   const all = finance.month, ls = leads || []
   const { ingresos: ing, egresos: egr, balance: gan } = finance.totals
   const mar = ing > 0 ? Math.round((gan / ing) * 100) : 0
@@ -2507,8 +2868,9 @@ function renderImportedInventory() {
       const price = Number(p.precio_venta_local || p.precio_venta_web) || 0
       const margin = productMargin(p)
       const status = productStateLabel(p)
+      const image = productImageUrl(p)
       return `<tr class="${highlighted ? 'attention-row' : ''}">
-        <td><strong>${escapeHTML(p.producto || '—')}</strong>${[p.variante, p.color, p.medida].filter(Boolean).length ? `<div class="product-sub">${escapeHTML([p.variante, p.color, p.medida].filter(Boolean).join(' · '))}</div>` : ''}</td>
+        <td><div class="product-name-cell">${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(p.producto || 'Producto')}">` : `<span>${escapeHTML((p.producto || 'P').slice(0, 1).toUpperCase())}</span>`}<div><strong>${escapeHTML(p.producto || '—')}</strong>${[p.variante, p.color, p.medida].filter(Boolean).length ? `<div class="product-sub">${escapeHTML([p.variante, p.color, p.medida].filter(Boolean).join(' · '))}</div>` : ''}</div></div></td>
         <td><span class="product-sub">${escapeHTML(p.sku || '—')}</span></td>
         <td>${escapeHTML(p.categoria || '—')}</td>
         <td>${cost > 0 ? money(cost) : '<span class="product-muted">Sin dato</span>'}</td>
@@ -2597,7 +2959,8 @@ function editImportedInventoryItem(id) {
   setEditField('ie-precio-local', item.precio_venta_local ?? 0)
   setEditField('ie-precio-web', item.precio_venta_web ?? 0)
   setEditField('ie-proveedor', item.proveedor)
-  setEditField('ie-notas', item.notas)
+  setEditField('ie-imagen', productImageUrl(item))
+  setEditField('ie-notas', String(item.notas || '').replace(/(?:^|\n)Imagen:\s*https?:\/\/\S+\s*/i, '').trim())
   const modal = document.getElementById('inv-edit-ov')
   if (modal) modal.classList.add('on')
 }
@@ -2618,7 +2981,7 @@ async function saveImportedInventoryEdit() {
     const precioLocal = editFieldNumber('ie-precio-local', 'Precio venta local')
     const precioWeb = editFieldNumber('ie-precio-web', 'Precio venta web')
     const proveedor = editFieldText('ie-proveedor', 'Proveedor')
-    const notas = editFieldText('ie-notas', 'Notas')
+    const notas = notesWithProductImage(editFieldText('ie-notas', 'Notas'), V('ie-imagen'))
     const derived = importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb)
     const payload = {
       producto, categoria, color, medida,
@@ -2748,7 +3111,7 @@ function renderSystemState() {
   const last = actions[0]
   const recentLimit = Date.now() - (7 * 24 * 60 * 60 * 1000)
   const recentErrors = actions.filter(a => a.status === 'failed' && new Date(a.created_at || 0).getTime() >= recentLimit).length
-  const advisorBlocked = !!last && last.status === 'failed' && /todavia no ejecuta|could not find the function public\.confirm_bot_action/i.test(String(last.error || ''))
+  const advisorBlocked = !!last && last.status === 'failed' && /todavia no ejecuta|todavía no ejecuta|could not find the function public\.confirm_bot_action/i.test(String(last.error || ''))
   const items = [
     { ok: !importedData.error, label: 'Supabase conectado', value: importedData.error ? 'Error al cargar datos' : 'OK' },
     { ok: !advisorBlocked, label: 'Asesor IA operativo', value: advisorBlocked ? 'Confirmación RPC pendiente o desactualizada' : 'Preview y confirmación activos' },
@@ -2872,6 +3235,16 @@ function stripActionPrefix(text) {
     .trim()
 }
 
+function normalizeBotInputForParsing(text) {
+  return String(text || '')
+    .replace(/\b(vndi|vnd[ií]|vendii|bendi|vendy)\b/gi, 'vendi')
+    .replace(/\b(x|xq)\s+(mp|mercado pago|efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito)\b/gi, 'por $2')
+    .replace(/\bwsp\b/gi, 'whatsapp')
+    .replace(/\bporfa\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function formatDateValue(v) {
   if (!v) return null
   if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10)
@@ -2894,7 +3267,7 @@ function detectTipo(v) {
 
 function detectMedio(v) {
   const t = normalizeText(v)
-  if (t.includes('mercado pago') || t.includes('mercado_pago')) return 'mercado_pago'
+  if (t.includes('mercado pago') || t.includes('mercado_pago') || /\bmp\b/.test(t)) return 'mercado_pago'
   if (t.includes('transferencia')) return 'transferencia'
   if (t.includes('efectivo')) return 'efectivo'
   if (t.includes('debito')) return 'debito'
@@ -2913,18 +3286,75 @@ function detectRowTarget(raw, forced = 'auto') {
 }
 
 function normalizeAliasText(v) {
-  return normalizeText(v).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim()
+  return normalizeText(v)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(word => !['un', 'una', 'unos', 'unas', 'el', 'la', 'los', 'las', 'de', 'del'].includes(word))
+    .map(word => word.length > 4 && word.endsWith('es') ? word.slice(0, -2) : word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word)
+    .join(' ')
+}
+
+function oneEditApart(a, b) {
+  if (!a || !b || Math.abs(a.length - b.length) > 1) return false
+  if (a === b) return true
+  let i = 0, j = 0, edits = 0
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue }
+    edits++
+    if (edits > 1) return false
+    if (a.length > b.length) i++
+    else if (b.length > a.length) j++
+    else { i++; j++ }
+  }
+  return edits + (i < a.length || j < b.length ? 1 : 0) <= 1
+}
+
+function textHasApproxToken(text, token) {
+  if (!token) return true
+  if (text.includes(token)) return true
+  if (token.length < 4) return false
+  return text.split(' ').some(word => oneEditApart(word, token))
 }
 
 function stripBotProductNoise(v) {
   return String(v || '')
+    .replace(/\b(?:en|por)\s+(instagram|whatsapp|shopify|web|mercado libre|tiendanube|local|mostrador)\b.*$/gi, ' ')
+    .replace(/\b(?:se\s+)?acreditaron?\s+\$?\s*[\d.,]+(?:\s*pesos?)?/gi, ' ')
     .replace(/\b(stock|costo|precio|a|por)\s+\$?\s*[\d.,]+(?:\s*cada\s+una)?/gi, ' ')
     .replace(/\b(stock\s+m[ií]nimo)\s+\$?\s*[\d.,]+/gi, ' ')
     .replace(/\b(en)\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
     .replace(/\b(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/gi, ' ')
     .replace(/\b(cada\s+una|unidad|unidades)\b/gi, ' ')
+    .replace(/\bmp\b/gi, ' ')
+    .replace(/\b(?:en|por|de)\s*$/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+const BOT_QTY_WORDS = {
+  un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5,
+  seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10
+}
+
+function readLeadingQuantity(text) {
+  let value = String(text || '').trim()
+  const numeric = value.match(/^\s*([\d.,]+)\s+/)
+  if (numeric) {
+    return {
+      cantidad: Math.max(1, Math.trunc(parseNumberValue(numeric[1]) || 1)),
+      text: value.replace(/^\s*[\d.,]+\s+/, '')
+    }
+  }
+  const word = normalizeText(value).split(/\s+/)[0]
+  if (Object.prototype.hasOwnProperty.call(BOT_QTY_WORDS, word)) {
+    return {
+      cantidad: BOT_QTY_WORDS[word],
+      text: value.replace(/^\s*\S+\s+/, '')
+    }
+  }
+  return { cantidad: 1, text: value }
 }
 
 function parseStockAdditionCommand(text) {
@@ -2947,7 +3377,7 @@ function parseStockAdditionCommand(text) {
 }
 
 function looksOperationalIntent(text) {
-  const t = normalizeText(stripActionPrefix(text))
+  const t = normalizeText(normalizeBotInputForParsing(stripActionPrefix(text)))
   const stockIntent = /\bstock\b/.test(t) && /(aumenta|aumentar|modifica|modificar|suma|agrega|agregar|repone|reponer|ajusta|ajustar|compra|compre|\d)/.test(t)
   const actionAtStart = /^(vendi|vender|vendimos|venta|registra(?:r)? venta|anota(?:r)? venta|gasto|anota(?:r)? gasto|registra(?:r)? gasto|compre|compra|repone|reponer|agrega(?:r)? producto|crear producto|crea producto|editar producto|edita producto)\b/.test(t)
   return stockIntent || actionAtStart
@@ -2956,9 +3386,9 @@ function looksOperationalIntent(text) {
 function parseSaleItemText(part) {
   let text = String(part || '').trim()
   if (!text) return null
-  const qtyMatch = text.match(/^\s*([\d.,]+)\s+/)
-  const cantidad = qtyMatch ? Math.max(1, Math.trunc(parseNumberValue(qtyMatch[1]) || 1)) : 1
-  if (qtyMatch) text = text.replace(/^\s*[\d.,]+\s+/, '')
+  const qty = readLeadingQuantity(text)
+  const cantidad = qty.cantidad
+  text = qty.text
   const priceMatch = text.match(/\b(?:a|por)\s+\$?\s*([\d.,]+(?:\s*(?:mil|k|millon|millones|m))?)/i)
   const precio = priceMatch ? parseMoneyPhrase(priceMatch[1]) : null
   text = text
@@ -2974,16 +3404,36 @@ function parseSaleCommand(text) {
   if (!/^(vendi|vender|vendimos|venta)\b/.test(t)) return null
   let body = clean.replace(/^\s*(vend[íi]|vendi|vender|vendimos|venta)\s+/i, '')
   const medio = detectMedio(clean)
-  body = body.replace(/\s+en\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b.*$/i, '')
+  body = body.replace(/\s+(?:en|por)\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago|mp)\b.*$/i, '')
   const parts = body.split(/\s*,\s*|\s+y\s+/i).map(parseSaleItemText).filter(Boolean)
   if (!parts.length) return null
   if (parts.length === 1) return { action_type: 'venta_stock', input_text: text, producto: parts[0].producto, cantidad: parts[0].cantidad, precio_unitario: parts[0].precio_unitario, medio_pago: medio }
   return { action_type: 'venta_multi', input_text: text, items: parts, medio_pago: medio }
 }
 
-function parseBotCommand(text) {
+function parseSaleCommandClean(text) {
   const clean = stripActionPrefix(text)
-  const sale = parseSaleCommand(clean)
+  const t = normalizeText(clean)
+  if (!/^(vendi|vender|vendimos|venta)\b/.test(t)) return null
+  const medio = detectMedio(clean)
+  const receivedMatch = clean.match(/\bacreditaron?\s+\$?\s*([\d.,]+(?:\s*(?:mil|k|millon|millones|m))?)/i)
+  const monto_recibido = receivedMatch ? parseMoneyPhrase(receivedMatch[1]) : null
+  const body = clean
+    .replace(/^\s*(vend(?:i|í)|vender|vendimos|venta)\s+/i, '')
+    .replace(/\b(?:en\s+)?mercado pago\s+se\s+acreditaron?\s+\$?\s*[\d.,]+(?:\s*(?:mil|k|millon|millones|m))?/i, ' ')
+    .replace(/\b(?:se\s+)?acreditaron?\s+\$?\s*[\d.,]+(?:\s*(?:mil|k|millon|millones|m))?/i, ' ')
+    .replace(/\s+(?:en|por)\s+(efectivo|transferencia|debito|credito|mercado pago|mercado_pago|mp)\b.*$/i, '')
+  const parts = body.split(/\s*,\s*|\s+y\s+/i).map(parseSaleItemText).filter(Boolean)
+  if (!parts.length) return null
+  if (parts.length === 1) {
+    return { action_type: 'venta_stock', input_text: text, producto: parts[0].producto, cantidad: parts[0].cantidad, precio_unitario: parts[0].precio_unitario, medio_pago: medio, monto_recibido }
+  }
+  return { action_type: 'venta_multi', input_text: text, items: parts, medio_pago: medio, monto_recibido }
+}
+
+function parseBotCommand(text) {
+  const clean = normalizeBotInputForParsing(stripActionPrefix(text))
+  const sale = parseSaleCommandClean(clean)
   if (sale) return { ...sale, input_text: text }
   const t = normalizeText(clean)
   const medio = detectMedio(clean)
@@ -3017,7 +3467,8 @@ function parseBotCommand(text) {
     let descripcion = text
       .replace(/^(gasto|pague|pagu[ée])\s+/i, '')
       .replace(/\$?\s*[\d.,]+/i, ' ')
-      .replace(/\s+(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago)\b/i, ' ')
+      .replace(/\s+(?:en|por)?\s*(efectivo|transferencia|debito|d[eé]bito|credito|cr[eé]dito|mercado pago|mercado_pago|mp)\b/i, ' ')
+      .replace(/\b(?:en|por|de)\s*$/i, ' ')
       .trim()
     return { action_type: 'gasto', input_text: text, descripcion, monto: parseNumberValue(montoMatch ? montoMatch[1] : ''), medio_pago: medio }
   }
@@ -3049,7 +3500,7 @@ async function findInventoryMatch(productText) {
     aliasesByItem[a.inventory_item_id].push(a)
   })
   const scored = (invRes.data || []).map(item => {
-    const productNorm = normalizeAliasText([item.producto, item.color, item.medida].filter(Boolean).join(' '))
+    const productNorm = normalizeAliasText([item.producto, item.categoria, item.color, item.medida].filter(Boolean).join(' '))
     const aliasNorms = (aliasesByItem[item.id] || []).map(a => normalizeAliasText(a.normalized_alias || a.alias))
     const all = [productNorm, ...aliasNorms].filter(Boolean)
     let score = 0
@@ -3058,12 +3509,17 @@ async function findInventoryMatch(productText) {
     else {
       const qTokens = query.split(' ').filter(Boolean)
       if (qTokens.length && all.some(v => qTokens.every(tok => v.includes(tok)))) score = 60
+      else if (qTokens.length && all.some(v => qTokens.every(tok => textHasApproxToken(v, tok)))) score = 55
     }
     return { item, score }
-  }).filter(m => m.score > 0).sort((a, b) => b.score - a.score)
+  }).filter(m => m.score > 0).sort((a, b) =>
+    b.score - a.score ||
+    (Number(b.item.stock_actual) || 0) - (Number(a.item.stock_actual) || 0) ||
+    saleItemPrice(b.item) - saleItemPrice(a.item)
+  )
   const top = scored.filter(m => m.score === scored[0]?.score)
   if (!top.length) return { status: 'none', matches: [] }
-  if (top.length > 1) return { status: 'ambiguous', matches: top.map(m => m.item) }
+  if (top.length > 1) return { status: 'ambiguous', item: top[0].item, matches: top.map(m => m.item) }
   return { status: 'match', item: top[0].item, matches: [top[0].item] }
 }
 
@@ -3086,8 +3542,12 @@ async function resolveSalePreviewItems(command, preview) {
       continue
     }
     const match = await findInventoryMatch(raw.producto)
+    if (match.status === 'ambiguous' && match.item) {
+      preview.warnings.push(`Interprete "${raw.producto}" como "${saleItemLabel(match.item)}". Revise y confirme si es correcto.`)
+      match.status = 'match'
+    }
     if (match.status === 'ambiguous') {
-      preview.warnings.push(`Hay mas de un producto parecido para "${raw.producto}".`)
+      preview.warnings.push(`Hay más de un producto parecido para "${raw.producto}".`)
       preview.canConfirm = false
       continue
     }
@@ -3150,6 +3610,7 @@ async function buildBotActionPreview(command) {
     const cost = saleItems.reduce((sum, item) => sum + item.cantidad * item.costo_unitario, 0)
     preview.total = total
     preview.ganancia = total - cost
+    preview.monto_recibido = Number(command.monto_recibido) > 0 ? Number(command.monto_recibido) : null
     preview.rows = saleItems.map(item => ({
       action: command.action_type,
       detail: item.producto_texto,
@@ -3161,7 +3622,7 @@ async function buildBotActionPreview(command) {
     const match = await findInventoryMatch(command.producto)
     preview.match = match
     if (match.status === 'none') preview.errors.push('No encontré ese producto. Revise el nombre o créelo primero.')
-    if (match.status === 'ambiguous') { preview.warnings.push('Hay mas de un producto parecido'); preview.canConfirm = false }
+    if (match.status === 'ambiguous') { preview.warnings.push('Hay más de un producto parecido'); preview.canConfirm = false }
     const item = match.item
     if (command.action_type === 'venta_stock') {
       if (command.cantidad === null) command.cantidad = 1
@@ -3450,7 +3911,7 @@ function renderBotActionPreview(surface = 'import') {
     return
   }
   card.style.display = 'block'
-  if (btn) { btn.disabled = !botActionPreview.canConfirm; btn.textContent = botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar' }
+  if (btn) { btn.disabled = !botActionPreview.canConfirm; btn.textContent = botActionPreview.canConfirm ? 'Confirmar acción' : 'No se puede confirmar' }
   const b = { listo: 'bg', revisar: 'by', error: 'br' }
   const notes = [...botActionPreview.errors, ...botActionPreview.warnings].map(escapeHTML).join('<br>') || '—'
   document.getElementById('im-bot-preview').innerHTML = botActionPreview.rows.map(r => {
@@ -3463,7 +3924,16 @@ function renderAIBotActionPreview() {
   if (!box || !botActionPreview) return
   const old = document.getElementById('ai-bot-action-preview')
   if (old) old.remove()
-  const row = botActionPreview.rows[0] || { detail: '—', qty: '—', amount: '—', expected: '—' }
+  const rows = botActionPreview.rows.length ? botActionPreview.rows : [{ detail: '—', qty: '—', amount: '—', expected: '—' }]
+  const expected = rows.length > 1 ? `Registrar venta con ${rows.length} items, ingreso y salida de inventario` : rows[0].expected
+  const detailRows = rows.map((row, index) => `
+      <div class="ai-action-row"><div class="ai-action-l">${rows.length > 1 ? `Item ${index + 1}` : 'Detalle'}</div><div class="ai-action-v">${escapeHTML(row.detail)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Cantidad</div><div class="ai-action-v">${escapeHTML(row.qty)}</div></div>
+      <div class="ai-action-row"><div class="ai-action-l">Monto</div><div class="ai-action-v">${escapeHTML(row.amount)}</div></div>
+    `).join('')
+  const totalRow = rows.length > 1
+    ? `<div class="ai-action-row"><div class="ai-action-l">Total</div><div class="ai-action-v">${money(botActionPreview.total || 0)}</div></div>`
+    : ''
   const b = { listo: 'bg', revisar: 'by', error: 'br' }
   const div = document.createElement('div')
   div.className = 'ai-action'
@@ -3471,16 +3941,15 @@ function renderAIBotActionPreview() {
   div.innerHTML = `
     <div class="ai-action-t">${escapeHTML(botActionTitle(botActionPreview.action_type))}</div>
     <div class="ai-action-grid">
-      <div class="ai-action-row"><div class="ai-action-l">Detalle</div><div class="ai-action-v">${escapeHTML(row.detail)}</div></div>
-      <div class="ai-action-row"><div class="ai-action-l">Cantidad</div><div class="ai-action-v">${escapeHTML(row.qty)}</div></div>
-      <div class="ai-action-row"><div class="ai-action-l">Monto</div><div class="ai-action-v">${escapeHTML(row.amount)}</div></div>
+      ${detailRows}
+      ${totalRow}
       <div class="ai-action-row"><div class="ai-action-l">Estado</div><div class="ai-action-v"><span class="badge ${b[botActionPreview.status] || 'bb'}">${escapeHTML(botActionPreview.status)}</span></div></div>
     </div>
     <div class="ai-action-note" style="color:${botActionPreview.errors.length ? 'var(--red)' : botActionPreview.warnings.length ? 'var(--yel)' : 'var(--txt2)'}">${botActionNotes(botActionPreview)}</div>
-    <div class="ai-action-note">${escapeHTML(row.expected)}</div>
+    <div class="ai-action-note">${escapeHTML(expected)}</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="cancelAIBotAction()">Cancelar</button>
-      <button class="btn btn-gold btn-sm" id="ai-bot-confirm-btn" onclick="confirmBotAction('ai')" ${botActionPreview.canConfirm ? '' : 'disabled'}>${botActionPreview.canConfirm ? 'Confirmar accion' : 'No se puede confirmar'}</button>
+      <button class="btn btn-gold btn-sm" id="ai-bot-confirm-btn" onclick="confirmBotAction('ai')" ${botActionPreview.canConfirm ? '' : 'disabled'}>${botActionPreview.canConfirm ? 'Confirmar acción' : 'No se puede confirmar'}</button>
     </div>
   `
   box.appendChild(div)
@@ -3573,8 +4042,8 @@ function cancelAIBotAction() {
 }
 
 async function confirmBotAction(surface = botActionSurface) {
-  if (!botActionPreview) { toastErr('No hay accion para confirmar'); return }
-  if (!botActionPreview.canConfirm) { toastErr('Esta accion necesita correccion antes de guardar'); return }
+  if (!botActionPreview) { toastErr('No hay acción para confirmar'); return }
+  if (!botActionPreview.canConfirm) { toastErr('Esta acción necesita corrección antes de guardar'); return }
   const btn = document.getElementById(surface === 'ai' ? 'ai-bot-confirm-btn' : 'im-bot-confirm-btn')
   if (btn.disabled) return
   btn.disabled = true; btn.textContent = 'Ejecutando...'
@@ -3585,11 +4054,20 @@ async function confirmBotAction(surface = botActionSurface) {
       const result = await registerSale({
         fecha: today(),
         medio_pago: botActionPreview.medio_pago || '',
+        monto_recibido: botActionPreview.monto_recibido || null,
         origen: 'bot',
         notas: botActionPreview.input_text,
         items: botActionPreview.sale_items || []
       })
       if (result.error) throw result.error
+      await sb.from('bot_actions').insert({
+        user_id: CU.id,
+        input_text: previewData.input_text,
+        action_type: actionType,
+        status: 'confirmed',
+        preview_data: previewData,
+        result_data: { sale_id: result.saleId, total: result.total, profit: result.profit }
+      })
       botActionPreview = null
       botActionSurface = 'import'
       btn.disabled = true; btn.textContent = 'Accion confirmada'
@@ -3597,7 +4075,7 @@ async function confirmBotAction(surface = botActionSurface) {
       if (surface === 'ai') {
         const old = document.getElementById('ai-bot-action-preview')
         if (old) old.remove()
-        appendAIMessage(`Venta confirmada por ${money(result.total)}. Actualice ventas, caja e inventario.`, 'bot')
+        appendAIMessage(`Venta confirmada por ${money(result.total)}. Se actualizaron ventas, caja e inventario.`, 'bot')
         goPage('sales')
         closeAI()
       } else {
@@ -3606,7 +4084,7 @@ async function confirmBotAction(surface = botActionSurface) {
       toast('Venta registrada')
     } catch (e) {
       const friendly = friendlyBotError(e)
-      btn.disabled = false; btn.textContent = 'Confirmar accion'
+      btn.disabled = false; btn.textContent = 'Confirmar acción'
       if (surface === 'ai') appendAIMessage(friendly, 'think')
       toastErr(friendly)
     }
@@ -3619,13 +4097,13 @@ async function confirmBotAction(surface = botActionSurface) {
     status: 'preview',
     preview_data: previewData
   }).select('id').single()
-  if (handleSupaError(actionErr, 'bot_actions')) { btn.disabled = false; btn.textContent = 'Confirmar accion'; return }
+  if (handleSupaError(actionErr, 'bot_actions')) { btn.disabled = false; btn.textContent = 'Confirmar acción'; return }
 
   try {
     const { data: rpcResult, error: rpcErr } = await sb.rpc('confirm_bot_action', { action_id: action.id })
     if (rpcErr) throw rpcErr
     if (!rpcResult || rpcResult.ok === false || rpcResult.status === 'failed') {
-      throw new Error(rpcResult?.error || 'No se pudo confirmar la accion')
+      throw new Error(rpcResult?.error || 'No se pudo confirmar la acción')
     }
     botActionPreview = null
     botActionSurface = 'import'
@@ -3646,9 +4124,9 @@ async function confirmBotAction(surface = botActionSurface) {
   } catch (e) {
     const friendly = friendlyBotError(e)
     await sb.from('bot_actions').update({ status: 'failed', error: friendly }).eq('id', action.id).eq('user_id', CU.id)
-    btn.disabled = false; btn.textContent = 'Confirmar accion'
+    btn.disabled = false; btn.textContent = 'Confirmar acción'
     if (surface === 'ai') appendAIMessage(friendly, 'think')
-    console.error('[KairÃ³s] confirmBotAction:', e)
+    console.error('[Kairós] confirmBotAction:', e)
     toastErr(friendly)
     await loadImportedData()
   }
@@ -3697,10 +4175,10 @@ function resetAdvisorState() {
     box.innerHTML = `
       <div class="ai-msg ai-bot">Puede consultar sobre el negocio o preparar una acción para revisar y confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
       <div class="ai-quick-actions">
-        <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
-        <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
-        <button class="ai-quick-action" onclick="seedAIExample('agregar producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
-        <button class="ai-quick-action" onclick="seedAIExample('sumar 10 de stock a nombre del producto')">Sumar stock</button>
+        <button class="ai-quick-action" onclick="seedAIExample('Vendí una remera por Mercado Pago')">Registrar venta</button>
+        <button class="ai-quick-action" onclick="seedAIExample('Pagué alquiler 250000 por transferencia')">Anotar gasto</button>
+        <button class="ai-quick-action" onclick="seedAIExample('Crear producto buzo oversize stock 10 costo 28000 precio 64000')">Crear producto</button>
+        <button class="ai-quick-action" onclick="seedAIExample('Sumar 10 unidades al stock de remera boxy blanca')">Sumar stock</button>
       </div>`
   }
 
@@ -3776,6 +4254,45 @@ function advisorFallbackReply(message) {
   return 'El asesor online no respondió; se muestra una respuesta local de respaldo. Puedo explicar margen, ganancia, gastos fijos, stock o resumir el negocio. Las acciones operativas mantienen vista previa y confirmación antes de guardar.'
 }
 
+function needsLocalBusinessAdvice(message) {
+  const text = normalizeText(message)
+  return /(conviene|recomienda|recomendar|que hago|que hacer|deberia|revisar primero|reviso primero|que reviso|q reviso|caja negativa|caja esta mal|como esta|estado del negocio|resumen|reponer|inventario|publicidad|equipo|pagar|invertir|prioridad)/.test(text)
+}
+
+async function buildLocalBusinessAdvice(message) {
+  const { m, y } = getMes()
+  const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
+  const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
+  await loadImportedData()
+  const [finance, sales, fixedResult, teamPaymentsResult] = await Promise.all([
+    loadUnifiedFinances(true),
+    loadSalesSummary(true),
+    sb.from('gastos_fijos').select('mon').eq('user_id', CU.id),
+    sb.from('team_payments').select('tipo,monto').eq('user_id', CU.id).gte('fecha', monthStart).lt('fecha', monthEnd)
+  ])
+  const fixedTotal = (fixedResult.data || []).reduce((sum, row) => sum + (Number(row.mon) || 0), 0)
+  const teamPaid = (teamPaymentsResult.data || [])
+    .filter(payment => !['retiro_duenio', 'distribucion_utilidad'].includes(payment.tipo))
+    .reduce((sum, payment) => sum + (Number(payment.monto) || 0), 0)
+  const stock = stockTotals(importedData.inventory || [])
+  const lowStock = (importedData.inventory || []).filter(inventoryNeedsReorder).slice(0, 4).map(item => item.producto)
+  const coverage = fixedTotal > 0 ? Math.min(100, Math.round((finance.totals.ingresos / fixedTotal) * 100)) : 0
+  const suggestions = []
+  if (lowStock.length) suggestions.push(`Reponer primero: ${lowStock.join(', ')}.`)
+  else suggestions.push('Mantener reposición normal: no hay faltantes críticos visibles.')
+  if (finance.totals.balance > 0 && coverage >= 100) suggestions.push(`Separar una reserva antes de aumentar publicidad. Caja disponible: ${money(finance.totals.balance)}.`)
+  if (sales.margin >= 35 && finance.totals.balance > 0) suggestions.push('Aumentar publicidad de forma gradual puede tener sentido si el inventario alcanza.')
+  if (teamPaid > 0) suggestions.push(`El equipo ya registra ${money(teamPaid)} pagados este mes; cualquier pago adicional conviene compararlo contra reserva y tareas pendientes.`)
+
+  return [
+    `Con los datos actuales, julio muestra ${money(finance.totals.ingresos)} ingresados, ${money(finance.totals.egresos)} gastados y una caja de ${money(finance.totals.balance)}.`,
+    `Ventas: ${sales.count} operaciones, ${money(sales.total)} vendidos, ganancia comercial ${money(sales.profit)} y margen ${fmtDec(sales.margin)}%.`,
+    `Gastos fijos: ${money(fixedTotal)} con ${coverage}% cubierto. Inventario: ${stock.count} productos, ${stock.rojo + stock.amarillo} requieren atención.`,
+    `Recomendación: ${suggestions.join(' ')}`,
+    'Orden sugerido: 1) asegurar inventario de productos con mayor salida, 2) reservar caja para gastos y equipo, 3) aumentar publicidad de forma gradual.'
+  ].join('\n\n')
+}
+
 async function sendAI() {
   const inp = document.getElementById('ai-inp')
   const msg = inp.value.trim(); if (!msg) return
@@ -3806,8 +4323,17 @@ async function sendAI() {
       return
     }
 
+    if (needsLocalBusinessAdvice(msg)) {
+      const localReply = await buildLocalBusinessAdvice(msg)
+      loadDiv.remove()
+      aiH.push({ role: 'assistant', content: localReply })
+      if (aiH.length > 20) aiH = aiH.slice(-20)
+      appendAIMessage(localReply, 'bot')
+      return
+    }
+
     const { data, error } = await sb.functions.invoke('ai-advisor', {
-      body: { message: msg, history: aiH.slice(-18) }
+      body: { message: msg, history: aiH.slice(-18), style: 'Español neutro, formal y directo. No usar voseo ni regionalismos argentinos.' }
     })
 
     loadDiv.remove()
@@ -3902,6 +4428,14 @@ async function doReset() {
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
+Object.assign(window, {
+  addPosItem,
+  changePosQty,
+  clearPosCart,
+  confirmPosSale,
+  renderSalesCatalog
+})
+
 document.addEventListener('DOMContentLoaded', init)
 
 // ══════════════════════════════════════

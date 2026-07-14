@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=qa-audit-20260709">
+<link rel="stylesheet" href="assets/styles.css?v=pos-image-hitfix-20260713">
 </head>
 <body>
 <svg class="icon-sprite" aria-hidden="true">
@@ -148,8 +148,8 @@
       <!-- DASHBOARD -->
       <div class="page on" id="page-dash">
         <div class="home-header">
-          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Mirá cómo está tu negocio y qué conviene hacer ahora.</div></div>
-          <button class="business-switcher" onclick="openProfile()"><span id="home-business-name">Tienda Axel</span><small>Perfil del negocio</small></button>
+          <div><div class="pt" id="dash-title">Hola</div><div class="ps">Este es el estado del negocio hoy</div></div>
+          <button class="business-switcher" onclick="openProfile()"><span id="home-business-name">Mi negocio</span><small>Perfil del negocio</small></button>
         </div>
         <div class="home-dashboard" aria-label="Panel principal del negocio">
           <section class="home-main">
@@ -359,7 +359,7 @@
 
               <div class="module-card pos-card sales-tab-panel" data-sales-panel="pos" id="sale-pos-card">
                 <div class="module-card-head">
-                  <div><div class="home-card-title">Punto de venta</div><p>Seleccione productos del catalogo, arme el ticket y confirme la venta con descuento de inventario y registro financiero.</p></div>
+                  <div><div class="home-card-title">Punto de venta</div><p>Seleccione productos del catálogo, arme el ticket y confirme la venta con descuento de inventario y registro financiero.</p></div>
                   <span class="module-pill">Mostrador</span>
                 </div>
                 <div class="pos-panel">
@@ -375,24 +375,24 @@
                       <div><strong>Ticket de venta</strong><small id="pos-ticket-count">Sin productos seleccionados</small></div>
                       <button class="btn btn-ghost btn-sm" onclick="clearPosCart()">Vaciar</button>
                     </div>
-                    <div class="pos-cart" id="pos-cart"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catalogo</div></div>
+                    <div class="pos-cart" id="pos-cart"><div class="empty" style="padding:14px"><div class="empty-i">.</div>Seleccione productos del catálogo</div></div>
                     <div class="pos-sale-fields">
                       <div class="field"><label>Canal</label><select id="pos-channel"><option value="local">Local</option><option value="web">Web</option><option value="shopify">Shopify</option><option value="mercado_libre">Mercado Libre</option><option value="tiendanube">Tiendanube</option><option value="instagram">Instagram / WhatsApp</option></select></div>
-                      <div class="field"><label>Medio de pago</label><select id="pos-method" onchange="renderPosCart()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
+                      <div class="field"><label>Medio de pago</label><select id="pos-method"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="debito">Debito</option><option value="credito">Credito</option></select></div>
                       <div class="field"><label>Cliente</label><input id="pos-client" type="text" placeholder="Cliente no informado"></div>
                       <div class="field"><label>Fecha</label><input id="pos-date" type="date"></div>
-                      <div class="field pos-received"><label>Importe recibido</label><input id="pos-received" type="number" min="0" placeholder="Solo si difiere del total" oninput="renderPosCart()"></div>
+                      <div class="field pos-received"><label>Importe recibido</label><input id="pos-received" type="number" min="0" placeholder="Solo si difiere del total"></div>
                     </div>
                     <div class="pos-total" id="pos-total">Total: $0</div>
                     <div class="pos-note" id="pos-note">Use importe recibido para reflejar comisiones o diferencias de cobro, por ejemplo en Mercado Pago.</div>
-                    <button class="btn btn-gold btn-full" onclick="confirmPosSale()">Confirmar venta</button>
+                    <button class="btn btn-gold btn-full" id="pos-confirm-sale">Confirmar venta</button>
                   </aside>
                 </div>
               </div>
 
               <div class="module-card manual-sale-card sales-tab-panel" data-sales-panel="manual" id="manual-sale-card">
                 <div class="module-card-head">
-                  <div><div class="home-card-title">Registro manual de venta</div><p>Seleccione productos existentes o registre un concepto manual cuando todavia no este en inventario.</p></div>
+                  <div><div class="home-card-title">Registro manual de venta</div><p>Seleccione productos existentes o registre un concepto manual cuando todavía no esté en inventario.</p></div>
                   <span class="module-pill">Venta directa</span>
                 </div>
                 <div class="manual-sale-grid">
@@ -424,6 +424,10 @@
 
             <aside class="module-side">
               <div class="module-card">
+                <div class="home-card-title">Resumen comercial</div>
+                <div id="sales-ranking" class="compact-list"><div class="empty" style="padding:14px"><div class="empty-i">·</div>Sin ventas suficientes</div></div>
+              </div>
+              <div class="module-card">
                 <div class="home-card-title">Compras y reposición</div>
                 <div id="sales-purchases" class="compact-list"><div class="empty" style="padding:14px"><div class="empty-i">·</div>Sin compras detectadas</div></div>
               </div>
@@ -441,10 +445,10 @@
       <div class="page" id="page-fin">
         <div class="module-shell finance-shell">
         <div class="module-header">
-          <div><div class="pt">Finanzas</div><div class="ps">Datos económicos del negocio, caja, gastos, resultado y evolución.</div></div>
+          <div><div class="pt">Finanzas</div><div class="ps">Caja, ingresos, egresos y resultado del negocio en un solo lugar.</div></div>
           <div class="module-header-actions">
             <button class="btn btn-ghost" onclick="showFinanceQuestion('movements')"><svg class="app-icon"><use href="#i-expense"></use></svg>Registrar movimiento</button>
-            <button class="btn btn-gold" onclick="showFinanceQuestion('summary')"><svg class="app-icon"><use href="#i-chart"></use></svg>Ver resumen</button>
+            <button class="btn btn-gold" onclick="showFinanceQuestion('summary')"><svg class="app-icon"><use href="#i-chart"></use></svg>Ver detalle</button>
           </div>
         </div>
 
@@ -510,20 +514,24 @@
         <div class="module-layout finance-overview">
           <section class="module-card">
             <div class="module-card-head">
-              <div><div class="home-card-title">Evolución económica</div><p>Comparación visual de ingresos, egresos, resultado y cobertura de gastos fijos.</p></div>
+              <div><div class="home-card-title">Movimiento del mes</div><p>Comparación simple entre dinero ingresado, dinero gastado, resultado y gastos fijos.</p></div>
               <span class="module-pill">Mes actual</span>
             </div>
             <div class="finance-chart" id="finance-chart-bars"></div>
           </section>
-          <aside class="module-card">
-            <div class="home-card-title">Lectura financiera</div>
-            <p id="finance-diagnosis">Kairós consolidará caja, gastos y resultado cuando existan movimientos registrados.</p>
-            <button class="btn btn-gold btn-full" onclick="openAIWithBusinessSummary()">Ver análisis financiero</button>
+          <aside class="module-card finance-next-card">
+            <div class="home-card-title">Revisar primero</div>
+            <p>Accesos directos para resolver lo más importante sin buscar entre tablas.</p>
+            <div class="finance-action-list" id="finance-priority-list">
+              <button onclick="showFinanceQuestion('movements')"><span class="dot warn"></span><strong>Registrar movimientos</strong><small>Agregar ingresos o egresos pendientes.</small></button>
+              <button onclick="showFinanceQuestion('fixed')"><span class="dot"></span><strong>Revisar gastos fijos</strong><small>Definir el costo mensual base.</small></button>
+              <button onclick="goPage('sales')"><span class="dot ok"></span><strong>Ver ventas</strong><small>Consultar ventas y margen comercial.</small></button>
+            </div>
           </aside>
         </div>
         <div class="finance-data-grid">
           <section class="module-card finance-data-card">
-            <div class="module-card-head"><div><div class="home-card-title">Detalle de caja</div><p>Lectura del dinero registrado durante el mes actual.</p></div><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span></div>
+            <div class="module-card-head"><div><div class="home-card-title">Caja del mes</div><p>Dinero disponible según los movimientos registrados.</p></div><span class="summary-icon"><svg class="app-icon"><use href="#i-wallet"></use></svg></span></div>
             <div class="metric-lines">
               <div><span>Resultado actual</span><strong id="finance-detail-cash">$0</strong></div>
               <div><span>Movimientos con monto</span><strong id="finance-detail-movements">0</strong></div>
@@ -532,16 +540,16 @@
             <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('movements')">Revisar movimientos</button>
           </section>
           <section class="module-card finance-data-card">
-            <div class="module-card-head"><div><div class="home-card-title">Ingresos y egresos</div><p>Comparación entre entradas y salidas efectivamente registradas.</p></div><span class="summary-icon blue"><svg class="app-icon"><use href="#i-chart"></use></svg></span></div>
+            <div class="module-card-head"><div><div class="home-card-title">Entradas y salidas</div><p>Comparación directa entre dinero ingresado y dinero gastado.</p></div><span class="summary-icon blue"><svg class="app-icon"><use href="#i-chart"></use></svg></span></div>
             <div class="metric-lines">
               <div><span>Ingresos registrados</span><strong id="finance-detail-income">$0</strong></div>
               <div><span>Egresos registrados</span><strong id="finance-detail-expense">$0</strong></div>
-              <div><span>Relación ingreso/egreso</span><strong id="finance-detail-ratio">—</strong></div>
+              <div><span>Relación ingreso/egreso</span><strong id="finance-detail-ratio">-</strong></div>
             </div>
             <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('summary')">Ver cálculo del mes</button>
           </section>
           <section class="module-card finance-data-card">
-            <div class="module-card-head"><div><div class="home-card-title">Gastos fijos</div><p>Referencia mensual para saber cuánto falta cubrir.</p></div><span class="summary-icon gold"><svg class="app-icon"><use href="#i-expense"></use></svg></span></div>
+            <div class="module-card-head"><div><div class="home-card-title">Compromisos mensuales</div><p>Gastos fijos y faltante para cubrir el mes.</p></div><span class="summary-icon gold"><svg class="app-icon"><use href="#i-expense"></use></svg></span></div>
             <div class="metric-lines">
               <div><span>Total mensual</span><strong id="finance-detail-fixed">$0</strong></div>
               <div><span>Cubierto con ingresos</span><strong id="finance-detail-fixed-covered">0%</strong></div>
@@ -550,7 +558,7 @@
             <button class="btn btn-ghost btn-full" onclick="showFinanceQuestion('fixed')">Administrar gastos fijos</button>
           </section>
           <section class="module-card finance-data-card">
-            <div class="module-card-head"><div><div class="home-card-title">Ventas y equipo</div><p>Impacto comercial y costo de trabajo conectado al resultado.</p></div><span class="summary-icon red"><svg class="app-icon"><use href="#i-users"></use></svg></span></div>
+            <div class="module-card-head"><div><div class="home-card-title">Ventas y equipo</div><p>Ganancia comercial y pagos de trabajo relacionados al resultado.</p></div><span class="summary-icon red"><svg class="app-icon"><use href="#i-users"></use></svg></span></div>
             <div class="metric-lines">
               <div><span>Ganancia de ventas</span><strong id="finance-detail-sales-profit">$0</strong></div>
               <div><span>Ventas registradas</span><strong id="finance-detail-sales-count">0</strong></div>
@@ -559,6 +567,13 @@
             <button class="btn btn-ghost btn-full" onclick="goPage('people')">Ver equipo</button>
           </section>
         </div>
+        <section class="module-card finance-diagnosis-card">
+          <div class="module-card-head">
+            <div><div class="home-card-title">Análisis de Kairós</div><p>Lectura automática a partir de los datos registrados.</p></div>
+            <button class="btn btn-gold btn-sm" onclick="openAIWithBusinessSummary()">Ver análisis completo</button>
+          </div>
+          <p id="finance-diagnosis">Kairós consolidará caja, gastos y resultado cuando existan movimientos registrados.</p>
+        </section>
         <button class="btn btn-ghost advanced-toggle" onclick="toggleAdvanced('fin-advanced',this)" data-closed-label="Ver tablas y formularios">Ver tablas y formularios</button>
         <div class="advanced-wrap" id="fin-advanced">
         <div class="section-tabs" role="tablist" aria-label="Secciones de Dinero">
@@ -745,8 +760,8 @@
               <aside class="product-side-panel">
                 <div class="product-info-card">
                   <div class="home-card-title">Diagnóstico de productos</div>
-                  <p>Hay productos que no pueden calcular rentabilidad porque faltan datos de costo o precio. Complete esa información para obtener un análisis más preciso.</p>
-                  <button class="btn btn-gold btn-full" onclick="showProductQuestion('inv','pricing')">Completar datos pendientes</button>
+                  <p id="product-diagnosis-text">Kairós revisará costos, precios e inventario cuando existan productos cargados.</p>
+                  <button id="product-diagnosis-btn" class="btn btn-gold btn-full" onclick="showProductQuestion('inv','pricing')">Completar datos pendientes</button>
                 </div>
                 <div class="product-info-card">
                   <div class="home-card-title">Prioridades de productos</div>
@@ -789,6 +804,7 @@
                   <div>
                     <div class="field"><label>Nombre *</label><input type="text" id="p-n" placeholder="Remera básica, Asesoría 1h..."></div>
                     <div class="field"><label>Categoría</label><input type="text" id="p-c" placeholder="Ropa, Servicios..."></div>
+                    <div class="field"><label>Imagen URL</label><input type="url" id="p-img" placeholder="https://..."></div>
                     <div class="field"><label>Descripción</label><textarea id="p-d" placeholder="Descripción breve del producto..."></textarea></div>
                     <div class="field"><label>Inventario inicial</label><input type="number" id="p-st" placeholder="0" min="0"></div>
                     <div class="field"><label>Inventario mínimo</label><input type="number" id="p-min" placeholder="0" min="0"></div>
@@ -1216,12 +1232,12 @@
     <button class="btn btn-ghost btn-sm" onclick="closeAI()">✕</button>
   </div>
   <div class="ai-msgs" id="ai-msgs">
-    <div class="ai-msg ai-bot">Preguntame sobre tu negocio o pedime que prepare una acción. Siempre vas a poder revisarla antes de confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
+    <div class="ai-msg ai-bot">Puede consultar sobre el negocio o solicitar que prepare una acción. Siempre podrá revisarla antes de confirmar.<span class="ai-msg-meta">Asesor · ahora</span></div>
     <div class="ai-quick-actions">
-      <button class="ai-quick-action" onclick="seedAIExample('venta 2 unidades de producto a 10000 cada una en efectivo')">Registrar venta</button>
-      <button class="ai-quick-action" onclick="seedAIExample('egreso alquiler 250000 transferencia')">Anotar gasto</button>
-      <button class="ai-quick-action" onclick="seedAIExample('agregar producto nombre stock 10 costo 5000 precio 10000')">Crear producto</button>
-      <button class="ai-quick-action" onclick="seedAIExample('sumar 10 de stock a nombre del producto')">Sumar stock</button>
+      <button class="ai-quick-action" onclick="seedAIExample('Registrar venta de una remera por Mercado Pago')">Registrar venta</button>
+      <button class="ai-quick-action" onclick="seedAIExample('Registrar pago de alquiler 250000 por transferencia')">Anotar gasto</button>
+      <button class="ai-quick-action" onclick="seedAIExample('Crear producto buzo oversize stock 10 costo 28000 precio 64000')">Crear producto</button>
+      <button class="ai-quick-action" onclick="seedAIExample('Sumar 10 unidades al inventario de remera boxy blanca')">Sumar inventario</button>
     </div>
   </div>
   <div class="ai-history">
@@ -1262,14 +1278,33 @@
       <div id="profile-summary-text" style="font-size:13px;color:var(--txt2);line-height:1.6">Complete los datos de Mi Negocio para ver un resumen.</div>
     </div>
     <div class="card integrations-card" style="padding:14px;margin-bottom:16px">
-      <div class="card-t">Integraciones de catalogo</div>
-      <div style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Productos sera el catalogo maestro de Kairos. Las conexiones web quedaran preparadas para importar productos, completar datos faltantes y recibir ventas externas con revision previa.</div>
-      <div class="integration-actions">
-        <button class="btn btn-ghost" disabled>Conectar Shopify - proximamente</button>
-        <button class="btn btn-ghost" disabled>Conectar Mercado Libre - proximamente</button>
-        <button class="btn btn-ghost" disabled>Conectar Tiendanube - proximamente</button>
+      <div class="card-t">Integraciones de catálogo</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Productos será el catálogo maestro de Kairós. Shopify podrá conectarse con autorización OAuth para sincronizar catálogo, ventas e inventario con revisión previa antes de guardar datos nuevos.</div>
+      <div class="integration-provider">
+        <div>
+          <strong>Shopify</strong>
+          <p id="shopify-status-text">Sin conexión activa.</p>
+        </div>
+        <div class="shopify-connect-box">
+          <input type="text" id="shopify-domain-input" placeholder="tienda.myshopify.com" aria-label="Dominio de Shopify">
+          <button class="btn btn-gold" id="shopify-connect-btn" onclick="connectShopify()">Conectar Shopify</button>
+        </div>
       </div>
-      <!-- Integraciones futuras: sync por Edge Function, con preview antes de escribir. Shopify usaria SHOPIFY_SHOP_DOMAIN, SHOPIFY_ACCESS_TOKEN y GET /admin/api/{version}/products.json para traer catalogo. Meta se sincroniza luego via el canal nativo de Shopify. -->
+      <div class="integration-actions">
+        <button class="btn btn-ghost" disabled>Conectar Mercado Libre - próximamente</button>
+        <button class="btn btn-ghost" disabled>Conectar Tiendanube - próximamente</button>
+      </div>
+      <!-- Shopify: OAuth en Edge Functions. Variables necesarias: SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET, SHOPIFY_REDIRECT_URI, SHOPIFY_SCOPES, SHOPIFY_TOKEN_ENCRYPTION_KEY y SUPABASE_SERVICE_ROLE_KEY. Luego catalogo via Admin GraphQL API y webhooks de productos, inventario y pedidos. Meta se sincroniza luego via el canal nativo de Shopify. -->
+    </div>
+    <div class="card integrations-card" style="padding:14px;margin-bottom:16px">
+      <div class="card-t">Portabilidad de datos</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px">Exporte o importe una cuenta completa de Kairós en un archivo JSON. La importación muestra una vista previa y asigna los datos al usuario actual.</div>
+      <div class="integration-actions">
+        <button class="btn btn-gold" onclick="exportKairosAccount()">Exportar cuenta</button>
+        <label class="btn btn-ghost" for="kairos-import-file">Seleccionar archivo</label>
+        <input type="file" id="kairos-import-file" accept="application/json,.json" style="display:none" onchange="previewKairosImport(event)">
+      </div>
+      <div id="kairos-import-preview" class="data-portability-preview"></div>
     </div>
     <div class="modal-actions" style="flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="closeProfile();goPage('neg')">Editar negocio</button>
@@ -1299,6 +1334,7 @@
       <div class="field"><label>Precio venta web</label><input type="number" id="ie-precio-web" min="0" step="0.01"></div>
       <div class="field"><label>Proveedor</label><input type="text" id="ie-proveedor"></div>
     </div>
+    <div class="field"><label>Imagen URL</label><input type="url" id="ie-imagen" placeholder="https://..."></div>
     <div class="field"><label>Notas</label><textarea id="ie-notas"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeImportedInventoryModal()">Cancelar</button>
@@ -1315,7 +1351,7 @@
 <script src="assets/js/core/dates.js"></script>
 <script src="assets/js/core/validation.js"></script>
 <script src="assets/js/ui/toast.js"></script>
-<script src="assets/js/services/financeService.js"></script>
-<script src="assets/app.js?v=qa-audit-20260709"></script>
+<script src="assets/js/services/financeService.js?v=month-sim-fixes-20260713"></script>
+<script src="assets/app.js?v=ai-messy-neutral-20260713"></script>
 </body>
 </html>

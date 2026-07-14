@@ -134,15 +134,18 @@
         return key && key >= monthStart && key < monthEnd
       })
       const total = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
-      const cost = sales.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
-      const profit = sales.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
+      const salesWithCost = sales.filter(sale => Number(sale.costo_total) > 0)
+      const cost = salesWithCost.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
+      const profit = salesWithCost.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
+      const marginBase = salesWithCost.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
       salesSummaryCache = {
         sales,
         count: sales.length,
         total,
         cost,
         profit,
-        margin: total > 0 ? (profit / total) * 100 : 0
+        marginBase,
+        margin: marginBase > 0 ? (profit / marginBase) * 100 : 0
       }
       return salesSummaryCache
     })()

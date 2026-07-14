@@ -58,6 +58,30 @@ Nada debe publicarse automáticamente sin preview y confirmación.
 - Documentación: https://shopify.dev/docs/apps/build/authentication-authorization
 - GraphQL Admin API: https://shopify.dev/docs/api/admin-graphql/latest
 
+Implementación base agregada:
+
+- `supabase/migrations/008_shopify_oauth.sql`
+- `supabase/functions/shopify-oauth-start/index.ts`
+- `supabase/functions/shopify-oauth-callback/index.ts`
+- `index.html`
+- `assets/app.js`
+
+Variables necesarias en Supabase Edge Functions:
+
+- `SHOPIFY_CLIENT_ID`
+- `SHOPIFY_CLIENT_SECRET`
+- `SHOPIFY_REDIRECT_URI`
+- `SHOPIFY_SCOPES`
+- `SHOPIFY_TOKEN_ENCRYPTION_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `APP_URL`
+
+Scopes iniciales recomendados:
+
+`read_products,write_products,read_inventory,write_inventory,read_orders`
+
+El token de Shopify se guarda cifrado en `shopify_connection_secrets`; el frontend solo puede leer el estado visible de `shopify_connections`.
+
 ### Mercado Libre
 
 - Usar OAuth del vendedor, APIs de publicaciones, categorías, atributos, órdenes y notificaciones.
