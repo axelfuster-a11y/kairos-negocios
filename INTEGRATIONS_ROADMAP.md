@@ -60,7 +60,7 @@ Nada debe publicarse automáticamente sin preview y confirmación.
 
 Implementación base agregada:
 
-- `supabase/migrations/008_shopify_oauth.sql`
+- `supabase/migrations/010_shopify_oauth.sql`
 - `supabase/functions/shopify-oauth-start/index.ts`
 - `supabase/functions/shopify-oauth-callback/index.ts`
 - `index.html`

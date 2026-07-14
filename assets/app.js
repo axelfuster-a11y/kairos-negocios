@@ -1362,84 +1362,36 @@ async function registerSale(payload) {
   if (items.some(item => !String(item.producto_texto || '').trim() && !item.inventory_item_id)) return { error: 'Falta el producto' }
   if (items.some(item => item.precio_unitario <= 0)) return { error: 'El precio debe ser mayor a 0' }
 
-  for (const item of items) {
-    if (!item.inventory_item_id) continue
-    const inv = (importedData.inventory || []).find(row => row.id === item.inventory_item_id)
-    if (inv && item.cantidad > (Number(inv.stock_actual) || 0)) return { error: `Inventario insuficiente para ${saleItemLabel(inv)}` }
-  }
-
   const total = items.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0)
   const cost = items.reduce((sum, item) => sum + item.cantidad * item.costo_unitario, 0)
-  const profit = total - cost
   const received = Number(payload.monto_recibido) > 0 ? Number(payload.monto_recibido) : total
   const saleDateValue = payload.fecha || today()
   const notes = [payload.notas || null, received !== total ? `Importe recibido: ${money(received)}. Diferencia de cobro: ${money(total - received)}.` : null].filter(Boolean).join(' ')
-  const { data: sale, error: saleErr } = await sb.from('ventas').insert({
-    user_id: CU.id,
-    fecha: saleDateValue,
-    cliente: payload.cliente || null,
-    medio_pago: payload.medio_pago || null,
-    total,
-    costo_total: cost,
-    ganancia: profit,
-    margen_pct: total > 0 ? (profit / total) * 100 : 0,
-    origen: payload.origen || 'manual',
-    notas: notes || null
-  }).select('id').single()
-  if (saleErr) return { error: saleErr }
 
-  const saleItems = items.map(item => ({
-    user_id: CU.id,
-    venta_id: sale.id,
-    inventory_item_id: item.inventory_item_id || null,
-    producto_texto: item.producto_texto || null,
-    cantidad: item.cantidad,
-    precio_unitario: item.precio_unitario,
-    costo_unitario: item.costo_unitario,
-    subtotal: item.cantidad * item.precio_unitario,
-    ganancia: item.cantidad * (item.precio_unitario - item.costo_unitario)
-  }))
-  const { error: itemsErr } = await sb.from('venta_items').insert(saleItems)
-  if (itemsErr) return { error: itemsErr }
-
-  for (const item of items) {
-    if (!item.inventory_item_id) continue
-    const inv = (importedData.inventory || []).find(row => row.id === item.inventory_item_id)
-    if (!inv) continue
-    const before = Number(inv.stock_actual) || 0
-    const after = before - item.cantidad
-    const { error: stockErr } = await sb.from('inventario_items').update({
-      stock_actual: after,
-      estado_stock: stockState(after, inv.stock_minimo)
-    }).eq('id', item.inventory_item_id).eq('user_id', CU.id)
-    if (stockErr) return { error: stockErr }
-    await sb.from('stock_movements').insert({
-      user_id: CU.id,
-      inventory_item_id: item.inventory_item_id,
-      tipo: 'venta',
-      cantidad: -item.cantidad,
-      stock_antes: before,
-      stock_despues: after,
-      motivo: 'Venta registrada',
-      referencia_tipo: 'venta',
-      referencia_id: sale.id,
-      origen: payload.origen || 'manual'
-    })
-  }
-
-  const { error: movementErr } = await sb.from('movimientos_financieros').insert({
-    user_id: CU.id,
-    fecha: saleDateValue,
-    descripcion: `Venta registrada${items.length === 1 ? ': ' + (items[0].producto_texto || '') : ''}`,
-    monto: received,
-    tipo: 'ingreso',
-    medio_pago: payload.medio_pago || null,
-    categoria: 'ventas',
-    mes: saleDateValue.slice(0, 7),
-    origen: payload.origen || 'manual'
+  const { data, error } = await sb.rpc('register_sale_atomic', {
+    p_fecha: saleDateValue,
+    p_cliente: payload.cliente || null,
+    p_medio_pago: payload.medio_pago || null,
+    p_monto_recibido: received,
+    p_origen: payload.origen || 'manual',
+    p_notas: notes || null,
+    p_items: items.map(item => ({
+      inventory_item_id: item.inventory_item_id || null,
+      producto_texto: item.producto_texto || null,
+      cantidad: item.cantidad,
+      precio_unitario: item.precio_unitario,
+      costo_unitario: item.costo_unitario
+    }))
   })
-  if (movementErr) return { error: movementErr }
-  return { saleId: sale.id, total, profit }
+  if (error) return { error }
+  return {
+    saleId: data?.saleId,
+    movementId: data?.movementId,
+    total: data?.total == null ? total : Number(data.total),
+    received: data?.received == null ? received : Number(data.received),
+    difference: data?.difference == null ? Math.max(total - received, 0) : Number(data.difference),
+    profit: data?.profit == null ? received - cost : Number(data.profit)
+  }
 }
 
 async function addManualSale() {
@@ -1899,6 +1851,10 @@ async function addTeamMember() {
   }
   if ([payload.horas_semanales, payload.remuneracion_objetivo, payload.cargas_pct, payload.comision_pct, payload.participacion_pct].some(value => value < 0)) {
     toastErr('Los valores no pueden ser negativos')
+    return
+  }
+  if (payload.comision_pct > 100) {
+    toastErr('La comisión no puede superar 100%')
     return
   }
   const currentOwnership = teamData.members.reduce((sum, member) => sum + (Number(member.participacion_pct) || 0), 0)

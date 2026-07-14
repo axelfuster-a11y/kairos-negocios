@@ -46,6 +46,7 @@ const requiredFunctions = [
   'record_cash_adjustment',
   'get_cash_session_summary',
   'close_cash_session',
+  'register_sale_atomic',
 ]
 for (const fn of requiredFunctions) {
   assert.match(sql, new RegExp(`function public\\.${fn}\\s*\\(`), `Missing RPC: ${fn}`)
@@ -107,4 +108,19 @@ for (const contract of [
   /estado = 'cerrada'/,
 ]) {
   assert.match(cash, contract, `Cash session contract missing: ${contract}`)
+}
+
+const sale = readFileSync(join(migrationDir, '011_register_sale_atomic.sql'), 'utf8').toLowerCase()
+for (const contract of [
+  /function public\.register_sale_atomic/,
+  /for update/,
+  /insert into public\.ventas/,
+  /insert into public\.venta_items/,
+  /insert into public\.movimientos_financieros/,
+  /insert into public\.stock_movements/,
+  /stock_actual = v_after/,
+  /v_after < 0/,
+  /v_profit := v_received - v_cost/,
+]) {
+  assert.match(sale, contract, `Atomic sale contract missing: ${contract}`)
 }
