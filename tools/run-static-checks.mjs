@@ -8,6 +8,7 @@ const checks = [
   'tools/check-daily-flow.mjs',
   'tools/check-cash-ui.mjs',
   'tools/check-mobile-help-channels.mjs',
+  'tools/check-core-flow-v2.mjs',
 ]
 
 for (const check of checks) {
