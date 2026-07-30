@@ -3,3 +3,12 @@ verify_jwt = true
 
 [functions.shopify-oauth-callback]
 verify_jwt = false
+
+[functions.catalog-oauth-start]
+verify_jwt = true
+
+[functions.catalog-oauth-callback]
+verify_jwt = false
+
+[functions.catalog-sync]
+verify_jwt = true

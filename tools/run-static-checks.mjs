@@ -8,6 +8,9 @@ const checks = [
   'tools/check-daily-flow.mjs',
   'tools/check-cash-ui.mjs',
   'tools/check-mobile-help-channels.mjs',
+  'tools/check-advisor-language.mjs',
+  'tools/check-ai-advisor.mjs',
+  'tools/check-catalog-integrations.mjs',
 ]
 
 for (const check of checks) {

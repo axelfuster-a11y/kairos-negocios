@@ -9,14 +9,14 @@ const mobileNav = navMatch[0]
 const buttons = [...mobileNav.matchAll(/<button\b/g)]
 assert.equal(buttons.length, 5, 'Mobile navigation must have exactly five destinations')
 
-for (const label of ['Hoy', 'Vender', 'Productos', 'Dinero', 'Gestión']) {
+for (const label of ['Hoy', 'Vender', 'Productos', 'Dinero', 'Más']) {
   assert.match(mobileNav, new RegExp(`<span>${label}<\\/span>`), `Missing mobile destination: ${label}`)
 }
 
 const managementMatch = html.match(/<details class="mobile-more">[\s\S]*?<\/details>/)
 assert.ok(managementMatch, 'Mobile management panel not found')
 const management = managementMatch[0]
-assert.match(management, /<summary>Gestión<\/summary>/, 'Management panel must use the Gestión label')
+assert.match(management, /<summary>Más<\/summary>/, 'Secondary panel must use the Más label')
 
 const configEntries = [...management.matchAll(/<span>Configuración<\/span>/g)]
 assert.equal(configEntries.length, 1, 'Management must contain a single Configuración entry')
@@ -27,7 +27,8 @@ for (const label of desktopLabels) {
 }
 
 assert.match(html, /Lo importante de hoy/, 'Daily dashboard heading missing')
-assert.match(html, /Dinero disponible/, 'Plain-language cash label missing')
-assert.match(html, /Ganancia del mes/, 'Plain-language profit label missing')
+assert.match(html, /Vendido este mes/, 'Sold amount label missing')
+assert.match(html, /Cobrado este mes/, 'Collected amount label missing')
+assert.match(html, /Pendiente de cobro/, 'Pending amount label missing')
 
 console.log('Daily flow contracts ok')

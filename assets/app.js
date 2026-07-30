@@ -203,45 +203,36 @@ async function enterApp() {
   document.getElementById('org-date').value = today()
   document.getElementById('org-month').value = today().slice(0, 7)
   setDashTitle()
-  await renderAll()
-  const biz = await getBiz()
+  const biz = await renderAll()
   setTbBiz(biz)
   await loadCfg()
   if (!biz || !biz.nom) openWiz()
+  if (location.hash === '#integrations') {
+    history.replaceState(null, '', location.pathname + location.search)
+    await openProfile()
+  }
 }
 
 // ══════════════════════════════════════
 // WIZARD
 // ══════════════════════════════════════
-function syncWizardChannels(biz = null) {
-  const saved = new Set(String(biz?.can || V('b-can') || '').split(',').map(v => normalizeText(v)).filter(Boolean))
-  document.querySelectorAll('#w-canales input').forEach(input => {
-    const value = normalizeText(input.value)
-    input.checked = saved.has(value) || (value === 'local fisico' && saved.has('local físico'))
-  })
-}
 function openWiz() {
-  syncWizardChannels()
   document.getElementById('wizard').classList.add('on')
 }
 function closeWiz() { document.getElementById('wizard').classList.remove('on') }
-function setWDot(n) { document.querySelectorAll('.wdot').forEach((d, i) => d.classList.toggle('on', i < n)) }
-function wNext(s) {
-  if (s === 1) { if (!V('w-nom').trim()) { alert('Ingrese el nombre'); return }; document.getElementById('ws1').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
-  else { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws3').classList.add('on'); setWDot(3) }
-}
-function wBack(s) {
-  if (s === 2) { document.getElementById('ws2').classList.remove('on'); document.getElementById('ws1').classList.add('on'); setWDot(1) }
-  if (s === 3) { document.getElementById('ws3').classList.remove('on'); document.getElementById('ws2').classList.add('on'); setWDot(2) }
-}
 async function wFinish() {
+  const name = V('w-nom').trim()
+  if (!name) { toastErr('Ingrese el nombre del negocio'); return }
   const btn = document.getElementById('w-finish-btn'); btn.disabled = true; btn.textContent = 'Guardando...'
-  const can = [...document.querySelectorAll('#w-canales input:checked')].map(c => c.value).join(', ')
-  const biz = { user_id: CU.id, nom: V('w-nom').trim(), rub: V('w-rub').trim(), cli: V('w-cli').trim(), prec: parseFloat(V('w-precio')) || 0, can, loc: '', prob: '', dif: '', don: '', prod: '' }
+  const firstAction = document.querySelector('input[name="first_action"]:checked')?.value || 'prod'
+  const biz = { user_id: CU.id, nom: name, rub: V('w-rub').trim(), cli: '', prec: 0, can: '', loc: '', prob: '', dif: '', don: '', prod: '' }
   const { error } = await sb.from('negocios').upsert(biz, { onConflict: 'user_id' })
-  btn.disabled = false; btn.textContent = 'Ingresar a Kairós'
+  btn.disabled = false; btn.textContent = 'Empezar'
   if (handleSupaError(error, 'wizard')) return
-  setTbBiz(biz); loadBizForm(biz); closeWiz(); toast('Configuración inicial guardada')
+  setTbBiz(biz); loadBizForm(biz); closeWiz(); toast('Negocio listo para empezar')
+  if (firstAction === 'sales') await focusManualSale()
+  else if (firstAction === 'prod') { await goPage('prod'); showProductQuestion('carga') }
+  else await goPage(firstAction)
 }
 
 // ══════════════════════════════════════
@@ -252,7 +243,7 @@ function resetPageScroll() {
   window.scrollTo({ top: 0, left: 0 })
 }
 
-function go(page, el) {
+async function go(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'))
   document.querySelectorAll('.ni,.mobile-ni').forEach(n => n.classList.remove('on'))
   const target = document.getElementById('page-' + page)
@@ -261,27 +252,17 @@ function go(page, el) {
   resetPageScroll()
   document.querySelectorAll(`[data-p="${page}"]`).forEach(n => n.classList.add('on'))
   if (['leads', 'org'].includes(page)) document.querySelectorAll('[data-p="people"]').forEach(n => n.classList.add('on'))
-  if (page === 'dash') switchDashboardTab('summary')
-  if (page === 'fin') { switchFinanceTab('summary'); renderFin(); loadCashSession() }
-  if (page === 'sales') renderSales()
-  if (page === 'prod') switchProductTab('inv')
-  if (page === 'people') loadTeamData()
-  if (page === 'org') loadOrganizationData()
-  if (['dash', 'fin', 'sales', 'prod', 'import'].includes(page)) loadImportedData()
+  if (page === 'dash') { switchDashboardTab('summary'); await renderDash() }
+  if (page === 'fin') { switchFinanceTab('summary'); await Promise.all([renderFin(), loadCashSession()]) }
+  if (page === 'sales') { await loadImportedData(); await renderSales() }
+  if (page === 'prod') { switchProductTab('inv'); await Promise.all([renderProds(), loadImportedData()]) }
+  if (page === 'people') await loadTeamData()
+  if (page === 'org') await loadOrganizationData()
+  if (page === 'import') await loadImportedData()
 }
 function goPage(p) {
   if (!document.getElementById('page-' + p)) return
-  go(p, document.querySelector(`[data-p="${p}"]`))
-}
-
-function showSecondaryTool(name) {
-  toast(`${name} quedará disponible desde Más herramientas cuando se active esa integración.`)
-}
-
-function scrollToImportHistory() {
-  setTimeout(() => {
-    document.getElementById('bot-actions-tb')?.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, 80)
+  return go(p, document.querySelector(`[data-p="${p}"]`))
 }
 
 function switchSectionTab(prefix, tab, tabs) {
@@ -515,7 +496,6 @@ async function saveBiz(force = false) {
 function loadBizForm(b) {
   if (!b) return
   ;[['b-nom', 'nom'], ['b-rub', 'rub'], ['b-loc', 'loc'], ['b-can', 'can'], ['b-prob', 'prob'], ['b-dif', 'dif'], ['b-cli', 'cli'], ['b-don', 'don'], ['b-prod', 'prod'], ['b-prec', 'prec']].forEach(([id, k]) => { const e = document.getElementById(id); if (e) e.value = b[k] || '' })
-  syncWizardChannels(b)
   setTbBiz(b)
 }
 
@@ -556,7 +536,7 @@ async function openProfile() {
     console.error('[Kairós] openProfile:', error)
     document.getElementById('profile-summary-text').textContent = 'No se pudo cargar el resumen. Intente nuevamente.'
   }
-  await loadShopifyConnection()
+  await loadCatalogConnections()
 }
 
 function closeProfile() {
@@ -580,6 +560,9 @@ const KAIROS_EXPORT_TABLES = [
   { name: 'team_members' },
   { name: 'team_settings', mode: 'upsert' },
   { name: 'team_payments' },
+  { name: 'cash_registers' },
+  { name: 'cash_sessions' },
+  { name: 'audit_events' },
   { name: 'leads' },
   { name: 'campanas' },
   { name: 'contenido' },
@@ -589,14 +572,6 @@ const KAIROS_EXPORT_TABLES = [
   { name: 'productos' },
   { name: 'angulos' },
 ]
-const KAIROS_IMPORT_ORDER = [
-  'negocios', 'configuracion_costos', 'inventario_items', 'movimientos_financieros', 'ventas',
-  'venta_items', 'stock_movements', 'inventory_aliases', 'bot_actions', 'import_batches',
-  'import_rows', 'organization_items', 'team_members', 'team_settings', 'team_payments',
-  'leads', 'campanas', 'contenido', 'referentes', 'gastos_fijos', 'transacciones', 'productos', 'angulos'
-]
-let pendingKairosImport = null
-
 function missingExportTable(error) {
   const msg = String(error?.message || '').toLowerCase()
   return error?.code === '42P01' || msg.includes('does not exist') || msg.includes('could not find the table')
@@ -649,93 +624,6 @@ async function exportKairosAccount() {
   if (btn) btn.blur()
 }
 
-function kairosImportCounts(payload) {
-  const tables = payload?.tables || {}
-  return KAIROS_EXPORT_TABLES
-    .map(t => [t.name, Array.isArray(tables[t.name]) ? tables[t.name].length : 0])
-    .filter(([, count]) => count > 0)
-}
-
-async function previewKairosImport(event) {
-  const file = event?.target?.files?.[0]
-  const box = document.getElementById('kairos-import-preview')
-  pendingKairosImport = null
-  if (!file || !box) return
-  try {
-    const payload = JSON.parse(await file.text())
-    if (payload?.app !== 'kairos-negocios' || !payload?.tables) throw new Error('El archivo no corresponde a una exportación de Kairós')
-    const counts = kairosImportCounts(payload)
-    pendingKairosImport = payload
-    const total = counts.reduce((sum, [, count]) => sum + count, 0)
-    box.classList.add('on')
-    box.innerHTML = `
-      <strong>Vista previa de importación</strong>
-      <div>Archivo: ${escapeHTML(file.name)}</div>
-      <div>Registros detectados: ${total}</div>
-      <div>Los datos se copiaran al usuario actual. No se importan tokens ni credenciales externas.</div>
-      <ul>${counts.slice(0, 12).map(([name, count]) => `<li>${escapeHTML(name)}: ${count}</li>`).join('')}${counts.length > 12 ? `<li>y ${counts.length - 12} tabla${counts.length - 12 === 1 ? '' : 's'} más</li>` : ''}</ul>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn btn-gold btn-sm" onclick="confirmKairosImport()">Importar datos</button>
-        <button class="btn btn-ghost btn-sm" onclick="cancelKairosImport()">Cancelar</button>
-      </div>`
-  } catch (error) {
-    box.classList.add('on')
-    box.innerHTML = `<strong>No se pudo leer el archivo</strong><div>${escapeHTML(error.message || 'Archivo inválido')}</div>`
-  }
-}
-
-function cancelKairosImport() {
-  pendingKairosImport = null
-  const input = document.getElementById('kairos-import-file')
-  const box = document.getElementById('kairos-import-preview')
-  if (input) input.value = ''
-  if (box) { box.classList.remove('on'); box.innerHTML = '' }
-}
-
-function remapKairosRow(table, row, idMaps) {
-  const copy = { ...row, user_id: CU.id }
-  if (copy.id) copy.id = idMaps[table]?.[copy.id] || crypto.randomUUID()
-  if (copy.venta_id) copy.venta_id = idMaps.ventas?.[copy.venta_id] || copy.venta_id
-  if (copy.inventory_item_id) copy.inventory_item_id = idMaps.inventario_items?.[copy.inventory_item_id] || copy.inventory_item_id
-  if (copy.batch_id) copy.batch_id = idMaps.import_batches?.[copy.batch_id] || copy.batch_id
-  if (copy.team_member_id) copy.team_member_id = idMaps.team_members?.[copy.team_member_id] || copy.team_member_id
-  if (copy.movimiento_financiero_id) copy.movimiento_financiero_id = idMaps.movimientos_financieros?.[copy.movimiento_financiero_id] || copy.movimiento_financiero_id
-  if (copy.referencia_id) copy.referencia_id = idMaps.ventas?.[copy.referencia_id] || idMaps.movimientos_financieros?.[copy.referencia_id] || copy.referencia_id
-  return copy
-}
-
-async function confirmKairosImport() {
-  if (!pendingKairosImport || !CU) return
-  if (!confirm('¿Importar estos datos en la cuenta actual? Esta acción agregará registros y actualizará configuraciones principales.')) return
-  const tables = pendingKairosImport.tables || {}
-  const idMaps = {}
-  for (const table of KAIROS_EXPORT_TABLES) {
-    const rows = Array.isArray(tables[table.name]) ? tables[table.name] : []
-    idMaps[table.name] = {}
-    rows.forEach(row => { if (row?.id) idMaps[table.name][row.id] = crypto.randomUUID() })
-  }
-  const errors = []
-  for (const tableName of KAIROS_IMPORT_ORDER) {
-    const config = KAIROS_EXPORT_TABLES.find(t => t.name === tableName) || {}
-    const rows = Array.isArray(tables[tableName]) ? tables[tableName] : []
-    if (!rows.length) continue
-    const mapped = rows.map(row => remapKairosRow(tableName, row, idMaps))
-    const query = config.mode === 'upsert'
-      ? sb.from(tableName).upsert(mapped.map(row => ({ ...row, user_id: CU.id, id: undefined })), { onConflict: 'user_id' })
-      : sb.from(tableName).insert(mapped)
-    const { error } = await query
-    if (error) errors.push(`${tableName}: ${error.message}`)
-  }
-  cancelKairosImport()
-  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderSales(), renderProds(), renderMet()])
-  if (errors.length) {
-    console.error('[Kairós] Importación parcial:', errors)
-    toastErr(`Importación parcial: ${errors.length} tabla${errors.length === 1 ? '' : 's'} con error`)
-  } else {
-    toast('Datos importados')
-  }
-}
-
 function normalizeShopifyDomain(value) {
   return String(value || '')
     .trim()
@@ -744,54 +632,117 @@ function normalizeShopifyDomain(value) {
     .replace(/\/.*$/, '')
 }
 
-async function loadShopifyConnection() {
-  const status = document.getElementById('shopify-status-text')
-  const btn = document.getElementById('shopify-connect-btn')
-  if (!status || !btn || !CU) return
-  status.textContent = 'Revisando conexión...'
-  const { data, error } = await sb.from('shopify_connections')
-    .select('shop_domain,status,connected_at,last_sync_at')
-    .eq('user_id', CU.id)
-    .order('connected_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (error) {
-    status.textContent = 'La conexión con Shopify todavía no está disponible en esta cuenta.'
-    btn.textContent = 'Conectar Shopify'
-    return
-  }
-  if (!data) {
-    status.textContent = 'Sin conexión activa.'
-    btn.textContent = 'Conectar Shopify'
-    return
-  }
-  const syncText = data.last_sync_at ? ` Última sincronización: ${new Date(data.last_sync_at).toLocaleDateString('es-AR')}.` : ''
-  status.textContent = `${data.shop_domain} - ${data.status === 'connected' ? 'conectado' : data.status}.${syncText}`
-  btn.textContent = 'Reconectar Shopify'
+const CATALOG_PROVIDERS = {
+  shopify: 'Shopify',
+  mercadolibre: 'Mercado Libre',
+  tiendanube: 'Tiendanube'
 }
 
-async function connectShopify() {
-  const raw = V('shopify-domain-input')
-  const shop = normalizeShopifyDomain(raw)
-  if (!shop) { toastErr('Ingrese el dominio de Shopify'); return }
-  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-    toastErr('Ingrese un dominio valido de Shopify, por ejemplo tienda.myshopify.com')
+async function loadCatalogConnections() {
+  if (!CU) return
+  Object.keys(CATALOG_PROVIDERS).forEach(provider => {
+    S(`${provider}-status-text`, 'Revisando conexión...')
+    const button = document.getElementById(`${provider}-connect-btn`)
+    if (button) button.dataset.connected = ''
+  })
+  const { data, error } = await sb.from('catalog_connections')
+    .select('provider,external_store_id,display_name,status,last_sync_at,last_error')
+    .eq('user_id', CU.id)
+    .in('provider', Object.keys(CATALOG_PROVIDERS))
+    .order('created_at', { ascending: false })
+  if (error) {
+    Object.keys(CATALOG_PROVIDERS).forEach(provider => S(`${provider}-status-text`, 'Integración no disponible. Aplique la migración 015.'))
     return
   }
-  const btn = document.getElementById('shopify-connect-btn')
+  const latest = new Map()
+  ;(data || []).forEach(connection => { if (!latest.has(connection.provider)) latest.set(connection.provider, connection) })
+  let missingImages = 0
+  Object.entries(CATALOG_PROVIDERS).forEach(([provider, label]) => {
+    const connection = latest.get(provider)
+    const button = document.getElementById(`${provider}-connect-btn`)
+    if (!connection) {
+      S(`${provider}-status-text`, 'Sin conexión activa.')
+      if (button) button.textContent = 'Conectar'
+      return
+    }
+    const syncText = connection.last_sync_at ? ` Última sincronización: ${new Date(connection.last_sync_at).toLocaleString('es-419')}.` : ''
+    S(`${provider}-status-text`, `${connection.display_name || connection.external_store_id} · ${connection.status === 'connected' ? 'Conectado' : 'Requiere atención'}.${syncText}${connection.last_error ? ` ${connection.last_error}.` : ''}`)
+    if (button) {
+      button.dataset.connected = connection.status === 'connected' ? 'true' : ''
+      button.textContent = connection.status === 'connected' ? 'Sincronizar' : 'Reconectar'
+    }
+    const match = String(connection.last_error || '').match(/^(\d+) variantes sin imagen/)
+    missingImages += Number(match?.[1] || 0)
+    if (provider === 'shopify') {
+      const domain = document.getElementById('shopify-domain-input')
+      if (domain) domain.value = connection.external_store_id
+    }
+  })
+  const warning = document.getElementById('catalog-image-warning')
+  if (warning) {
+    warning.hidden = !missingImages
+    warning.textContent = missingImages ? `${missingImages} variante${missingImages === 1 ? '' : 's'} no tiene${missingImages === 1 ? '' : 'n'} una foto propia. Agréguela en Productos antes de publicar o actualizar ese artículo.` : ''
+  }
+}
+
+async function connectCatalogProvider(provider) {
+  const label = CATALOG_PROVIDERS[provider]
+  const btn = document.getElementById(`${provider}-connect-btn`)
   if (btn) btn.disabled = true
   try {
-    const { data, error } = await sb.functions.invoke('shopify-oauth-start', {
-      body: { shop, returnTo: window.location.href }
+    if (btn?.dataset.connected === 'true') {
+      await syncCatalogProvider(provider)
+      return
+    }
+    const shop = provider === 'shopify' ? normalizeShopifyDomain(V('shopify-domain-input')) : null
+    const { data, error } = await sb.functions.invoke('catalog-oauth-start', {
+      body: { provider, shop, returnTo: location.origin + location.pathname + location.search }
     })
-    if (error) throw error
-    if (!data?.authorizationUrl) throw new Error('No se recibió la URL de autorización')
-    window.location.href = data.authorizationUrl
+    if (error) {
+      let detail
+      try {
+        const context = error.context
+        detail = (await (context?.json ? context.json() : new Response(context?.body).json()))?.error
+      } catch {}
+      throw new Error(detail?.replace(provider, label) || error.message)
+    }
+    if (!data?.authorizationUrl) throw new Error(data?.error || `No se pudo iniciar la conexión con ${label}`)
+    location.assign(data.authorizationUrl)
   } catch (error) {
-    console.error('[Kairós] connectShopify:', error)
-    toastErr(error.message || 'No se pudo iniciar la conexión con Shopify')
+    console.error(`[Kairós] connectCatalogProvider ${provider}:`, error)
+    toastErr(error.message || `No se pudo conectar ${label}`)
+  } finally {
     if (btn) btn.disabled = false
   }
+}
+
+async function syncCatalogProvider(provider) {
+  const label = CATALOG_PROVIDERS[provider]
+  const btn = document.getElementById(`${provider}-connect-btn`)
+  if (btn) { btn.disabled = true; btn.textContent = 'Sincronizando...' }
+  try {
+    const { data, error } = await sb.functions.invoke('catalog-sync', { body: { provider } })
+    if (error) throw error
+    if (!data?.ok) throw new Error(data?.error || `${label} no confirmó la sincronización`)
+    await Promise.all([loadCatalogConnections(), loadImportedData()])
+    toast(`${label}: ${data.variants} variantes sincronizadas${data.missingImages ? ` · ${data.missingImages} sin foto propia` : ''}`)
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sincronizar' }
+  }
+}
+
+let catalogStockTimer
+function syncPendingCatalogStock() {
+  clearTimeout(catalogStockTimer)
+  catalogStockTimer = setTimeout(async () => {
+    if (!CU) return
+    const { data, error } = await sb.from('catalog_connections').select('provider')
+      .eq('user_id', CU.id).eq('status', 'connected')
+    if (error) return console.warn('[Kairós] No se pudo revisar la cola de stock:', error)
+    await Promise.all([...new Set((data || []).map(row => row.provider))].map(provider =>
+      sb.functions.invoke('catalog-sync', { body: { provider, pushOnly: true } })
+    ))
+  }, 500)
 }
 
 function setDashTitle() {
@@ -1080,7 +1031,7 @@ function saleItemLabel(item) {
 }
 
 let posCart = {}
-let salesTab = 'history'
+let salesTab = 'pos'
 let posCategories = new Set()
 
 function switchSalesTab(tab = 'pos') {
@@ -1234,7 +1185,8 @@ function renderPosCart() {
   const rows = getPosCartItems()
   const count = rows.reduce((sum, row) => sum + row.cantidad, 0)
   const total = rows.reduce((sum, row) => sum + row.cantidad * saleItemPrice(row.item), 0)
-  const received = numOrDefault('pos-received')
+  const receivedInput = document.getElementById('pos-received')
+  const received = receivedInput?.value === '' ? null : Math.max(0, Number(receivedInput?.value) || 0)
   if (countEl) countEl.textContent = count ? `${count} producto${count === 1 ? '' : 's'} seleccionado${count === 1 ? '' : 's'}` : 'Sin productos seleccionados'
   cart.innerHTML = rows.length
     ? rows.map(({ item, cantidad }) => `<div class="pos-cart-row">
@@ -1245,7 +1197,7 @@ function renderPosCart() {
   if (totalEl) totalEl.textContent = `Total de venta: ${money(total)}`
   if (noteEl) {
     const method = V('pos-method')
-    noteEl.textContent = received > 0 && received !== total
+    noteEl.textContent = received !== null && received !== total
       ? `Finanzas registrara ${money(received)} como importe recibido. Diferencia: ${money(total - received)}.`
       : method === 'mercado_pago'
         ? 'Si Mercado Pago acredita menos que el total vendido, complete el importe recibido antes de confirmar.'
@@ -1257,16 +1209,17 @@ async function confirmPosSale() {
   const rows = getPosCartItems()
   if (!rows.length) { toastErr('Seleccione al menos un producto'); return }
   const total = rows.reduce((sum, row) => sum + row.cantidad * saleItemPrice(row.item), 0)
-  const received = numOrDefault('pos-received')
+  const receivedInput = document.getElementById('pos-received')
+  const received = receivedInput?.value === '' ? null : Math.max(0, Number(receivedInput?.value) || 0)
   const channel = V('pos-channel') || 'local'
   const method = V('pos-method')
   const notes = [`Canal: ${channel}`]
-  if (received > 0 && received !== total) notes.push(`Importe recibido: ${money(received)} sobre ${money(total)}`)
+  if (received !== null && received !== total) notes.push(`Importe recibido: ${money(received)} sobre ${money(total)}`)
   const result = await registerSale({
     fecha: V('pos-date') || today(),
     cliente: V('pos-client').trim(),
     medio_pago: method,
-    monto_recibido: received > 0 ? received : null,
+    monto_recibido: received,
     origen: 'pos',
     notas: notes.join('. '),
     items: rows.map(({ item, cantidad }) => ({
@@ -1348,7 +1301,7 @@ async function refreshAfterSale() {
   invalidateUnifiedFinances()
   invalidateSalesSummary()
   await loadImportedData()
-  await Promise.all([renderSales(), renderFin(), renderDash(), renderMet()])
+  await Promise.all([renderSales(), renderFin(), renderDash()])
 }
 
 async function registerSale(payload) {
@@ -1364,7 +1317,9 @@ async function registerSale(payload) {
 
   const total = items.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0)
   const cost = items.reduce((sum, item) => sum + item.cantidad * item.costo_unitario, 0)
-  const received = Number(payload.monto_recibido) > 0 ? Number(payload.monto_recibido) : total
+  const hasReceived = payload.monto_recibido !== null && payload.monto_recibido !== undefined && payload.monto_recibido !== ''
+  const received = hasReceived ? Number(payload.monto_recibido) : total
+  if (!Number.isFinite(received) || received < 0 || received > total) return { error: 'El importe recibido debe estar entre 0 y el total de la venta' }
   const saleDateValue = payload.fecha || today()
   const notes = [payload.notas || null, received !== total ? `Importe recibido: ${money(received)}. Diferencia de cobro: ${money(total - received)}.` : null].filter(Boolean).join(' ')
 
@@ -1390,7 +1345,7 @@ async function registerSale(payload) {
     total: data?.total == null ? total : Number(data.total),
     received: data?.received == null ? received : Number(data.received),
     difference: data?.difference == null ? Math.max(total - received, 0) : Number(data.difference),
-    profit: data?.profit == null ? received - cost : Number(data.profit)
+    profit: data?.profit == null ? total - cost : Number(data.profit)
   }
 }
 
@@ -1423,8 +1378,7 @@ async function addManualSale() {
 }
 
 async function focusManualSale() {
-  goPage('sales')
-  await loadImportedData()
+  await goPage('sales')
   switchSalesTab('pos')
   populateManualSaleProducts()
   renderSalesCatalog()
@@ -1434,6 +1388,42 @@ async function focusManualSale() {
   if (posDate && !posDate.value) posDate.value = today()
   updateManualSalePreview()
   setTimeout(() => document.getElementById('sale-pos-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+}
+
+function openSalePayment(saleId, pending) {
+  document.getElementById('sale-payment-id').value = saleId
+  document.getElementById('sale-payment-amount').value = pending
+  document.getElementById('sale-payment-amount').max = pending
+  document.getElementById('sale-payment-date').value = today()
+  S('sale-payment-pending', `Saldo pendiente: ${money(pending)}`)
+  document.getElementById('sale-payment-ov').classList.add('on')
+}
+
+function closeSalePayment() {
+  document.getElementById('sale-payment-ov').classList.remove('on')
+  ;['sale-payment-id', 'sale-payment-amount', 'sale-payment-notes'].forEach(id => { document.getElementById(id).value = '' })
+}
+
+async function confirmSalePayment() {
+  const saleId = V('sale-payment-id')
+  const amount = numOrDefault('sale-payment-amount')
+  if (!saleId || amount <= 0) { toastErr('Ingrese un cobro válido'); return }
+  const btn = document.getElementById('sale-payment-confirm')
+  btn.disabled = true
+  const { error } = await sb.rpc('register_sale_payment', {
+    p_sale_id: saleId,
+    p_monto: amount,
+    p_fecha: V('sale-payment-date') || today(),
+    p_medio_pago: V('sale-payment-method') || null,
+    p_notas: V('sale-payment-notes').trim() || null
+  })
+  btn.disabled = false
+  if (handleSupaError(error, 'confirmSalePayment')) return
+  invalidateUnifiedFinances()
+  invalidateSalesSummary()
+  closeSalePayment()
+  await Promise.all([renderSales(), renderFin(), renderDash(), loadCashSession()])
+  toast('Cobro registrado')
 }
 
 async function renderSales() {
@@ -1469,9 +1459,11 @@ async function renderSales() {
   const table = document.getElementById('sales-tb')
   if (table) {
     table.innerHTML = !rows.length
-      ? '<tr><td colspan="7"><div class="empty"><div class="empty-i">·</div>Todavía no hay ventas registradas</div></td></tr>'
+      ? '<tr><td colspan="9"><div class="empty"><div class="empty-i">·</div>Todavía no hay ventas registradas</div></td></tr>'
       : rows.map(row => {
         const total = Number(row.total) || 0
+        const received = Number(row.monto_recibido ?? row.total) || 0
+        const pending = Number(row.diferencia_cobro) || 0
         const cost = Number(row.costo_total) || 0
         const hasCost = cost > 0
         const profit = hasCost ? (Number(row.ganancia) || (total - cost)) : null
@@ -1480,6 +1472,8 @@ async function renderSales() {
           <td>${escapeHTML(saleDate(row))}</td>
           <td><strong>${escapeHTML(row.cliente || 'Cliente no informado')}</strong></td>
           <td>${money(total)}</td>
+          <td>${money(received)}</td>
+          <td style="color:${pending > 0 ? 'var(--yel)' : 'var(--txt2)'}">${pending > 0 ? `${money(pending)}<button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="openSalePayment('${row.id}',${pending})">Cobrar</button>` : 'Saldada'}</td>
           <td>${cost > 0 ? money(cost) : 'Sin dato'}</td>
           <td style="color:${profit === null ? 'var(--yel)' : profit >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${profit === null ? 'No calculado' : money(profit)}</td>
           <td>${margin === null ? '<span class="badge by">No calculado</span>' : `<span class="badge ${margin >= 25 ? 'bg' : margin >= 0 ? 'by' : 'br'}">${fmtDec(margin)}%</span>`}</td>
@@ -1909,7 +1903,7 @@ async function recordTeamPayment() {
   document.getElementById('team-payment-method').value = ''
   document.getElementById('team-payment-notes').value = ''
   invalidateUnifiedFinances()
-  await Promise.all([loadTeamData(), renderDash(), renderFin(), renderMet(), loadImportedData()])
+  await Promise.all([loadTeamData(), renderDash(), renderFin(), loadImportedData()])
   switchFinanceTab('team')
   toast('Pago registrado como egreso')
 }
@@ -2074,8 +2068,10 @@ function cleanImageUrl(value) {
 }
 
 function productImageUrl(item) {
-  const direct = cleanImageUrl(item?.imagen_url || item?.image_url)
+  const direct = cleanImageUrl(item?.imagen_principal_url || item?.imagen_url || item?.image_url)
   if (direct) return direct
+  const gallery = Array.isArray(item?.imagenes) ? cleanImageUrl(item.imagenes[0]) : ''
+  if (gallery) return gallery
   const match = String(item?.notas || '').match(/(?:^|\n)Imagen:\s*(https?:\/\/\S+)/i)
   return cleanImageUrl(match?.[1])
 }
@@ -2104,7 +2100,7 @@ async function addProd() {
   const { data, error } = await sb.rpc('create_inventory_item', {
     product_name: n,
     product_category: V('p-c').trim() || null,
-    product_notes: notesWithProductImage(V('p-d'), V('p-img')) || null,
+    product_notes: V('p-d').trim() || null,
     current_stock: stock,
     minimum_stock: stockMin,
     unit_cost: co,
@@ -2115,6 +2111,16 @@ async function addProd() {
   })
   if (handleSupaError(error, 'addProd')) return
   if (!data?.ok) { toastErr(data?.error || 'No se pudo crear el producto'); return }
+  try {
+    const files = [...(document.getElementById('p-img-file')?.files || [])]
+    const uploaded = await uploadProductImages(files, data.inventory_item_id)
+    const url = cleanImageUrl(V('p-img'))
+    const images = [...new Set([...uploaded, ...(url ? [url] : [])])]
+    await saveProductImages(data.inventory_item_id, images[0] || '', images)
+  } catch (imageError) {
+    console.error('[KairÃ³s] addProd image:', imageError)
+    toastErr(`Producto creado, pero la imagen no se pudo guardar: ${imageError.message}`)
+  }
   if (calc && data.inventory_item_id) {
     const { error: marginError } = await sb.from('inventario_items').update({
       ganancia_local: calc.ganancia,
@@ -2122,7 +2128,7 @@ async function addProd() {
     }).eq('id', data.inventory_item_id).eq('user_id', CU.id)
     if (handleSupaError(marginError, 'addProdMargin')) return
   }
-  ;['p-n', 'p-c', 'p-img', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
+  ;['p-n', 'p-c', 'p-img', 'p-img-file', 'p-d', 'p-co', 'p-pkg', 'p-env', 'p-cplat', 'p-cpago', 'p-imp', 'p-desc', 'p-mar', 'p-pr', 'p-st', 'p-min'].forEach(id => { const e = document.getElementById(id); if (e) e.value = '' })
   document.getElementById('p-cost-result').style.display = 'none'
   document.getElementById('p-cost-alert').style.display = 'none'
   await loadImportedData()
@@ -2502,7 +2508,7 @@ async function renderDash() {
   S('home-cash-answer', !ing && !egr ? 'No hay movimientos con monto válido.' : gan >= 0 ? 'Este mes entró más dinero del que salió.' : 'Este mes salió más dinero del que entró.')
   S('home-cash-number', `Entró ${money(ing)} · Salió ${money(egr)} · Resultado ${money(gan)}`)
   S('home-sales-answer', !sales.count ? 'No hay ventas confirmadas para calcularlo.' : sales.profit >= 0 ? 'Las ventas dejan ganancia.' : 'Las ventas están dejando pérdida.')
-  S('home-sales-number', sales.count ? `${money(sales.profit)} de ganancia · De cada $100 vendidos quedan $${fmtDec(sales.margin)}` : 'Registre ventas para conocer este dato.')
+  S('home-sales-number', sales.count ? `De ${money(sales.total)} vendidos` : 'Sin ventas registradas')
   const attentionCount = redCount + lossProducts + incompleteProducts
   S('home-alert-answer', attentionCount ? `${attentionCount} producto${attentionCount === 1 ? '' : 's'} necesita${attentionCount === 1 ? '' : 'n'} atención.` : 'No hay alertas críticas de productos.')
   S('home-alert-number', redCount ? `${redCount} con stock crítico` : incompleteProducts ? `${incompleteProducts} con datos incompletos` : 'Inventario sin alertas críticas')
@@ -2521,11 +2527,11 @@ async function renderDash() {
   setCommandMeter('home-cash-meter', cashHealth, gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
   setCommandMeter('home-sales-meter', salesHealth, !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
   setCommandMeter('home-stock-meter', stockHealth, redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
-  S('command-cash-value', money(gan))
+  S('command-cash-value', money(sales.total))
   const cashTrend = document.getElementById('command-cash-trend')
   if (cashTrend) {
-    cashTrend.textContent = !ing && !egr ? 'Sin movimientos con monto registrado' : `Entró ${money(ing)} · Salió ${money(egr)}`
-    cashTrend.className = `console-trend ${gan > 0 ? 'good' : gan < 0 ? 'bad' : ''}`.trim()
+    cashTrend.textContent = sales.count ? `${sales.count} venta${sales.count === 1 ? '' : 's'} confirmada${sales.count === 1 ? '' : 's'}` : 'Sin ventas registradas'
+    cashTrend.className = 'console-trend'
   }
   const setConsoleState = (prefix, percent, label, state) => {
     S(`${prefix}-percent`, `${Math.round(Math.max(0, Math.min(100, percent)))}%`)
@@ -2538,15 +2544,15 @@ async function renderDash() {
   setConsoleState('cash', cashHealth, !ing && !egr ? 'Sin datos' : gan < 0 ? 'Atención' : 'Sano', gan < 0 ? 'bad' : gan === 0 ? 'warn' : 'good')
   setConsoleState('stock', stockHealth, !inventory.length ? 'Sin inventario' : redCount ? 'Atención' : incompleteProducts ? 'Revisar datos' : 'Sano', redCount ? 'bad' : incompleteProducts ? 'warn' : 'good')
   setConsoleState('sales', salesHealth, !sales.count ? 'Sin ventas' : sales.margin < 0 ? 'Con pérdida' : sales.margin < 25 ? 'Margen bajo' : 'Bien', !sales.count || sales.margin < 0 ? 'bad' : sales.margin < 25 ? 'warn' : 'good')
-  S('console-sales-profit', money(sales.profit))
+  S('console-sales-profit', money(sales.received))
   S('console-sales-margin', sales.count ? money(sales.margin) : '$0')
   const coverage = breakEven > 0 ? Math.min(100, ing / breakEven * 100) : 0
-  S('coverage-percent', `${Math.round(coverage)}%`)
-  S('coverage-copy', breakEven > 0 ? `${money(Math.min(ing, breakEven))} de ${money(breakEven)} cubiertos este mes` : 'Cargue gastos fijos para medir este dato.')
+  S('coverage-percent', money(sales.pending))
+  S('coverage-copy', sales.pending > 0 ? 'Revisá las ventas con saldo pendiente.' : 'Todas las ventas están saldadas.')
   setCommandMeter('coverage-meter', coverage, breakEven <= 0 ? 'warn' : coverage >= 100 ? 'good' : coverage >= 60 ? 'warn' : 'bad')
   const stateEl = document.getElementById('command-state')
   const critical = gan < 0 || redCount > 0 || lossProducts > 0
-  const attention = !critical && (incompleteProducts > 0 || !sales.count || (breakEven > 0 && ing < breakEven))
+  const attention = !critical && (sales.pending > 0 || incompleteProducts > 0 || !sales.count || (breakEven > 0 && ing < breakEven))
   if (stateEl) stateEl.className = `command-state ${critical ? 'critical' : attention ? 'attention' : 'stable'}`
   S('command-status', critical ? 'Requiere atención' : attention ? 'En observación' : 'Operación estable')
   S('command-status-copy', critical
@@ -2556,12 +2562,13 @@ async function renderDash() {
       : 'Los registros principales no muestran alertas críticas por el momento.')
   const missions = []
   if (redCount) missions.push({ mark: '!', title: `Reponer ${redCount} producto${redCount === 1 ? '' : 's'} con stock crítico`, detail: 'Abra el inventario filtrado para decidir qué comprar.', action: "goPage('prod');showProductQuestion('inv','low')", tag: 'Urgente' })
+  if (sales.pending > 0) missions.push({ mark: '$', title: `Cobrar ${money(sales.pending)} pendiente`, detail: 'Revise las ventas que todavía no están saldadas.', action: "goPage('sales')", tag: 'Cobros' })
   if (gan < 0) missions.push({ mark: '$', title: 'Revisar los egresos del mes', detail: `La caja está ${money(Math.abs(gan))} por debajo de los ingresos.`, action: "goFinanceDetail('summary')", tag: 'Caja' })
   if (breakEven > 0 && ing < breakEven) missions.push({ mark: 'GF', title: 'Cubrir los gastos fijos', detail: `Faltan ${money(breakEven - ing)} de ingresos para cubrir la referencia mensual.`, action: "goFinanceDetail('fixed')", tag: 'Meta' })
   if (!sales.count) missions.push({ mark: '+', title: 'Registrar la primera venta', detail: 'Esto habilita el cálculo real de ganancia y margen.', action: "startDashboardAction('venta')", tag: 'Inicio' })
   if (incompleteProducts) missions.push({ mark: '?', title: `Completar ${incompleteProducts} producto${incompleteProducts === 1 ? '' : 's'}`, detail: 'Falta costo o precio para poder calcular rentabilidad.', action: "goPage('prod');showProductQuestion('inv','pricing')", tag: 'Datos' })
-  if (!missions.length) missions.push({ mark: 'OK', title: 'Mantener los registros al día', detail: 'No hay alertas críticas. Registre ventas y gastos cuando ocurran.', action: "openAIWithBusinessSummary()", tag: 'Estable' })
-  const visibleMissions = missions.slice(0, 3)
+  if (!missions.length) missions.push({ mark: 'OK', title: 'Mantener los registros al día', detail: 'No hay alertas críticas. Registre ventas y gastos cuando ocurran.', action: "focusManualSale()", tag: 'Estable' })
+  const visibleMissions = missions.slice(0, 1)
   S('mission-count', `${visibleMissions.length} prioridad${visibleMissions.length === 1 ? '' : 'es'}`)
   S('home-mobile-priority-title', `${visibleMissions.length} prioridad${visibleMissions.length === 1 ? '' : 'es'}`)
   S('home-mobile-priority-detail', visibleMissions[0]?.title || 'Revise alertas y movimientos recientes.')
@@ -2688,6 +2695,7 @@ async function loadImportedData() {
       renderRecentImports()
       renderBotActionsHistory()
       renderSystemState()
+      if (!importedData.error) syncPendingCatalogStock()
     }
   })()
   return importedLoadPromise
@@ -2916,6 +2924,7 @@ function editImportedInventoryItem(id) {
   setEditField('ie-precio-web', item.precio_venta_web ?? 0)
   setEditField('ie-proveedor', item.proveedor)
   setEditField('ie-imagen', productImageUrl(item))
+  setEditField('ie-imagen-file', '')
   setEditField('ie-notas', String(item.notas || '').replace(/(?:^|\n)Imagen:\s*https?:\/\/\S+\s*/i, '').trim())
   const modal = document.getElementById('inv-edit-ov')
   if (modal) modal.classList.add('on')
@@ -2937,7 +2946,14 @@ async function saveImportedInventoryEdit() {
     const precioLocal = editFieldNumber('ie-precio-local', 'Precio venta local')
     const precioWeb = editFieldNumber('ie-precio-web', 'Precio venta web')
     const proveedor = editFieldText('ie-proveedor', 'Proveedor')
-    const notas = notesWithProductImage(editFieldText('ie-notas', 'Notas'), V('ie-imagen'))
+    const notas = editFieldText('ie-notas', 'Notas')
+    const imageFiles = [...(document.getElementById('ie-imagen-file')?.files || [])]
+    const uploadedImages = await uploadProductImages(imageFiles, editingInventoryId)
+    const currentItem = (importedData.inventory || []).find(item => item.id === editingInventoryId)
+    const currentImages = Array.isArray(currentItem?.imagenes) ? currentItem.imagenes.map(cleanImageUrl).filter(Boolean) : []
+    const typedImage = cleanImageUrl(V('ie-imagen'))
+    const images = [...new Set([...uploadedImages, ...(typedImage ? [typedImage] : []), ...currentImages])]
+    const imageUrl = uploadedImages[0] || typedImage || currentImages[0] || ''
     const derived = importedInventoryDerived(stock, stockMin, costo, extra, precioLocal, precioWeb)
     const payload = {
       producto, categoria, color, medida,
@@ -2949,6 +2965,8 @@ async function saveImportedInventoryEdit() {
       precio_venta_web: precioWeb,
       proveedor,
       notas,
+      imagen_principal_url: imageUrl || null,
+      imagenes: images,
       ...derived
     }
     const { error } = await sb.from('inventario_items').update(payload).eq('id', editingInventoryId).eq('user_id', CU.id)
@@ -3083,7 +3101,7 @@ async function deleteImportedMovement(id) {
   if (!confirm('\u00bfEliminar este movimiento importado?')) return
   const { error } = await window.KairosFinanceService.deleteMovement('movimientos_financieros', id)
   if (handleSupaError(error, 'deleteImportedMovement')) return
-  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+  await Promise.all([loadImportedData(), renderDash(), renderFin()])
   toast('Movimiento importado eliminado')
 }
 
@@ -3978,7 +3996,7 @@ async function confirmImport() {
   importRows = []
   btn.disabled = true; btn.textContent = 'Carga confirmada'
   invalidateUnifiedFinances()
-  await Promise.all([loadImportedData(), renderDash(), renderFin(), renderMet()])
+  await Promise.all([loadImportedData(), renderDash(), renderFin()])
   toast('Carga confirmada')
 }
 
@@ -4066,7 +4084,7 @@ async function confirmBotAction(surface = botActionSurface) {
     btn.disabled = true; btn.textContent = 'Acción confirmada'
     invalidateUnifiedFinances()
     invalidateSalesSummary()
-    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderSales(), renderMet()])
+    await Promise.all([loadImportedData(), renderDash(), renderFin(), renderSales()])
     if (surface === 'ai') {
       const old = document.getElementById('ai-bot-action-preview')
       if (old) old.remove()
@@ -4116,6 +4134,13 @@ function resetImport() {
 // AI — SEGURO VIA EDGE FUNCTION
 // ══════════════════════════════════════
 let aiH = []
+const AI_LANGUAGE_INSTRUCTIONS = [
+  'Responder siempre en español neutro latinoamericano.',
+  'Usar un tono claro, profesional y cercano.',
+  'Tratar al usuario de usted cuando sea necesario.',
+  'No usar voseo, modismos, regionalismos ni expresiones propias de un país.',
+  'Preferir instrucciones universales como "seleccione", "ingrese" y "puede".'
+].join(' ')
 
 function resetAdvisorState() {
   aiH = []
@@ -4168,7 +4193,48 @@ function closeAI() {
 }
 
 function aiClock() {
-  return new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date())
+  return new Intl.DateTimeFormat('es-419', { hour: '2-digit', minute: '2-digit' }).format(new Date())
+}
+
+async function uploadProductImage(file, inventoryItemId) {
+  if (!file) return ''
+  if (!file.type.startsWith('image/')) throw new Error('El archivo debe ser una imagen')
+  if (file.size > 10 * 1024 * 1024) throw new Error('La imagen no puede superar 10 MB')
+  const extension = String(file.name || '').split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+  const path = `${CU.id}/${inventoryItemId}/${crypto.randomUUID()}.${extension}`
+  const { error } = await sb.storage.from('product-images').upload(path, file, { contentType: file.type, upsert: false })
+  if (error) throw error
+  return sb.storage.from('product-images').getPublicUrl(path).data.publicUrl
+}
+
+async function uploadProductImages(files, inventoryItemId) {
+  const images = []
+  for (const file of files || []) images.push(await uploadProductImage(file, inventoryItemId))
+  return images
+}
+
+async function saveProductImages(inventoryItemId, imageUrl, imageUrls = []) {
+  const cleanUrl = cleanImageUrl(imageUrl)
+  const cleanImages = [...new Set((imageUrls || []).map(cleanImageUrl).filter(Boolean))]
+  if (!cleanUrl && !cleanImages.length) return
+  const { error } = await sb.rpc('set_inventory_images', {
+    p_inventory_item_id: inventoryItemId,
+    p_main_image_url: cleanUrl || cleanImages[0],
+    p_images: cleanImages.length ? cleanImages : [cleanUrl]
+  })
+  if (error) throw error
+}
+
+function neutralizeAdvisorReply(text) {
+  const replacements = new Map([
+    ['tenés', 'tiene'], ['podés', 'puede'], ['querés', 'desea'], ['hacé', 'haga'],
+    ['elegí', 'elija'], ['guardá', 'guarde'], ['ingresá', 'ingrese'], ['registrá', 'registre'],
+    ['decime', 'dígame'], ['contame', 'cuénteme'], ['revisá', 'revise'], ['usá', 'use']
+  ])
+  return String(text).replace(/\b(tenés|podés|querés|hacé|elegí|guardá|ingresá|registrá|decime|contame|revisá|usá)\b/gi, word => {
+    const replacement = replacements.get(word.toLocaleLowerCase('es-419')) || word
+    return /^[A-ZÁÉÍÓÚ]/.test(word) ? replacement.charAt(0).toUpperCase() + replacement.slice(1) : replacement
+  })
 }
 
 function appendAIMessage(text, type = 'bot') {
@@ -4289,7 +4355,12 @@ async function sendAI() {
     }
 
     const { data, error } = await sb.functions.invoke('ai-advisor', {
-      body: { message: msg, history: aiH.slice(-18), style: 'Español neutro, formal y directo. No usar voseo ni regionalismos argentinos.' }
+      body: {
+        message: msg,
+        history: aiH.slice(-18),
+        style: AI_LANGUAGE_INSTRUCTIONS,
+        language: 'es-419'
+      }
     })
 
     loadDiv.remove()
@@ -4303,7 +4374,7 @@ async function sendAI() {
       return
     }
 
-    const reply = data?.reply || 'No se pudo procesar la consulta.'
+    const reply = neutralizeAdvisorReply(data?.reply || 'No se pudo procesar la consulta.')
     aiH.push({ role: 'assistant', content: reply })
     if (aiH.length > 20) aiH = aiH.slice(-20)
 
@@ -4332,7 +4403,8 @@ function mdToHtml(text) {
 async function renderAll() {
   const biz = await getBiz()
   loadBizForm(biz)
-  await Promise.all([loadAng(), renderFin(), renderSales(), renderProds(), renderLeads(), renderPub(), renderCont(), renderRefs(), renderMet(), renderDash(), loadImportedData()])
+  await renderDash()
+  return biz
 }
 
 // ══════════════════════════════════════
@@ -4482,7 +4554,7 @@ async function openCashSession() {
   if (!CU || cashSessionState.loading) return
   const amount = Number(V('cash-opening-amount') || 0)
   if (!Number.isFinite(amount) || amount < 0) {
-    toast('Ingresá un efectivo inicial válido')
+    toast('Ingrese un efectivo inicial válido')
     return
   }
   setCashLoading(true)
@@ -4506,11 +4578,11 @@ async function recordCashAdjustment() {
   const description = V('cash-adjustment-description').trim()
   if (!session) return
   if (!Number.isFinite(amount) || amount <= 0) {
-    toast('Ingresá un monto mayor a cero')
+    toast('Ingrese un monto mayor a cero')
     return
   }
   if (!description) {
-    toast('Contanos qué movimiento estás registrando')
+    toast('Indique qué movimiento desea registrar')
     return
   }
 
@@ -4536,7 +4608,7 @@ async function closeCashSession() {
   const counted = Number(V('cash-counted-amount'))
   if (!session) return
   if (!Number.isFinite(counted) || counted < 0) {
-    toast('Ingresá el efectivo que contaste')
+    toast('Ingrese el efectivo que contó')
     return
   }
 

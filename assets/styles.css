@@ -794,8 +794,9 @@ tr:hover td{background:#171c20}
 .integration-provider{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;margin-bottom:10px;border:1px solid var(--bor);border-radius:14px;background:var(--sur2)}
 .integration-provider strong{display:block;font-size:14px;color:var(--txt)}
 .integration-provider p{margin:4px 0 0;color:var(--txt2);font-size:12px;line-height:1.45}
-.shopify-connect-box{display:flex;align-items:center;gap:8px;min-width:min(100%,360px)}
-.shopify-connect-box input{min-width:0;height:42px}
+.catalog-connect-box{display:flex;align-items:center;gap:8px;min-width:min(100%,360px)}
+.catalog-connect-box input{min-width:0;height:42px}
+.integration-warning{margin-top:10px;padding:10px 12px;border:1px solid rgba(245,158,11,.35);border-radius:12px;background:rgba(245,158,11,.08);color:var(--yel);font-size:12px;line-height:1.5}
 .data-portability-preview{display:none;margin-top:12px;padding:12px;border:1px solid var(--bor);border-radius:14px;background:var(--sur2);font-size:12px;color:var(--txt2);line-height:1.5}
 .data-portability-preview.on{display:block}
 .data-portability-preview strong{color:var(--txt)}
@@ -867,7 +868,7 @@ tr:hover td{background:#171c20}
 @media(max-width:1250px){.finance-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.people-flow{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1100px){.module-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.module-layout,.finance-overview,.people-layout,.pos-panel{grid-template-columns:1fr}.pos-ticket{position:static}}
 @media(max-width:900px){.module-header{align-items:flex-start;flex-direction:column;width:calc(100vw - 28px)!important;max-width:100%;min-width:0}.module-header-actions{width:100%!important;max-width:100%;min-width:0}.module-header-actions .btn{flex:1 1 180px;justify-content:center}}
-@media(max-width:700px){.module-header{align-items:flex-start;flex-direction:column}.module-header-actions,.module-header-actions .btn{width:100%;justify-content:center}.module-summary-grid,.commerce-actions,.manual-sale-grid,.finance-chart,.finance-data-grid,.pos-toolbar,.pos-grid,.pos-sale-fields,.integration-actions{grid-template-columns:1fr}.integration-provider,.shopify-connect-box{align-items:stretch;flex-direction:column}.shopify-connect-box{min-width:0}.manual-sale-name,.pos-received{grid-column:auto}.finance-flow-head{align-items:flex-start;flex-direction:column}.finance-flow-head strong{text-align:left}.module-shell .module-card-head{align-items:flex-start;flex-direction:column}.module-summary-card{min-height:auto}.metric-lines>div{align-items:flex-start;flex-direction:column}.metric-lines strong{text-align:left}}
+@media(max-width:700px){.module-header{align-items:flex-start;flex-direction:column}.module-header-actions,.module-header-actions .btn{width:100%;justify-content:center}.module-summary-grid,.commerce-actions,.manual-sale-grid,.finance-chart,.finance-data-grid,.pos-toolbar,.pos-grid,.pos-sale-fields,.integration-actions{grid-template-columns:1fr}.integration-provider,.catalog-connect-box{align-items:stretch;flex-direction:column}.catalog-connect-box{min-width:0}.manual-sale-name,.pos-received{grid-column:auto}.finance-flow-head{align-items:flex-start;flex-direction:column}.finance-flow-head strong{text-align:left}.module-shell .module-card-head{align-items:flex-start;flex-direction:column}.module-summary-card{min-height:auto}.metric-lines>div{align-items:flex-start;flex-direction:column}.metric-lines strong{text-align:left}}
 @media(max-width:520px){
   .sales-shell{gap:12px}
   .sales-shell .module-layout,.sales-shell .module-main,.sales-shell .module-side,.sales-shell .module-card{min-width:0}

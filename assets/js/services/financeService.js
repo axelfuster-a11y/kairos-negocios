@@ -127,13 +127,15 @@
       const { m, y } = getMes()
       const monthStart = `${y}-${String(m).padStart(2, '0')}-01`
       const monthEnd = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`
-      const { data, error } = await client().from('ventas').select('id,fecha,total,costo_total,ganancia,created_at').eq('user_id', userId()).order('created_at', { ascending: false }).limit(5000)
+      const { data, error } = await client().from('ventas').select('id,fecha,total,monto_recibido,diferencia_cobro,costo_total,ganancia,created_at').eq('user_id', userId()).order('created_at', { ascending: false }).limit(5000)
       if (error) throw error
       const sales = (data || []).filter(sale => {
         const key = sale.fecha || (sale.created_at ? String(sale.created_at).slice(0, 10) : null)
         return key && key >= monthStart && key < monthEnd
       })
       const total = sales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0)
+      const received = sales.reduce((sum, sale) => sum + (Number(sale.monto_recibido ?? sale.total) || 0), 0)
+      const pending = sales.reduce((sum, sale) => sum + (Number(sale.diferencia_cobro) || 0), 0)
       const salesWithCost = sales.filter(sale => Number(sale.costo_total) > 0)
       const cost = salesWithCost.reduce((sum, sale) => sum + (Number(sale.costo_total) || 0), 0)
       const profit = salesWithCost.reduce((sum, sale) => sum + (Number(sale.ganancia) || 0), 0)
@@ -142,6 +144,8 @@
         sales,
         count: sales.length,
         total,
+        received,
+        pending,
         cost,
         profit,
         marginBase,

@@ -14,15 +14,15 @@ for (const [index, match] of metricHelp.entries()) {
 assert.match(css, /\.metric-help\.on::after/, 'Tapped help must remain visible')
 assert.match(app, /\.info-dot\.on,\.metric-help\.on/, 'Help state selector must include metric help')
 
-const channelBlock = html.match(/<div id="w-canales"[\s\S]*?<\/div>/)?.[0]
-assert.ok(channelBlock, 'Channel selection block missing')
-const checkboxes = [...channelBlock.matchAll(/type="checkbox"/g)]
-assert.ok(checkboxes.length >= 8, 'Expected multiple sales channel choices')
-for (const channel of ['Instagram', 'Facebook', 'WhatsApp', 'Shopify', 'Tienda Nube', 'Página web propia']) {
-  assert.match(channelBlock, new RegExp(channel), `Missing sales channel: ${channel}`)
+const firstActionBlock = html.match(/<div class="channel-options" aria-label="Primera acción">[\s\S]*?<\/div>/)?.[0]
+assert.ok(firstActionBlock, 'First action selection missing')
+const choices = [...firstActionBlock.matchAll(/type="radio"/g)]
+assert.equal(choices.length, 4, 'Expected four first action choices')
+for (const action of ['Crear productos', 'Registrar una venta', 'Ordenar el dinero', 'Ver el resumen']) {
+  assert.match(firstActionBlock, new RegExp(action), `Missing first action: ${action}`)
 }
-assert.match(app, /querySelectorAll\('#w-canales input:checked'\)/, 'Onboarding must save every checked channel')
-assert.match(css, /\.channel-option:has\(\.channel-checkbox:checked\)/, 'Selected channels need visible feedback')
-assert.match(css, /appearance:auto!important/, 'Checkboxes must keep native mobile behavior')
+assert.match(app, /input\[name="first_action"\]:checked/, 'Onboarding must route to the selected first action')
+assert.match(css, /\.channel-option:has\(\.channel-checkbox:checked\)/, 'Selected action needs visible feedback')
+assert.match(css, /appearance:auto!important/, 'Radios must keep native mobile behavior')
 
-console.log('Mobile help and channel selection contracts ok')
+console.log('Mobile help and onboarding action contracts ok')
