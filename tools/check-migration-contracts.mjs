@@ -30,6 +30,7 @@ const requiredTables = [
   'audit_events',
   'cash_registers',
   'cash_sessions',
+  'sale_payments',
 ]
 for (const table of requiredTables) {
   assert.match(sql, new RegExp(`create table if not exists public\\.${table}|create table public\\.${table}`), `Missing table contract: ${table}`)
@@ -47,6 +48,7 @@ const requiredFunctions = [
   'get_cash_session_summary',
   'close_cash_session',
   'register_sale_atomic',
+  'register_sale_payment',
 ]
 for (const fn of requiredFunctions) {
   assert.match(sql, new RegExp(`function public\\.${fn}\\s*\\(`), `Missing RPC: ${fn}`)
@@ -110,7 +112,7 @@ for (const contract of [
   assert.match(cash, contract, `Cash session contract missing: ${contract}`)
 }
 
-const sale = readFileSync(join(migrationDir, '011_register_sale_atomic.sql'), 'utf8').toLowerCase()
+const sale = readFileSync(join(migrationDir, '012_fix_sale_financial_truth.sql'), 'utf8').toLowerCase()
 for (const contract of [
   /function public\.register_sale_atomic/,
   /for update/,
@@ -120,7 +122,12 @@ for (const contract of [
   /insert into public\.stock_movements/,
   /stock_actual = v_after/,
   /v_after < 0/,
-  /v_profit := v_received - v_cost/,
+  /v_unit_cost := coalesce\(v_inv\.costo_total, v_inv\.costo_unitario, 0\)/,
+  /v_profit := v_total - v_cost/,
+  /if v_received > 0 then/,
+  /insert into public\.sale_payments/,
+  /function public\.register_sale_payment/,
+  /el cobro supera el saldo pendiente/,
 ]) {
   assert.match(sale, contract, `Atomic sale contract missing: ${contract}`)
 }

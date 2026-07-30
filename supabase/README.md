@@ -8,6 +8,56 @@ Supabase sigue siendo la base de datos de la app. Las migraciones existentes no 
 
 Las funciones de importacion viven visualmente dentro de `Mas herramientas > Importaciones` y tambien alimentan los resumenes de `Inicio`, `Productos`, `Ventas` y `Finanzas`. Las tablas legacy siguen existiendo y no se eliminan.
 
+### `migrations/013_multichannel_catalog.sql`
+
+Agrega la base transaccional para sincronizar catÃ¡logos de Shopify, Tiendanube y Meta:
+
+- imagen principal y galerÃ­a por producto, mÃ¡s el bucket `product-images` para cargas manuales;
+- conexiones y vÃ­nculos entre cada variante externa y el inventario de KairÃ³s;
+- importaciÃ³n idempotente con movimientos de stock;
+- cola durable para propagar ventas y cambios locales a todos los canales conectados;
+- vista `v_catalog_products` lista para mostrar imagen, stock y canales en el mostrador.
+
+Los tokens se guardan separados de las tablas visibles y las llamadas externas deben ejecutarse desde Edge Functions. El frontend nunca recibe ni lee esos tokens.
+
+### `migrations/015_catalog_oauth.sql`
+
+Unifica la conexión oficial de Shopify, Mercado Libre y Tiendanube:
+
+- OAuth por usuario con `state` de un solo uso y vencimiento corto;
+- PKCE y renovación automática de tokens para Mercado Libre;
+- verificación HMAC para Shopify;
+- tokens cifrados con AES-GCM y sin acceso desde el navegador;
+- importación paginada de productos y variantes;
+- relación explícita de la foto propia de cada variante;
+- cola de actualización de stock para los tres proveedores.
+
+Antes de desplegar, registre la misma URL de callback en las tres aplicaciones:
+
+```text
+https://SU-PROYECTO.supabase.co/functions/v1/catalog-oauth-callback
+```
+
+Configure las variables indicadas en `supabase/functions/.env.example` como
+Supabase Edge Function Secrets. No copie valores reales al repositorio.
+
+Despliegue las funciones:
+
+```bash
+supabase functions deploy catalog-oauth-start
+supabase functions deploy catalog-oauth-callback --no-verify-jwt
+supabase functions deploy catalog-sync
+```
+
+La sincronización importa únicamente imágenes vinculadas a la variante:
+
+- Shopify: `ProductVariant.media`;
+- Mercado Libre: `variation.picture_ids`;
+- Tiendanube: `variant.image_id`.
+
+Si una variante externa no tiene foto propia, Kairós la importa sin inventar
+una imagen, muestra la advertencia y permite cargar sus fotos desde Productos.
+
 ## Migraciones
 
 ### `migrations/001_import_base.sql`
