@@ -2,37 +2,63 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#10131a"><meta name="description" content="Kairós: tu centro personal, privado y local.">
-<link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./styles.css">
-<title>Kairós — Centro personal</title>
+<meta name="theme-color" content="#f4f2ec"><meta name="description" content="Kairós: tu centro personal, privado y local.">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./styles.css">
+<title>Kairós — Tu centro personal</title>
 </head>
 <body>
-<div class="shell">
-<header class="top"><a class="brand" href="#"><span class="brandmark">K</span><span><b>Kairós</b><small>Centro personal</small></span></a><div class="topright"><span class="localtag"><i></i> Datos en este dispositivo</span><button class="iconbtn" id="restoreBtn" title="Restaurar copia de seguridad" aria-label="Restaurar copia">↥</button><button class="iconbtn" id="backupBtn" title="Exportar copia de seguridad" aria-label="Exportar copia">↧</button></div></header>
-<main>
-<section class="welcome"><div><p class="eyebrow" id="todayLabel">TU ESPACIO</p><h1>Ordená tu día.<br><em>Recuperá el control.</em></h1><p class="muted">Un lugar para tus finanzas y lo que tenés por delante.</p></div><div class="welcome-mark">✳</div></section>
-<nav class="tabs" aria-label="Secciones"><button class="tab active" data-view="home">Resumen</button><button class="tab" data-view="finance">Finanzas</button><button class="tab" data-view="tasks">Organización</button></nav>
-<section class="view active" id="view-home">
-<div class="sectionhead"><div><p class="eyebrow">VISTA GENERAL</p><h2>Tu situación</h2></div><button class="textbtn" id="quickAdd">＋ Registrar</button></div>
-<div class="stats"><article class="stat primary"><span>Dinero disponible</span><strong id="totalBalance">$0</strong><small>En todas tus cuentas</small></article><article class="stat"><span>Ingresos del mes</span><strong class="positive" id="monthIncome">$0</strong><small>Registrados</small></article><article class="stat"><span>Gastos del mes</span><strong id="monthExpense">$0</strong><small>Registrados</small></article><article class="stat"><span>Deudas pendientes</span><strong id="debtTotal">$0</strong><small id="debtCount">0 registradas</small></article></div>
-<div class="columns"><article class="panel"><div class="panelhead"><div><p class="eyebrow">MOVIMIENTOS</p><h3>Actividad reciente</h3></div><button class="subtle" data-go="finance">Ver todos →</button></div><div id="recentList" class="list empty">Todavía no hay movimientos.</div></article><article class="panel"><div class="panelhead"><div><p class="eyebrow">EN AGENDA</p><h3>Lo próximo</h3></div><button class="subtle" data-go="tasks">Ver tareas →</button></div><div id="upcomingList" class="list empty">No tenés tareas pendientes.</div></article></div>
-<div class="panel privacy"><div class="privacyicon">⌑</div><div><b>Tu información es tuya.</b><p>Esta versión guarda los datos localmente en este navegador. No necesita una cuenta, servidor ni suscripción. Exportá una copia de seguridad regularmente.</p></div></div>
-</section>
-<section class="view" id="view-finance">
-<div class="sectionhead"><div><p class="eyebrow">CONTROL FINANCIERO</p><h2>Finanzas</h2></div><button class="textbtn" id="newMovement">＋ Movimiento</button></div>
-<div class="financegrid"><article class="panel"><div class="panelhead"><h3>Cuentas</h3><button class="subtle" id="newAccount">＋ Agregar</button></div><div id="accountsList" class="list empty">Agregá tu primera cuenta.</div></article><article class="panel"><div class="panelhead"><h3>Deudas</h3><button class="subtle" id="newDebt">＋ Agregar</button></div><div id="debtsList" class="list empty">No hay deudas registradas.</div></article></div>
-<article class="panel movementpanel"><div class="panelhead"><div><p class="eyebrow">REGISTRO</p><h3>Todos los movimientos</h3></div><select id="movementFilter" aria-label="Filtrar movimientos"><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option><option value="transfer">Transferencias</option></select></div><div id="movementList" class="list empty">Todavía no hay movimientos.</div></article>
-</section>
-<section class="view" id="view-tasks">
-<div class="sectionhead"><div><p class="eyebrow">PLANIFICACIÓN</p><h2>Organización</h2></div><button class="textbtn" id="newTask">＋ Nueva tarea</button></div>
-<div class="tasksummary"><div><b id="taskOpen">0</b><span>Pendientes</span></div><div><b id="taskDone">0</b><span>Completadas</span></div></div>
-<article class="panel"><div class="panelhead"><h3>Tu lista</h3><select id="taskFilter" aria-label="Filtrar tareas"><option value="open">Pendientes</option><option value="all">Todas</option><option value="done">Completadas</option></select></div><div id="taskList" class="list empty">No hay tareas. Agregá la primera.</div></article>
-</section>
-</main>
-<footer>KAIRÓS · VERSIÓN INICIAL · PRIVACIDAD LOCAL</footer>
+<div class="app-shell">
+<aside class="sidebar">
+<a class="brand" href="#home"><span class="brand-mark">k</span><span><b>Kairós</b><small>tu espacio personal</small></span></a>
+<div class="profile-chip"><span class="avatar">A</span><span><b>Mi espacio</b><small>Privado · Este dispositivo</small></span><i class="status-dot"></i></div>
+<nav class="side-nav" aria-label="Navegación principal">
+<p class="nav-label">GENERAL</p>
+<button class="nav-item active" data-view="home"><span>⌂</span>Mi día</button>
+<button class="nav-item" data-view="calendar"><span>▦</span>Calendario</button>
+<button class="nav-item" data-view="organize"><span>☷</span>Tareas</button>
+<button class="nav-item" data-view="focus"><span>◷</span>Enfoque</button>
+<p class="nav-label">GESTIÓN</p>
+<button class="nav-item" data-view="finance"><span>◈</span>Finanzas</button>
+<button class="nav-item" data-view="projects"><span>◇</span>Proyectos</button>
+<button class="nav-item" data-view="studies"><span>▤</span>Estudios</button>
+<button class="nav-item" data-view="work"><span>⌑</span>Trabajo y negocios</button>
+<p class="nav-label">ASISTENTE</p>
+<button class="nav-item" data-view="assistant"><span>✳</span>Hablar con Kairo</button>
+<button class="nav-item" data-view="settings"><span>⚙</span>Configuración</button>
+</nav>
+<div class="sidebar-bottom"><div class="mascot-mini"><span class="mascot-face">◡</span><div><b>Un paso a la vez.</b><small>Tu progreso cuenta.</small></div></div><button class="side-help" data-view="assistant">¿Necesitás ordenar algo? <span>→</span></button></div>
+</aside>
+<div class="main-column">
+<header class="topbar">
+<div class="mobile-brand"><span class="brand-mark">k</span><b>Kairós</b></div>
+<div class="breadcrumb" id="breadcrumb">GENERAL <span>/</span> MI DÍA</div>
+<div class="top-actions">
+<span class="save-status"><i></i> Guardado local</span>
+<button class="icon-action" id="undoBtn" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled>↶</button>
+<button class="icon-action" id="redoBtn" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled>↷</button>
+<button class="icon-action" id="backupBtn" title="Copia de seguridad" aria-label="Copia de seguridad">⇩</button>
+<button class="avatar top-avatar" id="settingsShortcut" aria-label="Configuración">A</button>
 </div>
-<dialog id="entryDialog"><form method="dialog" id="entryForm"><div class="dialoghead"><div><p class="eyebrow" id="formEyebrow">NUEVO REGISTRO</p><h2 id="formTitle">Registrar movimiento</h2></div><button class="iconbtn" value="cancel" aria-label="Cerrar">×</button></div><div id="formFields"></div><div class="formactions"><button class="btn ghost" value="cancel">Cancelar</button><button class="btn" id="saveEntry" value="default">Guardar</button></div></form></dialog>
-<input id="importFile" type="file" accept="application/json,.json" hidden>
-<div id="toast" role="status" aria-live="polite"></div>
+</header>
+<main id="main-content">
+<section class="view active" id="view-home"></section>
+<section class="view" id="view-calendar"></section>
+<section class="view" id="view-organize"></section>
+<section class="view" id="view-focus"></section>
+<section class="view" id="view-finance"></section>
+<section class="view" id="view-projects"></section>
+<section class="view" id="view-studies"></section>
+<section class="view" id="view-work"></section>
+<section class="view" id="view-assistant"></section>
+<section class="view" id="view-settings"></section>
+</main>
+</div>
+<nav class="mobile-nav" aria-label="Navegación móvil">
+<button class="active" data-view="home"><span>⌂</span>Hoy</button><button data-view="organize"><span>☷</span>Tareas</button><button class="mobile-add" id="mobileQuickAdd"><span>＋</span></button><button data-view="finance"><span>◈</span>Plata</button><button data-view="assistant"><span>✳</span>Chat</button>
+</nav>
+</div>
+<dialog id="modal"><form id="modalForm"><div class="modal-head"><div><p class="eyebrow" id="modalEyebrow">NUEVO</p><h2 id="modalTitle">Crear</h2></div><button type="button" class="icon-action close-modal" aria-label="Cerrar">×</button></div><div id="modalFields" class="modal-fields"></div><div class="modal-actions"><button type="button" class="btn btn-quiet close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
 <script src="./domain.js"></script><script src="./app.js"></script>
 </body></html>
