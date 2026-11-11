@@ -54,6 +54,31 @@
     const saveButton=$('savePrefs'),old=saveButton.onclick;
     saveButton.onclick=async()=>{const theme=$('prefTheme').value,fontScale=$('prefFont').value;await old?.();state.prefs.theme=theme;state.prefs.fontScale=fontScale;await save();applyDisplayPrefs();renderSettings();toast('Preferencias visuales guardadas')};
   };
+
+  const basicSend=sendChat;
+  sendChat=async function(text){
+    const previous=pendingChat, answer=String(text||'').trim().toLowerCase();
+    if(previous?.kind==='compoundClarification'){
+      chatSay('user',String(text||''));
+      if(/^(sí|si|correcto|exacto|así es|después del gasto)[.! ]*$/.test(answer)){
+        const raw=previous.raw||'',match=raw.match(/gast[eé]\s+[\d.,]+\s+(?:pesos\s+)?(?:en\s+)?(.+?)(?:\s+y\s+(?:tengo|me queda|quedan|saldo).*)?$/i);
+        const description=(match?.[1]||'Gasto informado en el chat').trim().replace(/[.,;]+$/,'');
+        pendingChat={kind:'movement',type:'expense',amount:previous.expenseAmount,description,accountId:previous.accountId||null};
+        const response=previous.accountId
+          ?'Perfecto. Preparé un gasto de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado, no lo usaré para inventar otro movimiento. ¿Confirmás el gasto?'
+          :'Perfecto. Preparé el gasto de '+money(previous.expenseAmount)+' por "'+description+'". ¿De qué cuenta salió? '+state.accounts.map(a=>a.name).join(', ');
+        const actions=previous.accountId?'<button data-chat-confirm>Confirmar gasto</button> <button data-chat-cancel>Cancelar</button>':state.accounts.map(a=>'<button data-chat-account="'+a.id+'">'+esc(a.name)+'</button>').join('');
+        chatSay('assistant',response,actions);
+      }else{
+        pendingChat=null;
+        chatSay('assistant','No registré nada. Contame qué representa cada importe y lo vuelvo a interpretar.');
+      }
+      await save();renderAssistant();return;
+    }
+    pendingChat=null;
+    return basicSend(text);
+  };
+
   const baseMetric=metric;
   metric=function(label,value,note,cls=''){
     const target=/deuda/i.test(label)?'finance':/disponible|ingresos|gastos/i.test(label)?'finance':/pendientes|completadas|atrasadas/i.test(label)?'organize':null;
