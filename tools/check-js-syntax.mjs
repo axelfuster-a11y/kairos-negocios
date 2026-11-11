@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
-const roots = ['assets/app.js', 'assets/js', 'tools', 'personal/app.js']
+const roots = ['assets/app.js', 'assets/js', 'tools', 'personal/app.js', 'personal/app-core.js', 'personal/app-views-1.js', 'personal/app-views-2.js', 'personal/app-views-3.js', 'personal/app-views-4.js', 'personal/app-forms.js', 'personal/app-actions-1.js', 'personal/app-features-1.js', 'personal/app-features-2.js']
 
 function collectJs(path) {
   if (!existsSync(path)) return []
