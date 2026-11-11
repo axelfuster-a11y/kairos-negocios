@@ -54,6 +54,13 @@
     const saveButton=$('savePrefs'),old=saveButton.onclick;
     saveButton.onclick=async()=>{const theme=$('prefTheme').value,fontScale=$('prefFont').value;await old?.();state.prefs.theme=theme;state.prefs.fontScale=fontScale;await save();applyDisplayPrefs();renderSettings();toast('Preferencias visuales guardadas')};
   };
-  document.addEventListener('click',e=>{const metric=e.target.closest('[data-metric-view]');if(metric)nav(metric.dataset.metricView)});
+  const baseMetric=metric;
+  metric=function(label,value,note,cls=''){
+    const target=/deuda/i.test(label)?'finance':/disponible|ingresos|gastos/i.test(label)?'finance':/pendientes|completadas|atrasadas/i.test(label)?'organize':null;
+    return baseMetric(label,value,note,cls).replace('<article class="card metric-card','<article '+(target?'data-metric-view="'+target+'" tabindex="0" role="link" aria-label="Ver detalle de '+label+'" ':'')+'class="card metric-card');
+  };
+  document.addEventListener('click',e=>{const metricCard=e.target.closest('[data-metric-view]');if(metricCard)nav(metricCard.dataset.metricView)});
+  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-metric-view]')){e.preventDefault();nav(e.target.dataset.metricView)}});
+
   applyDisplayPrefs();
 })();
