@@ -25,3 +25,12 @@ html[data-theme="dark"] .calendar-event{background:#34473a;color:#d3e3d3}
 html[data-theme="dark"] .nav-item{color:#c1cbc1}
 html[data-theme="dark"] .notice{background:#413b2c;border-color:#65583a;color:#e0cf9e}
 html[data-theme="dark"] dialog{background:var(--paper);color:var(--ink);border-color:var(--line)}
+
+@media(prefers-color-scheme:dark){
+ html[data-theme="system"]{color-scheme:dark;--bg:#202923;--paper:#29352e;--paper-2:#303d35;--ink:#edf0e9;--muted:#b3beb3;--faint:#929f94;--line:#435047;--sage:#a2bba4;--sage-dark:#91ad95;--sage-soft:#34473a;--clay:#d5a58d;--clay-soft:#4a3932;--gold:#d6bd8d;--blue-soft:#34464a;--red:#e09b8f;--red-soft:#4b3532;--shadow:0 8px 30px #00000020}
+ html[data-theme="system"] body,html[data-theme="system"] .sidebar,html[data-theme="system"] .topbar,html[data-theme="system"] .mobile-nav,html[data-theme="system"] .chat-input-row{background:var(--bg);color:var(--ink)}
+ html[data-theme="system"] .welcome-panel,html[data-theme="system"] .metric-card.primary,html[data-theme="system"] .mascot-mini{background:#303f34;border-color:#46584a}
+ html[data-theme="system"] .chat-bubble,html[data-theme="system"] .suggestion,html[data-theme="system"] .chat-input,html[data-theme="system"] .form-field input,html[data-theme="system"] .form-field select,html[data-theme="system"] .form-field textarea,html[data-theme="system"] .calendar-weekday{background:var(--paper-2);color:var(--ink);border-color:var(--line)}
+ html[data-theme="system"] .chat-msg.user .chat-bubble{background:#526e5b;color:white}
+ html[data-theme="system"] dialog{background:var(--paper);color:var(--ink);border-color:var(--line)}
+}
