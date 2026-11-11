@@ -62,5 +62,7 @@
   document.addEventListener('click',e=>{const metricCard=e.target.closest('[data-metric-view]');if(metricCard)nav(metricCard.dataset.metricView)});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-metric-view]')){e.preventDefault();nav(e.target.dataset.metricView)}});
 
+  const baseNav=nav;
+  nav=function(next){applyDisplayPrefs();return baseNav(next)};
   applyDisplayPrefs();
 })();
