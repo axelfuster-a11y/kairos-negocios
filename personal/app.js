@@ -41,7 +41,7 @@ if(kind==='task'){if(!data.title.trim())throw Error('Escribí la tarea.');state.
 await saveState();$('entryDialog').close();editing=null;render();toast('Guardado correctamente.')}catch(err){toast(err.message||'No se pudo guardar.')}})
 document.addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]')?.dataset.edit;if(edit){const item=state.movements.find(m=>m.id===edit);if(item)openForm('movement',item)}
 const del=e.target.closest('[data-delete]')?.dataset.delete;if(del&&confirm('¿Borrar este movimiento? Esta acción no se puede deshacer.')){state.movements=state.movements.filter(m=>m.id!==del);await saveState();render();toast('Movimiento borrado.')}
-const paid=e.target.closest('[data-paid]')?.dataset.paid;if(paid){const d=state.debts.find(x=>x.id===paid);if(d&&confirm('¿Marcar esta deuda como pagada? El registro se conservará.')){d.status='paid';await saveState();render();toast('Deuda actualizada.')}}
+const paid=e.target.closest('[data-paid]')?.dataset.paid;if(paid){const d=state.debts.find(x=>x.id===paid);if(d&&confirm('¿Marcar esta deuda como pagada? Esto solo cambia su estado: no descuenta dinero de ninguna cuenta. Para reflejar el pago en tu saldo, registrá también el gasto correspondiente.')){d.status='paid';await saveState();render();toast('Deuda actualizada.')}}
 const taskDel=e.target.closest('[data-delete-task]')?.dataset.deleteTask;if(taskDel&&confirm('¿Borrar esta tarea?')){state.tasks=state.tasks.filter(x=>x.id!==taskDel);await saveState();render()}
 });
 document.addEventListener('change',async e=>{const id=e.target.dataset.toggleTask;if(id){const task=state.tasks.find(x=>x.id===id);if(task){task.done=e.target.checked;await saveState();render()}}});
