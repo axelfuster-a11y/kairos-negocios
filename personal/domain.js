@@ -1,0 +1,7 @@
+(function(root,factory){const api=factory();if(typeof module!=='undefined'&&module.exports)module.exports=api;root.KairosDomain=api})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  function accountBalance(account,movements){return Number(account.opening||0)+(movements||[]).filter(m=>m.accountId===account.id).reduce((sum,m)=>sum+(m.type==='income'?1:-1)*Number(m.amount),0)}
+  function summarize(state,month){const movements=state.movements||[],monthItems=movements.filter(m=>String(m.date||'').startsWith(month));return {balance:(state.accounts||[]).reduce((sum,a)=>sum+accountBalance(a,movements),0),income:monthItems.filter(m=>m.type==='income').reduce((s,m)=>s+Number(m.amount),0),expense:monthItems.filter(m=>m.type==='expense').reduce((s,m)=>s+Number(m.amount),0),debt:(state.debts||[]).filter(d=>d.status!=='paid').reduce((s,d)=>s+Number(d.amount),0)}}
+  function validateMovement(m,accountIds){if(!['income','expense'].includes(m.type))return 'Tipo de movimiento inválido.';if(!String(m.description||'').trim())return 'Escribí una descripción.';if(!Number.isFinite(Number(m.amount))||Number(m.amount)<=0)return 'El monto debe ser mayor a cero.';if(!accountIds.includes(m.accountId))return 'Elegí una cuenta válida.';if(!/^\d{4}-\d{2}-\d{2}$/.test(m.date||''))return 'Elegí una fecha válida.';return null}
+  return Object.freeze({accountBalance,summarize,validateMovement});
+});
