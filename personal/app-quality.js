@@ -52,7 +52,7 @@
     card.insertBefore(box,card.querySelector('#savePrefs'));
     $('prefTheme').value=state.prefs.theme||'light';$('prefFont').value=state.prefs.fontScale||'normal';
     const saveButton=$('savePrefs'),old=saveButton.onclick;
-    saveButton.onclick=async()=>{await old?.();state.prefs.theme=$('prefTheme').value;state.prefs.fontScale=$('prefFont').value;await save();applyDisplayPrefs();renderSettings();toast('Preferencias visuales guardadas')};
+    saveButton.onclick=async()=>{const theme=$('prefTheme').value,fontScale=$('prefFont').value;await old?.();state.prefs.theme=theme;state.prefs.fontScale=fontScale;await save();applyDisplayPrefs();renderSettings();toast('Preferencias visuales guardadas')};
   };
   document.addEventListener('click',e=>{const metric=e.target.closest('[data-metric-view]');if(metric)nav(metric.dataset.metricView)});
   applyDisplayPrefs();
