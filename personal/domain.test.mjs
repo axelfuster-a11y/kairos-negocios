@@ -12,6 +12,10 @@ test('validación impide transferencias a la misma cuenta',()=>{const m={type:'t
 
 test('repetición mensual conserva el fin de mes y ajusta fechas largas',()=>{assert.equal(D.nextDate('2026-01-31','monthly'),'2026-02-28');assert.equal(D.nextDate('2026-02-28','monthly'),'2026-03-31');assert.equal(D.nextDate('2026-03-31','monthly'),'2026-04-30');assert.equal(D.nextDate('2026-01-30','monthly'),'2026-02-28')});
 test('repetición semanal conserva la fecha local',()=>{assert.equal(D.nextDate('2026-11-11','weekly'),'2026-11-18')});
+test('repetición mensual conserva el día original cuando febrero acorta el mes',()=>{
+ assert.equal(D.nextDate('2026-02-28','monthly',30,false),'2026-03-30');
+ assert.equal(D.nextDate('2026-02-28','monthly',31,true),'2026-03-31');
+});
 test('progreso de proyecto usa tareas completadas y omite archivadas',()=>{const p={id:'p'};const ts=[{projectId:'p',done:true},{projectId:'p',done:false},{projectId:'p',done:true,archived:true}];assert.equal(D.projectProgress(p,ts),50)});
 test('calendario reúne tareas, eventos y vencimientos sin duplicar transferencias',()=>{const s={tasks:[{id:'t',title:'Entrega',due:'2026-11-12',subjectId:'s'}],events:[{id:'e',title:'Médico',date:'2026-11-12',time:'10:00'}],debts:[{id:'d',name:'Cuota',due:'2026-11-12',status:'open'}],workEntries:[]};const xs=D.buildCalendarItems(s,'2026-11');assert.equal(xs.length,3);assert.deepEqual(xs.map(x=>x.type).sort(),['debt','event','study'])});
 test('deudas con saldo cero no agregan pasivo',()=>{const s={accounts:[],movements:[],debts:[{amount:100,remaining:0,status:'open'},{amount:50,remaining:20,status:'open'}]};assert.equal(D.summarize(s,'2026-11').debt,20)});
