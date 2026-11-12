@@ -85,3 +85,17 @@ test('una respuesta afirmativa no confirma una aclaración con varios importes s
  assert.equal(c.pendingChat,null);
  assert.match(c.messages.at(-1).text,/No preparé nada/);
 });
+
+test('una fecha sin importe no se registra como gasto',async()=>{
+ const c=makeContext();
+ const answer=await c.sendChat('Gasté el 12/11/2026');
+ assert.match(answer,/No encontré un importe/);
+ assert.equal(c.pendingChat,null);
+});
+
+test('una pregunta sobre gastos no se convierte en un movimiento',async()=>{
+ const c=makeContext();
+ const answer=await c.sendChat('¿Cuánto gasté?');
+ assert.equal(answer,'respuesta anterior');
+ assert.equal(c.pendingChat,null);
+});
