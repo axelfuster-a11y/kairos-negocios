@@ -12,6 +12,7 @@ function makeContext(){
  vm.runInContext(`
   var state={accounts:[{id:'mp',name:'Mercado Pago',kind:'Billetera virtual'}],prefs:{theme:'light',fontScale:'normal'}};
   var pendingChat=null;
+  var today=function(){return '2026-11-12'};
   var assistantReply=function(){return 'respuesta anterior'};
   var sendChat=async function(text){const answer=assistantReply(text);chatSay('assistant',answer);return answer};
   var money=function(n){return '$'+n};
@@ -74,6 +75,7 @@ test('el chat ignora la fecha cuando aparece antes del importe',async()=>{
  assert.equal(c.pendingChat.amount,3000);
  assert.equal(c.pendingChat.description,'transporte');
  assert.equal(c.pendingChat.accountId,'mp');
+ assert.equal(c.pendingChat.date,'2026-11-12');
 });
 
 test('una respuesta afirmativa no confirma una aclaración con varios importes sin saldo',async()=>{
@@ -116,4 +118,15 @@ test('un único importe identificado como saldo nunca se registra como gasto',as
  const answer=await c.sendChat('Tengo $40.000 en Mercado Pago y gasté en comida');
  assert.match(answer,/parece ser un saldo/);
  assert.equal(c.pendingChat,null);
+});
+
+test('el chat interpreta fechas relativas y rechaza fechas imposibles',async()=>{
+ const c=makeContext();
+ await c.sendChat('Me pagaron ayer $50.000 por una comisión');
+ assert.equal(c.pendingChat.type,'income');
+ assert.equal(c.pendingChat.date,'2026-11-11');
+ const invalid=makeContext();
+ const answer=await invalid.sendChat('Gasté $3.000 el 31/02/2026 en comida');
+ assert.match(answer,/fecha indicada no existe/);
+ assert.equal(invalid.pendingChat,null);
 });
