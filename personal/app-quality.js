@@ -37,7 +37,7 @@
       return 'Detecté un ingreso y un gasto en el mismo mensaje. Para no asignar mal los importes, envía cada movimiento por separado. No registré nada.';
     }
     const movementType=expense?'expense':income?'income':null;
-    const questionIntent=/^\\s*¿?\\s*(?:cu[aá]nto|qu[eé]|cu[aá]les|cu[aá]ntas|por qu[eé]|c[oó]mo)\\b|quiero saber|mu[eé]strame|resumen|historial/i.test(s);
+    const questionIntent=/^\s*¿?\s*(?:cu[aá]nto|qu[eé]|cu[aá]les|cu[aá]ntas|por qu[eé]|c[oó]mo)\b|quiero saber|mu[eé]strame|resumen|historial/i.test(s);
     if(questionIntent)return originalReply(text);
     if(movementType&&amounts.length===0)return 'No encontré un importe para ese movimiento. Indica cuánto fue y lo prepararé para que lo revises.';
     if(movementType&&amounts.length===2&&balance){
