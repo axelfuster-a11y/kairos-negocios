@@ -10,7 +10,7 @@ test('validación rechaza monto cero, cuenta desconocida y descripción vacía',
 test('transferencia mueve saldo entre cuentas sin crear ingreso ni gasto',()=>{const s={accounts:[{id:'mp',opening:1000},{id:'cash',opening:100}],movements:[{type:'transfer',fromAccountId:'mp',toAccountId:'cash',amount:300,date:'2026-11-11'}],debts:[]};assert.deepEqual(D.summarize(s,'2026-11'),{balance:1100,income:0,expense:0,debt:0,movementCount:1});assert.equal(D.accountBalance(s.accounts[0],s.movements),700);assert.equal(D.accountBalance(s.accounts[1],s.movements),400)});
 test('validación impide transferencias a la misma cuenta',()=>{const m={type:'transfer',description:'Mover plata',amount:10,fromAccountId:'a',toAccountId:'a',date:'2026-11-11'};assert.match(D.validateMovement(m,['a']),/distintos/)});
 
-test('repetición mensual respeta el último día del mes',()=>{assert.equal(D.nextDate('2026-01-31','monthly'),'2026-02-28');assert.equal(D.nextDate('2026-02-28','monthly'),'2026-03-28')});
+test('repetición mensual conserva el fin de mes y ajusta fechas largas',()=>{assert.equal(D.nextDate('2026-01-31','monthly'),'2026-02-28');assert.equal(D.nextDate('2026-02-28','monthly'),'2026-03-31');assert.equal(D.nextDate('2026-03-31','monthly'),'2026-04-30');assert.equal(D.nextDate('2026-01-30','monthly'),'2026-02-28')});
 test('repetición semanal conserva la fecha local',()=>{assert.equal(D.nextDate('2026-11-11','weekly'),'2026-11-18')});
 test('progreso de proyecto usa tareas completadas y omite archivadas',()=>{const p={id:'p'};const ts=[{projectId:'p',done:true},{projectId:'p',done:false},{projectId:'p',done:true,archived:true}];assert.equal(D.projectProgress(p,ts),50)});
 test('calendario reúne tareas, eventos y vencimientos sin duplicar transferencias',()=>{const s={tasks:[{id:'t',title:'Entrega',due:'2026-11-12',subjectId:'s'}],events:[{id:'e',title:'Médico',date:'2026-11-12',time:'10:00'}],debts:[{id:'d',name:'Cuota',due:'2026-11-12',status:'open'}],workEntries:[]};const xs=D.buildCalendarItems(s,'2026-11');assert.equal(xs.length,3);assert.deepEqual(xs.map(x=>x.type).sort(),['debt','event','study'])});
@@ -75,4 +75,17 @@ test('pago de cuotas adelanta vencimiento solo por cuotas completas abonadas',()
 });
 test('saldo pendiente no admite NaN',()=>{
  assert.match(D.validateDebt({name:'Tarjeta',amount:100,remaining:NaN}),/importe válido/);
+});
+
+test('extracción de importes ignora fechas y horas y conserva importes argentinos',()=>{
+ const mentions=D.extractMoneyMentions('Gasté $3.000 el 12/11/2026 y ahora tengo $40.000 en Mercado Pago a las 14:30');
+ assert.deepEqual(mentions.map(x=>x.value),[3000,40000]);
+ assert.equal(D.extractMoneyMentions('Gasté 1,234 en un servicio').length,0);
+});
+test('restauración acepta copias válidas y rechaza datos corruptos',()=>{
+ const backup={format:'kairos-backup-v2',data:{accounts:[{id:'a',name:'Efectivo',opening:100}],movements:[{id:'m',type:'expense',description:'Comida',amount:10,accountId:'a',date:'2026-11-12'}],debts:[{id:'d',name:'Cuota',amount:50,remaining:50}],tasks:[{id:'t',title:'Estudiar'}]}};
+ assert.equal(D.validateBackup(backup),null);
+ assert.match(D.validateBackup({...backup,format:'otro'}),/compatible/);
+ assert.match(D.validateBackup({...backup,data:{...backup.data,movements:[{type:'expense',description:'Comida',amount:10,accountId:'inexistente',date:'2026-11-12'}]}}),/movimiento inválido/);
+ assert.match(D.validateBackup({...backup,data:{...backup.data,tasks:[{}]}}),/tarea inválida/);
 });
