@@ -105,7 +105,7 @@ test('restauración acepta copias válidas y rechaza datos corruptos',()=>{
  assert.equal(D.validateBackup(backup),null);
  assert.match(D.validateBackup({...backup,format:'otro'}),/compatible/);
  assert.match(D.validateBackup({...backup,data:{...backup.data,movements:[{id:'bad-movement',type:'expense',description:'Comida',amount:10,accountId:'inexistente',date:'2026-11-12'}]}}),/movimiento inválido/);
- assert.match(D.validateBackup({...backup,data:{...backup.data,tasks:[{}]}}),/tarea inválida/);
+ assert.match(D.validateBackup({...backup,data:{...backup.data,tasks:[{id:'bad-task'}]}}),/tarea inválida/);
 });
 
 test('restauración rechaza identificadores inseguros y repetidos',()=>{
