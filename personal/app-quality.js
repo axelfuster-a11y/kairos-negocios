@@ -13,7 +13,7 @@
   }
   function describeMoneyAction(text,mention,account,fallback){
     let value=String(text).slice(0,mention.index)+' '+String(text).slice(mention.index+mention.raw.length);
-    value=value.replace(/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron)\b/gi,' ')
+    value=value.replace(/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron|ingres[eé]|me ingresaron)\b/gi,' ')
       .replace(/\b\d{4}-\d{2}-\d{2}\b/g,' ')
       .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
       .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
@@ -27,9 +27,9 @@
   assistantReply=function(text){
     const s=String(text).toLowerCase(),amounts=parseMoneyMentions(text);
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
-    const income=/cobr[eé]|me pagaron|recib[ií]|ingres[oó]|me depositaron|acreditaron/i.test(s);
+    const income=/cobr[eé]\s+\$?\s*\d|me pagaron|recib[ií]\s+\$?\s*\d|me depositaron|me ingresaron|acreditaron|ingres[eé]\s+\$?\s*\d/i.test(s);
     const balance=/tengo|qued[aó]|saldo|disponible|me queda|hay en/i.test(s);
-    const account=inferAccount(text);
+    const account=inferAccount(text),accountHint=/\b(?:mercado\s*pago|mp|cuenta|banco|tarjeta|efectivo)\b/i.test(s),chosenAccount=account||(!accountHint&&state.accounts.length===1?state.accounts[0]:null);
     if((expense||income)&&unparsedMoneyMentions(text).some(raw=>KairosDomain.parseMoney(raw)===null)){
       return 'Encontré un importe que no puedo interpretar con seguridad. No voy a registrar nada. Escribe el importe sin separadores de miles o con coma decimal de hasta dos cifras.';
     }
@@ -39,8 +39,8 @@
     const movementType=expense?'expense':income?'income':null;
     if(movementType&&amounts.length===2&&balance){
       const first=amounts[0],second=amounts[1],label=movementType==='income'?'ingreso':'gasto';
-      pendingChat={kind:'compoundClarification',movementType,expenseAmount:first.value,balanceAmount:second.value,accountId:account?.id||null,raw:text};
-      return 'Entendí un '+label+' de '+money(first.value)+' y un saldo informado de '+money(second.value)+(account?' en '+account.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(second.value)+' es el saldo actual de esa cuenta después del movimiento?';
+      pendingChat={kind:'compoundClarification',movementType,expenseAmount:first.value,balanceAmount:second.value,accountId:chosenAccount?.id||null,raw:text};
+      return 'Entendí un '+label+' de '+money(first.value)+' y un saldo informado de '+money(second.value)+(chosenAccount?' en '+chosenAccount.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(second.value)+' es el saldo actual de esa cuenta después del movimiento?';
     }
     if(movementType&&amounts.length>1){
       pendingChat={kind:'compoundClarification',movementType,amounts:amounts.map(x=>x.value),accountId:account?.id||null,raw:text};
@@ -48,7 +48,7 @@
     }
     if(movementType&&amounts.length===1){
       if(!state.accounts.length)return 'Primero crea una cuenta en Finanzas.';
-      const chosen=account||(state.accounts.length===1?state.accounts[0]:null),fallback=movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
+      const chosen=chosenAccount,fallback=movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
       pendingChat={kind:'movement',type:movementType,amount:amounts[0].value,description:describeMoneyAction(text,amounts[0],chosen,fallback),accountId:chosen?.id||null};
       return 'Preparé un movimiento para revisar antes de guardarlo.';
     }
