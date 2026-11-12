@@ -67,7 +67,8 @@
         const description=(first&&second?raw.slice(first.index+first.raw.length,second.index):'')
           .replace(/\b(?:el\s+)?\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
           .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
-          .replace(/^\s*(?:el\s+)?(?:en|por)\s+/i,'')
+          .replace(/^\s*el\s+/i,'')
+          .replace(/^\s*(?:en|por)\s+/i,'')
           .replace(/[,;\.\s]+(?:y\s+)?(?:ahora\s+)?(?:tengo|me queda|me quedan|quedan|saldo|disponible)\b[\s\S]*$/i,'')
           .trim().replace(/[.,;]+$/,'')||'Gasto informado en el chat';
         pendingChat={kind:'movement',type:'expense',amount:previous.expenseAmount,description,accountId:previous.accountId||null};
