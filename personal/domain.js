@@ -41,10 +41,30 @@ function accountBalance(account,movements){return round(Number(account.opening||
 function summarize(state,month){const movements=state.movements||[],monthItems=movements.filter(m=>m.status!=='void'&&String(m.date||'').startsWith(month));return {balance:round((state.accounts||[]).reduce((sum,a)=>sum+accountBalance(a,movements),0)),income:round(monthItems.filter(m=>m.type==='income').reduce((s,m)=>s+Number(m.amount),0)),expense:round(monthItems.filter(m=>m.type==='expense').reduce((s,m)=>s+Number(m.amount),0)),debt:round((state.debts||[]).filter(d=>d.status!=='paid'&&d.status!=='void').reduce((s,d)=>s+Number(d.remaining??d.amount),0)),movementCount:monthItems.length}}
 function validateMovement(m,accountIds){if(!['income','expense','transfer'].includes(m.type))return 'Tipo de movimiento inválido.';if(!String(m.description||'').trim())return 'Escribí una descripción.';if(!Number.isFinite(Number(m.amount))||Number(m.amount)<=0)return 'El monto debe ser mayor a cero.';if(m.type==='transfer'){if(!accountIds.includes(m.fromAccountId)||!accountIds.includes(m.toAccountId))return 'Elegí las dos cuentas.';if(m.fromAccountId===m.toAccountId)return 'El origen y destino deben ser distintos.'}else if(!accountIds.includes(m.accountId))return 'Elegí una cuenta válida.';if(!validISODate(m.date))return 'Elegí una fecha válida.';return null}
 function validateDebt(d){if(!String(d.name||'').trim())return 'Escribí el concepto de la deuda.';if(!Number.isFinite(Number(d.amount))||Number(d.amount)<=0)return 'El monto debe ser mayor a cero.';if(d.remaining!==undefined&&!Number.isFinite(Number(d.remaining)))return 'El saldo pendiente debe ser un importe válido.';if(d.remaining!==undefined&&Number(d.remaining)<0)return 'El saldo pendiente no puede ser negativo.';if(d.remaining!==undefined&&Number(d.remaining)>Number(d.amount))return 'El saldo pendiente no puede superar el importe original.';return null}
+function prepareDebtPayment(debt,amount,accountId,date,movementId,createdAt,notes=''){
+ if(!debt)throw new Error('No se encontró la deuda.');
+ const remaining=Number(debt.remaining??debt.amount);
+ if(!Number.isFinite(remaining)||remaining<0)throw new Error('El saldo pendiente de la deuda no es válido.');
+ if(!Number.isFinite(Number(amount))||Number(amount)<=0||Number(amount)>remaining)throw new Error('El pago debe ser mayor a cero y no superar el saldo pendiente.');
+ if(!accountId)throw new Error('Elegí una cuenta válida.');
+ if(!validISODate(date))throw new Error('Elegí una fecha válida.');
+ const value=round(Number(amount)),updatedDebt={...debt,remaining:round(remaining-value)};
+ const installment=Number(debt.installmentAmount);
+ if(Number.isFinite(installment)&&installment>0){
+  const paidInstallments=Math.floor((value+0.005)/installment);
+  if(paidInstallments>0){
+   if(Number(debt.installments)>0)updatedDebt.installments=Math.max(0,Number(debt.installments)-paidInstallments);
+   if(debt.frequency!=='once'&&debt.due)for(let i=0;i<paidInstallments;i++)updatedDebt.due=nextDate(updatedDebt.due,debt.frequency)||updatedDebt.due;
+  }
+ }
+ if(updatedDebt.remaining<=0.005){updatedDebt.remaining=0;updatedDebt.status='paid'}
+ const movement={id:movementId,type:'expense',description:'Pago de deuda: '+debt.name,amount:value,accountId,date,category:'Pago de deuda',notes:notes||'',debtId:debt.id,status:'posted',createdAt};
+ return {debt:updatedDebt,movement};
+}
 function nextDate(date,repeat){const d=new Date(date+'T12:00:00');if(repeat==='daily')d.setDate(d.getDate()+1);else if(repeat==='weekly')d.setDate(d.getDate()+7);else if(repeat==='monthly'){const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last))}else return null;return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function taskStats(tasks,referenceDate=localISODate()){const active=(tasks||[]).filter(t=>!t.done&&!t.archived),done=(tasks||[]).filter(t=>t.done);return {active:active.length,done:done.length,overdue:active.filter(t=>t.due&&t.due<referenceDate).length}}
 function projectProgress(project,tasks){const related=(tasks||[]).filter(t=>t.projectId===project.id&&!t.archived);return related.length?Math.round(related.filter(t=>t.done).length/related.length*100):Number(project.progress||0)}
 function buildCalendarItems(state,month){const out=[];for(const t of state.tasks||[])if(!t.archived&&t.due&&t.due.startsWith(month))out.push({id:'task:'+t.id,date:t.due,title:t.title,type:t.subjectId?'study':t.projectId?'project':'task'});for(const e of state.events||[])if(e.date&&e.date.startsWith(month))out.push({id:'event:'+e.id,date:e.date,title:e.title,type:e.type||'event',time:e.time||''});for(const d of state.debts||[])if(d.status!=='paid'&&d.due&&d.due.startsWith(month))out.push({id:'debt:'+d.id,date:d.due,title:'Vence: '+d.name,type:'debt'});for(const w of state.workEntries||[])if(w.date&&w.date.startsWith(month))out.push({id:'work:'+w.id,date:w.date,title:w.title||w.client||'Trabajo',type:'work'});return out.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))}
 function monthlyTotals(state,month){const xs=(state.workEntries||[]).filter(x=>(x.date||'').startsWith(month));return {income:round(xs.reduce((s,x)=>s+Number(x.income||0),0)),expenses:round(xs.reduce((s,x)=>s+Number(x.expenses||0),0)),hours:round(xs.reduce((s,x)=>s+Number(x.minutes||0),0)/60)}}
-return Object.freeze({round,parseMoney,localISODate,accountBalance,summarize,validateMovement,validateDebt,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
+return Object.freeze({round,parseMoney,localISODate,accountBalance,summarize,validateMovement,validateDebt,prepareDebtPayment,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
 });
