@@ -18,7 +18,7 @@
       .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
       .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
       .replace(/(?:\$\s*)?\b\d[\d.,]*\b/g,' ')
-      .replace(/\b(?:en|desde|por|de|el|la|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\b/gi,' ')
+      .replace(/\b(?:en|desde|por|de|el|la|a|las|hora|horas|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\b/gi,' ')
       .replace(/\bmp\b/gi,' ');
     if(account?.name){const name=account.name.toLowerCase().trim();if(name.length<=3){const token=name.replace(/[^a-z0-9áéíóúüñ]/g,'');if(token)value=value.replace(new RegExp('\\b'+token+'\\b','ig'),' ')}else{const lower=value.toLowerCase(),index=lower.indexOf(name);if(index>=0)value=value.slice(0,index)+' '+value.slice(index+name.length)}}
     value=value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ0-9\s'-]/g,' ').replace(/\s+/g,' ').trim();
