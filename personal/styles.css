@@ -34,3 +34,10 @@ html[data-theme="dark"] dialog{background:var(--paper);color:var(--ink);border-c
  html[data-theme="system"] .chat-msg.user .chat-bubble{background:#526e5b;color:white}
  html[data-theme="system"] dialog{background:var(--paper);color:var(--ink);border-color:var(--line)}
 }
+
+/* Keyboard and reading support for interactive dashboard metrics */
+.metric-card[data-metric-view]{cursor:pointer}
+.metric-card[data-metric-view]:hover{border-color:var(--sage);box-shadow:0 8px 28px #3c4b3e18}
+.metric-card[data-metric-view]:focus-visible{outline:3px solid var(--sage);outline-offset:3px}
+html[data-font-scale="large"] .nav-label,html[data-font-scale="large"] .breadcrumb,html[data-font-scale="large"] .save-status,html[data-font-scale="large"] .metric-label,html[data-font-scale="large"] .metric-note,html[data-font-scale="large"] .task-meta,html[data-font-scale="large"] .chat-bubble,html[data-font-scale="large"] .suggestion,html[data-font-scale="large"] .setting-row small,html[data-font-scale="large"] .mini-btn{font-size:12px}
+html[data-font-scale="larger"] .nav-label,html[data-font-scale="larger"] .breadcrumb,html[data-font-scale="larger"] .save-status,html[data-font-scale="larger"] .metric-label,html[data-font-scale="larger"] .metric-note,html[data-font-scale="larger"] .task-meta,html[data-font-scale="larger"] .chat-bubble,html[data-font-scale="larger"] .suggestion,html[data-font-scale="larger"] .setting-row small,html[data-font-scale="larger"] .mini-btn{font-size:14px}
