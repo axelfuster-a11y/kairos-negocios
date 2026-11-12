@@ -9,6 +9,7 @@ const checks = [
   'tools/check-cash-ui.mjs',
   'tools/check-mobile-help-channels.mjs',
   'personal/domain.test.mjs',
+  'personal/app-quality.test.mjs',
 ]
 
 for (const check of checks) {
