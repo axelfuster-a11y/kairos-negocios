@@ -137,3 +137,12 @@ test('el nombre corto MP no se confunde con la palabra importe',async()=>{
  await c.sendChat('Gasté $3.000 en importe');
  assert.equal(c.pendingChat.accountId,null);
 });
+
+test('las preferencias guardadas aplican tema y tamaño de letra',()=>{
+ const c=makeContext();
+ c.state.prefs.theme='dark';
+ c.state.prefs.fontScale='larger';
+ c.nav('finance');
+ assert.equal(c.document.documentElement.dataset.theme,'dark');
+ assert.equal(c.document.documentElement.dataset.fontScale,'larger');
+});
