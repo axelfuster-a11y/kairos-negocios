@@ -8,7 +8,7 @@ const defaults=()=>({version:2,accounts:[],movements:[],debts:[],tasks:[],events
 let db,state=defaults(),undoStack=[],redoStack=[],view='home',modal=null,calDate=new Date(),timer,pendingChat=null;
 const DB='kairos-personal-v2',STORE='app';
 function openDB(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE,{keyPath:'id'});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
-function save(){return new Promise((ok,no)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id:'main',data:state,undo:undoStack.slice(-30),redo:redoStack.slice(-30)});t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+function save(){return new Promise((ok,no)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id:'main',data:state,undo:undoStack.slice(-30),redo:redoStack.slice(-30)});t.oncomplete=ok;t.onerror=()=>no(t.error||new Error('Error al guardar en el almacenamiento local.'));t.onabort=()=>no(t.error||new Error('Se canceló el guardado local.'))})}
 function load(){return new Promise((ok,no)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>ok(r.result||null);r.onerror=()=>no(r.error)})}
 function toast(s){const e=$('toast');e.textContent=s;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2400)}
 async function tx(label,fn){
