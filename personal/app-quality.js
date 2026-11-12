@@ -43,7 +43,7 @@
       return 'Entendí un '+label+' de '+money(first.value)+' y un saldo informado de '+money(second.value)+(chosenAccount?' en '+chosenAccount.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(second.value)+' es el saldo actual de esa cuenta después del movimiento?';
     }
     if(movementType&&amounts.length>1){
-      pendingChat={kind:'compoundClarification',movementType,amounts:amounts.map(x=>x.value),accountId:account?.id||null,raw:text};
+      pendingChat={kind:'compoundClarification',movementType,amounts:amounts.map(x=>x.value),accountId:chosenAccount?.id||null,raw:text};
       return 'Detecté '+amounts.length+' importes ('+amounts.map(x=>money(x.value)).join(' y ')+'). No voy a elegir uno por suposición. ¿Cuál corresponde al movimiento y qué representa el otro importe?';
     }
     if(movementType&&amounts.length===1){
