@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
 const source=await readFile(new URL('./app-quality.js',import.meta.url),'utf8');
+const domainSource=await readFile(new URL('./domain.js',import.meta.url),'utf8');
 function makeContext(){
  const messages=[];
  const context={messages};
@@ -26,6 +27,7 @@ function makeContext(){
   var $=function(){return {}};
   var document={documentElement:{dataset:{}},querySelector:function(){return {content:''}},addEventListener:function(){}};
  `,context);
+ vm.runInContext(domainSource,context);
  vm.runInContext(source,context);
  return context;
 }
