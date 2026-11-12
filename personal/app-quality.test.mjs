@@ -99,3 +99,21 @@ test('una pregunta sobre gastos no se convierte en un movimiento',async()=>{
  assert.equal(answer,'respuesta anterior');
  assert.equal(c.pendingChat,null);
 });
+
+test('el chat identifica el gasto aunque el saldo aparezca primero',async()=>{
+ const c=makeContext();
+ await c.sendChat('Tengo $40.000 en Mercado Pago y gasté $3.000 en transporte');
+ assert.equal(c.pendingChat.kind,'compoundClarification');
+ assert.equal(c.pendingChat.expenseAmount,3000);
+ assert.equal(c.pendingChat.balanceAmount,40000);
+ await c.sendChat('sí');
+ assert.equal(c.pendingChat.amount,3000);
+ assert.equal(c.pendingChat.description,'transporte');
+});
+
+test('un único importe identificado como saldo nunca se registra como gasto',async()=>{
+ const c=makeContext();
+ const answer=await c.sendChat('Tengo $40.000 en Mercado Pago y gasté en comida');
+ assert.match(answer,/parece ser un saldo/);
+ assert.equal(c.pendingChat,null);
+});
