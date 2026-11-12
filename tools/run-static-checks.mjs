@@ -12,6 +12,7 @@ const checks = [
   'personal/app-quality.test.mjs',
   'personal/app-core.test.mjs',
   'personal/app-security.test.mjs',
+  'personal/pwa.test.mjs',
 ]
 
 for (const check of checks) {
