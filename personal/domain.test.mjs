@@ -104,7 +104,7 @@ test('restauración acepta copias válidas y rechaza datos corruptos',()=>{
  const backup={format:'kairos-backup-v2',data:{accounts:[{id:'a',name:'Efectivo',opening:100}],movements:[{id:'m',type:'expense',description:'Comida',amount:10,accountId:'a',date:'2026-11-12'}],debts:[{id:'d',name:'Cuota',amount:50,remaining:50}],tasks:[{id:'t',title:'Estudiar'}]}};
  assert.equal(D.validateBackup(backup),null);
  assert.match(D.validateBackup({...backup,format:'otro'}),/compatible/);
- assert.match(D.validateBackup({...backup,data:{...backup.data,movements:[{type:'expense',description:'Comida',amount:10,accountId:'inexistente',date:'2026-11-12'}]}}),/movimiento inválido/);
+ assert.match(D.validateBackup({...backup,data:{...backup.data,movements:[{id:'bad-movement',type:'expense',description:'Comida',amount:10,accountId:'inexistente',date:'2026-11-12'}]}}),/movimiento inválido/);
  assert.match(D.validateBackup({...backup,data:{...backup.data,tasks:[{}]}}),/tarea inválida/);
 });
 
