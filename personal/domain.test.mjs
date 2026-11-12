@@ -54,6 +54,20 @@ test('pago parcial reduce deuda y crea un único gasto vinculado',()=>{
  assert.equal(result.movement.notes,'Pago parcial');
  assert.equal(debt.remaining,100000);
 });
+test('revertir un pago restaura el saldo y los vencimientos sin borrar datos de la deuda',()=>{
+ const debt={id:'d5',name:'Universidad',amount:120,remaining:120,status:'open',installments:2,installmentAmount:60,frequency:'monthly',due:'2026-01-31',notes:'Mantener'};
+ const payment=D.prepareDebtPayment(debt,60,'mp','2026-01-01','m5','2026-01-01T12:00:00Z');
+ assert.equal(payment.debt.remaining,60);
+ assert.equal(payment.debt.due,'2026-02-28');
+ const reverted=D.revertDebtPayment(payment.debt,payment.movement);
+ assert.equal(reverted.remaining,120);
+ assert.equal(reverted.status,'open');
+ assert.equal(reverted.installments,2);
+ assert.equal(reverted.due,'2026-01-31');
+ assert.equal(reverted.name,'Universidad');
+ assert.equal(reverted.notes,'Mantener');
+ assert.throws(()=>D.revertDebtPayment(payment.debt,{debtId:'d5'}),/revertir/);
+});
 test('pago total cierra deuda y registra el gasto por el mismo importe',()=>{
  const debt={id:'d2',name:'Tarjeta',amount:50000,remaining:20000,status:'open'};
  const result=D.prepareDebtPayment(debt,20000,'bank','2026-11-12','m2','2026-11-12T12:00:00Z');
