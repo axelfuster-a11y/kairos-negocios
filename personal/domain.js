@@ -34,10 +34,10 @@ function parseMoney(input){
 function extractMoneyMentions(text){
  const source=String(text??'');
  const masked=source
-  .replace(/\\b\\d{4}-\\d{2}-\\d{2}\\b/g,m=>' '.repeat(m.length))
-  .replace(/\\b\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,m=>' '.repeat(m.length))
-  .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,m=>' '.repeat(m.length));
- const re=/(?:\\$\\s*)?\\b\\d[\\d.,]*\\b\\s*(?:pesos|ars)?/gi,out=[];let match;
+  .replace(/\b\d{4}-\d{2}-\d{2}\b/g,m=>' '.repeat(m.length))
+  .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,m=>' '.repeat(m.length))
+  .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,m=>' '.repeat(m.length));
+ const re=/(?:\$\s*)?\b\d[\d.,]*\b\s*(?:pesos|ars)?/gi,out=[];let match;
  while((match=re.exec(masked))!==null){const value=parseMoney(match[0]);if(value!==null)out.push({value,index:match.index,raw:source.slice(match.index,match.index+match[0].length)})}
  return out;
 }
