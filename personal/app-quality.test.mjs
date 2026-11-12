@@ -130,3 +130,10 @@ test('el chat interpreta fechas relativas y rechaza fechas imposibles',async()=>
  assert.match(answer,/fecha indicada no existe/);
  assert.equal(invalid.pendingChat,null);
 });
+
+test('el nombre corto MP no se confunde con la palabra importe',async()=>{
+ const c=makeContext();
+ c.state.accounts.push({id:'cash',name:'Efectivo',kind:'cash'});
+ await c.sendChat('Gasté $3.000 en importe');
+ assert.equal(c.pendingChat.accountId,null);
+});
