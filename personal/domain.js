@@ -89,15 +89,39 @@ function validateBackup(backup){
  if(!backup||!['kairos-backup-v1','kairos-backup-v2'].includes(backup.format))return 'El archivo no es una copia compatible de Kairós.';
  const data=backup.data;
  const required=['accounts','movements','debts','tasks'];
- if(!data||required.some(key=>!Array.isArray(data[key])))return 'La copia está incompleta o tiene una estructura inválida.';
  const optional=['events','projects','subjects','workEntries','clients','timeSessions','reviews','chat'];
+ if(!data||required.some(key=>!Array.isArray(data[key])))return 'La copia está incompleta o tiene una estructura inválida.';
  if(optional.some(key=>data[key]!==undefined&&!Array.isArray(data[key])))return 'La copia contiene una sección con formato inválido.';
- if(data.accounts.some(a=>!a||typeof a!=='object'||!String(a.id||'').trim()||!String(a.name||'').trim()||(a.opening!==undefined&&!Number.isFinite(Number(a.opening)))))return 'La copia contiene una cuenta inválida.';
+ for(const key of [...required,...optional]){
+  const seen=new Set();
+  for(const item of data[key]||[]){
+   if(!item||typeof item!=='object'||Array.isArray(item))return 'La copia contiene un registro inválido.';
+   const id=item.id;
+   if(typeof id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(id)||seen.has(id))return 'La copia contiene un identificador inválido o repetido.';
+   seen.add(id);
+  }
+ }
+ if(data.accounts.some(a=>!String(a.name||'').trim()||(a.opening!==undefined&&!Number.isFinite(Number(a.opening)))))return 'La copia contiene una cuenta inválida.';
  const ids=data.accounts.map(a=>a.id);
  for(const movement of data.movements){const error=validateMovement(movement,ids);if(error)return 'La copia contiene un movimiento inválido: '+error}
  for(const debt of data.debts){const error=validateDebt(debt);if(error)return 'La copia contiene una deuda inválida: '+error}
- if(data.tasks.some(t=>!t||typeof t!=='object'||!String(t.title||'').trim()))return 'La copia contiene una tarea inválida.';
+ if(data.tasks.some(t=>!String(t.title||'').trim()))return 'La copia contiene una tarea inválida.';
  if(data.prefs!==undefined&&(!data.prefs||typeof data.prefs!=='object'||Array.isArray(data.prefs)))return 'Las preferencias de la copia no son válidas.';
+ const prefs=data.prefs||{};
+ if(prefs.currency!==undefined&&!['ARS','USD','EUR'].includes(prefs.currency))return 'La moneda de la copia no está admitida.';
+ if(prefs.theme!==undefined&&!['light','dark','system'].includes(prefs.theme))return 'El tema de la copia no es válido.';
+ if(prefs.fontScale!==undefined&&!['normal','large','larger'].includes(prefs.fontScale))return 'El tamaño de letra de la copia no es válido.';
+ if(prefs.dailyReviewTime!==undefined&&prefs.dailyReviewTime!==''&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(prefs.dailyReviewTime))return 'La hora de revisión de la copia no es válida.';
+ for(const key of ['pomodoro','shortBreak','longBreak'])if(prefs[key]!==undefined&&(!Number.isInteger(Number(prefs[key]))||Number(prefs[key])<1||Number(prefs[key])>120))return 'La duración del temporizador de la copia no es válida.';
+ if(data.focus!==undefined){
+  const focus=data.focus;
+  if(!focus||typeof focus!=='object'||Array.isArray(focus))return 'La configuración del temporizador no es válida.';
+  if(focus.running!==undefined&&typeof focus.running!=='boolean')return 'El estado del temporizador no es válido.';
+  if(focus.mode!==undefined&&!['focus','short','long'].includes(focus.mode))return 'El modo del temporizador no es válido.';
+  if(focus.remaining!==undefined&&(!Number.isFinite(Number(focus.remaining))||Number(focus.remaining)<0||Number(focus.remaining)>7200))return 'El tiempo restante no es válido.';
+  if(focus.until!==undefined&&focus.until!==null&&(!Number.isFinite(Number(focus.until))||Number(focus.until)<=0))return 'La fecha de finalización del temporizador no es válida.';
+  if(focus.taskId!==undefined&&focus.taskId!==null&&(typeof focus.taskId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(focus.taskId)))return 'La tarea del temporizador no es válida.';
+ }
  return null;
 }
 function nextDate(date,repeat,anchorDay=null,endOfMonth=null){if(!validISODate(date))return null;const [year,month,day]=date.split('-').map(Number);let target;if(repeat==='daily')target=new Date(Date.UTC(year,month-1,day+1));else if(repeat==='weekly')target=new Date(Date.UTC(year,month-1,day+7));else if(repeat==='monthly'){const sourceLast=new Date(Date.UTC(year,month,0)).getUTCDate(),nextMonth=new Date(Date.UTC(year,month,1)),targetLast=new Date(Date.UTC(year,month+1,0)).getUTCDate(),anchor=Number(anchorDay)>0?Math.min(31,Math.floor(Number(anchorDay))):day,preserveEnd=endOfMonth===null?day===sourceLast:endOfMonth===true,targetDay=preserveEnd?targetLast:Math.min(anchor,targetLast);target=new Date(Date.UTC(nextMonth.getUTCFullYear(),nextMonth.getUTCMonth(),targetDay))}else return null;return target.toISOString().slice(0,10)}
