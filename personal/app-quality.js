@@ -8,8 +8,8 @@
     return masked.match(/\b\d[\d.,]*\b/g)||[];
   }
   function inferAccount(text){
-    const s=text.toLowerCase();
-    return state.accounts.find(a=>s.includes(a.name.toLowerCase()))||state.accounts.find(a=>a.kind?.toLowerCase().includes('billetera')&&/mercado\s*pago|mp\b/.test(s))||null;
+    const s=String(text).toLowerCase(),normalized=' '+s.replace(/[^a-z0-9áéíóúüñ]+/g,' ').trim()+' ';
+    return state.accounts.find(a=>{const name=String(a.name||'').toLowerCase().replace(/[^a-z0-9áéíóúüñ]+/g,' ').trim();return name&&normalized.includes(' '+name+' ')})||state.accounts.find(a=>a.kind?.toLowerCase().includes('billetera')&&/mercado\s*pago|\bmp\b/.test(s))||null;
   }
   function describeMoneyAction(text,mention,account,fallback){
     let value=String(text).slice(0,mention.index)+' '+String(text).slice(mention.index+mention.raw.length);
@@ -20,7 +20,7 @@
       .replace(/(?:\$\s*)?\b\d[\d.,]*\b/g,' ')
       .replace(/\b(?:en|desde|por|de|el|la|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\b/gi,' ')
       .replace(/\bmp\b/gi,' ');
-    if(account?.name){const lower=value.toLowerCase(),name=account.name.toLowerCase(),index=lower.indexOf(name);if(index>=0)value=value.slice(0,index)+' '+value.slice(index+name.length)}
+    if(account?.name){const name=account.name.toLowerCase().trim();if(name.length<=3)value=value.replace(/\bmp\b/gi,' ');else{const lower=value.toLowerCase(),index=lower.indexOf(name);if(index>=0)value=value.slice(0,index)+' '+value.slice(index+name.length)}}
     value=value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ0-9\s'-]/g,' ').replace(/\s+/g,' ').trim();
     return value||fallback;
   }
