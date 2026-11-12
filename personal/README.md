@@ -6,7 +6,7 @@ Esta versión es independiente del sistema anterior de Kairós Negocios. No util
 Serví esta carpeta con cualquier servidor estático (por ejemplo, `python -m http.server 8080` desde la carpeta `personal`) y abrí `http://localhost:8080`. Para instalar como PWA y usar el modo offline, se requiere HTTPS o localhost.
 
 ## Persistencia y privacidad
-Los datos se guardan en IndexedDB dentro del perfil del navegador. No salen del dispositivo. No hay sincronización entre dispositivos ni recuperación automática si se pierde el navegador/dispositivo. Usá el botón de copia de seguridad para exportar un JSON y guardalo en un lugar seguro. La importación reemplaza los datos actuales.
+Los datos se guardan en IndexedDB dentro del perfil del navegador. No salen del dispositivo. No hay sincronización entre dispositivos ni recuperación automática si se pierde el navegador/dispositivo. Usa el botón de copia de seguridad para exportar un JSON y guardalo en un lugar seguro. La importación reemplaza los datos actuales.
 
 ## Incluye
 - Cuentas y saldos calculados desde saldo inicial y movimientos.
