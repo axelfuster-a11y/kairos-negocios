@@ -107,3 +107,22 @@ test('restauración acepta copias válidas y rechaza datos corruptos',()=>{
  assert.match(D.validateBackup({...backup,data:{...backup.data,movements:[{type:'expense',description:'Comida',amount:10,accountId:'inexistente',date:'2026-11-12'}]}}),/movimiento inválido/);
  assert.match(D.validateBackup({...backup,data:{...backup.data,tasks:[{}]}}),/tarea inválida/);
 });
+
+test('restauración rechaza identificadores inseguros y repetidos',()=>{
+ const base={format:'kairos-backup-v2',data:{accounts:[{id:'a',name:'Efectivo',opening:0}],movements:[],debts:[],tasks:[]}};
+ assert.match(D.validateBackup({...base,data:{...base.data,accounts:[{id:'a" onmouseover="x',name:'Efectivo',opening:0}]}}),/identificador/);
+ assert.match(D.validateBackup({...base,data:{...base.data,tasks:[{id:'same',title:'Una'},{id:'same',title:'Dos'}]}}),/identificador/);
+});
+test('restauración rechaza preferencias que pueden romper la interfaz',()=>{
+ const base={format:'kairos-backup-v2',data:{accounts:[],movements:[],debts:[],tasks:[]}};
+ assert.match(D.validateBackup({...base,data:{...base.data,prefs:{currency:'XYZ'}}}),/moneda/);
+ assert.match(D.validateBackup({...base,data:{...base.data,prefs:{theme:'neon'}}}),/tema/);
+ assert.match(D.validateBackup({...base,data:{...base.data,prefs:{fontScale:'huge'}}}),/tamaño de letra/);
+ assert.match(D.validateBackup({...base,data:{...base.data,prefs:{pomodoro:0}}}),/temporizador/);
+ assert.equal(D.validateBackup({...base,data:{...base.data,prefs:{currency:'ARS',theme:'dark',fontScale:'larger',dailyReviewTime:'21:00',pomodoro:25,shortBreak:5,longBreak:15}}}),null);
+});
+test('restauración rechaza estado de temporizador corrupto',()=>{
+ const base={format:'kairos-backup-v2',data:{accounts:[],movements:[],debts:[],tasks:[]}};
+ assert.match(D.validateBackup({...base,data:{...base.data,focus:{running:'yes',mode:'focus',remaining:10}}}),/estado del temporizador/);
+ assert.match(D.validateBackup({...base,data:{...base.data,focus:{running:false,mode:'unknown',remaining:10}}}),/modo del temporizador/);
+});
