@@ -126,3 +126,12 @@ test('restauración rechaza estado de temporizador corrupto',()=>{
  assert.match(D.validateBackup({...base,data:{...base.data,focus:{running:'yes',mode:'focus',remaining:10}}}),/estado del temporizador/);
  assert.match(D.validateBackup({...base,data:{...base.data,focus:{running:false,mode:'unknown',remaining:10}}}),/modo del temporizador/);
 });
+
+test('restauración valida identificadores, tipo y tamaño de adjuntos',()=>{
+ const base={format:'kairos-backup-v2',data:{accounts:[],movements:[],debts:[],tasks:[],subjects:[{id:'s1',name:'Materia',attachments:[{id:'f1',name:'apunte.pdf',type:'application/pdf',size:10,data:'data:application/pdf;base64,AA=='}]}]}};
+ assert.equal(D.validateBackup(base),null);
+ const unsafe={...base,data:{...base.data,subjects:[{id:'s1',name:'Materia',attachments:[{id:'f1" onmouseover="x',name:'apunte.pdf',type:'application/pdf',size:10,data:'data:application/pdf;base64,AA=='}]}]}};
+ assert.match(D.validateBackup(unsafe),/identificador de adjunto/);
+ const oversized={...base,data:{...base.data,subjects:[{id:'s1',name:'Materia',attachments:[{id:'f1',name:'grande.pdf',type:'application/pdf',size:6*1024*1024,data:'data:application/pdf;base64,AA=='}]}]}};
+ assert.match(D.validateBackup(oversized),/adjunto inválido/);
+});
