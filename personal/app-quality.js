@@ -50,7 +50,7 @@
     if(!card)return;
     const box=document.createElement('div');
     box.className='setting-row display-preferences';
-    box.innerHTML='<div><b>Apariencia y lectura</b><small>Elegí el tema y un tamaño de letra cómodo.</small><div class="display-controls"><label for="prefTheme">Tema</label><select class="control" id="prefTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Según el dispositivo</option></select><label for="prefFont">Tamaño de letra</label><select class="control" id="prefFont"><option value="normal">Normal</option><option value="large">Grande</option><option value="larger">Muy grande</option></select></div></div>';
+    box.innerHTML='<div><b>Apariencia y lectura</b><small>Elige el tema y un tamaño de letra cómodo.</small><div class="display-controls"><label for="prefTheme">Tema</label><select class="control" id="prefTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Según el dispositivo</option></select><label for="prefFont">Tamaño de letra</label><select class="control" id="prefFont"><option value="normal">Normal</option><option value="large">Grande</option><option value="larger">Muy grande</option></select></div></div>';
     card.insertBefore(box,card.querySelector('#savePrefs'));
     $('prefTheme').value=state.prefs.theme||'light';$('prefFont').value=state.prefs.fontScale||'normal';
     const saveButton=$('savePrefs'),old=saveButton.onclick;
@@ -78,7 +78,7 @@
         chatSay('assistant',response,actions);
       }else{
         pendingChat=null;
-        chatSay('assistant','No registré nada. Contame qué representa cada importe y lo vuelvo a interpretar.');
+        chatSay('assistant','No registré nada. Cuéntame qué representa cada importe y lo vuelvo a interpretar.');
       }
       await save();renderAssistant();return;
     }
