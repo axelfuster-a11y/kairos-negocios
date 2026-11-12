@@ -135,3 +135,19 @@ test('restauración valida identificadores, tipo y tamaño de adjuntos',()=>{
  const oversized={...base,data:{...base.data,subjects:[{id:'s1',name:'Materia',attachments:[{id:'f1',name:'grande.pdf',type:'application/pdf',size:6*1024*1024,data:'data:application/pdf;base64,AA=='}]}]}};
  assert.match(D.validateBackup(oversized),/adjunto inválido/);
 });
+
+test('restauración mantiene integridad de pagos vinculados a deudas',()=>{
+ const base={format:'kairos-backup-v2',data:{
+  accounts:[{id:'a',name:'Cuenta',opening:100}],
+  movements:[{id:'m',type:'expense',description:'Pago',amount:10,accountId:'a',date:'2026-11-12',status:'posted',debtId:'d',debtBefore:{remaining:60,status:'open'}}],
+  debts:[{id:'d',name:'Tarjeta',amount:100,remaining:50,status:'open'}],
+  tasks:[]
+ }};
+ assert.equal(D.validateBackup(base),null);
+ const orphan={...base,data:{...base.data,movements:[{...base.data.movements[0],debtId:'missing'}]}};
+ assert.match(D.validateBackup(orphan),/deuda inexistente/);
+ const badHistory={...base,data:{...base.data,movements:[{...base.data.movements[0],debtBefore:{remaining:120}}]}};
+ assert.match(D.validateBackup(badHistory),/saldo previo/);
+ const badStatus={...base,data:{...base.data,movements:[{...base.data.movements[0],status:'pending'}]}};
+ assert.match(D.validateBackup(badStatus),/Estado de movimiento/);
+});
