@@ -2,11 +2,10 @@
 (function(){
   const originalReply=assistantReply;
   const originalSend=sendChat;
-  const moneyValue=s=>{let x=String(s).replace(/\s/g,'');if(x.includes(',')&&x.includes('.'))x=x.replace(/\./g,'').replace(',','.');else if(x.includes(','))x=x.replace(',','.');else if((x.match(/\./g)||[]).length===1&&x.split('.')[1].length===3)x=x.replace('.','');return Number(x)};
-  function parseMoneyMentions(text){
-    const re=/(?:\$\s*)?\b\d[\d.,]*\b\s*(?:pesos|ars)?/gi, out=[];let m;
-    while((m=re.exec(text))!==null){const value=moneyValue(m[0]);if(Number.isFinite(value)&&value>0)out.push({value,index:m.index,raw:m[0]})}
-    return out;
+  function parseMoneyMentions(text){return KairosDomain.extractMoneyMentions(text)}
+  function unparsedMoneyMentions(text){
+    const masked=String(text).replace(/\b\d{4}-\d{2}-\d{2}\b/g,m=>' '.repeat(m.length)).replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,m=>' '.repeat(m.length)).replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,m=>' '.repeat(m.length));
+    return masked.match(/\b\d[\d.,]*\b/g)||[];
   }
   function inferAccount(text){
     const s=text.toLowerCase();
@@ -17,6 +16,9 @@
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
     const balance=/tengo|qued[aó]|saldo|disponible|me queda|hay en/i.test(s);
     const account=inferAccount(text);
+    if(expense&&unparsedMoneyMentions(text).some(raw=>KairosDomain.parseMoney(raw)===null)){
+      return 'Encontré un importe con separadores ambiguos. No voy a registrar nada todavía. Escribilo sin separadores de miles o con coma decimal de hasta dos cifras.';
+    }
     if(expense&&amounts.length>=2&&balance){
       const first=amounts[0], second=amounts[1];
       pendingChat={kind:'compoundClarification',expenseAmount:first.value,balanceAmount:second.value,accountId:account?.id||null,raw:text};
@@ -61,11 +63,16 @@
     if(previous?.kind==='compoundClarification'){
       chatSay('user',String(text||''));
       if(/^(sí|si|correcto|exacto|así es|después del gasto)[.! ]*$/.test(answer)){
-        const raw=previous.raw||'',match=raw.match(/gast[eé]\s+[\d.,]+\s+(?:pesos\s+)?(?:en\s+)?(.+?)(?:\s+y\s+(?:tengo|me queda|quedan|saldo).*)?$/i);
-        const description=(match?.[1]||'Gasto informado en el chat').trim().replace(/[.,;]+$/,'');
+        const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),first=mentions[0],second=mentions[1];
+        const description=(first&&second?raw.slice(first.index+first.raw.length,second.index):'')
+          .replace(/\b(?:el\s+)?\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
+          .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
+          .replace(/^\s*(?:el\s+)?(?:en|por)\s+/i,'')
+          .replace(/[,;\.\s]+(?:y\s+)?(?:ahora\s+)?(?:tengo|me queda|me quedan|quedan|saldo|disponible)\b[\s\S]*$/i,'')
+          .trim().replace(/[.,;]+$/,'')||'Gasto informado en el chat';
         pendingChat={kind:'movement',type:'expense',amount:previous.expenseAmount,description,accountId:previous.accountId||null};
         const response=previous.accountId
-          ?'Perfecto. Preparé un gasto de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado, no lo usaré para inventar otro movimiento. ¿Confirmás el gasto?'
+          ?'Perfecto. Preparé un gasto de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado, no lo usaré para inventar otro movimiento. ¿Confirmas el gasto?'
           :'Perfecto. Preparé el gasto de '+money(previous.expenseAmount)+' por "'+description+'". ¿De qué cuenta salió? '+state.accounts.map(a=>a.name).join(', ');
         const actions=previous.accountId?'<button data-chat-confirm>Confirmar gasto</button> <button data-chat-cancel>Cancelar</button>':state.accounts.map(a=>'<button data-chat-account="'+a.id+'">'+esc(a.name)+'</button>').join('');
         chatSay('assistant',response,actions);
