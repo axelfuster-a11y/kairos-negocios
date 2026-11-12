@@ -35,6 +35,27 @@
     for(const cue of cues){cue.pattern.lastIndex=0;let match;while((match=cue.pattern.exec(before))!==null)if(match.index>latest.index)latest={index:match.index,role:cue.role}}
     return latest.role;
   }
+  function extractMovementDate(text){
+    const source=String(text),s=source.toLowerCase(),base=today();
+    const tokens=[...source.matchAll(/\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g)],relative=[...s.matchAll(/\b(?:ayer|hoy|mañana)\b/g)];
+    if(tokens.length+relative.length>1)return {error:'Encontré más de una fecha. Indica una sola fecha para el movimiento.'};
+    let date=base;
+    if(tokens.length){
+      const raw=tokens[0][0];
+      if(/^\d{4}-/.test(raw))date=raw;
+      else{
+        const [day,month,yearText]=raw.split(/[/-]/).map(Number),year=yearText?(yearText<100?2000+yearText:yearText):Number(base.slice(0,4));
+        date=year+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      }
+    }else if(relative.length){
+      const shifted=new Date(base+'T12:00:00');
+      shifted.setDate(shifted.getDate()+(s.includes('ayer')?-1:s.includes('mañana')?1:0));
+      date=[shifted.getFullYear(),String(shifted.getMonth()+1).padStart(2,'0'),String(shifted.getDate()).padStart(2,'0')].join('-');
+    }
+    const check=new Date(date+'T00:00:00.000Z');
+    if(!Number.isFinite(check.getTime())||check.toISOString().slice(0,10)!==date)return {error:'La fecha indicada no existe. No registraré el movimiento hasta que la corrijas.'};
+    return {date};
+  }
   assistantReply=function(text){
     const s=String(text).toLowerCase(),amounts=parseMoneyMentions(text);
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
@@ -50,12 +71,14 @@
     const movementType=expense?'expense':income?'income':null;
     const questionIntent=/^\s*¿?\s*(?:cu[aá]nto|qu[eé]|cu[aá]les|cu[aá]ntas|por qu[eé]|c[oó]mo)\b|quiero saber|mu[eé]strame|resumen|historial/i.test(s);
     if(questionIntent)return originalReply(text);
+    const parsedDate=movementType?extractMovementDate(text):{date:today()};
+    if(parsedDate.error)return parsedDate.error;
     if(movementType&&amounts.length===0)return 'No encontré un importe para ese movimiento. Indica cuánto fue y lo prepararé para que lo revises.';
     if(movementType&&amounts.length===2&&balance){
       const roles=amounts.map(item=>moneyMentionRole(text,item)),movementIndex=roles.indexOf(movementType),balanceIndex=roles.indexOf('balance');
       if(movementIndex>=0&&balanceIndex>=0&&movementIndex!==balanceIndex){
         const movementAmount=amounts[movementIndex],balanceAmount=amounts[balanceIndex],label=movementType==='income'?'ingreso':'gasto';
-        pendingChat={kind:'compoundClarification',movementType,expenseAmount:movementAmount.value,balanceAmount:balanceAmount.value,movementIndex,balanceIndex,accountId:chosenAccount?.id||null,raw:text};
+        pendingChat={kind:'compoundClarification',movementType,expenseAmount:movementAmount.value,balanceAmount:balanceAmount.value,movementIndex,balanceIndex,date:parsedDate.date,accountId:chosenAccount?.id||null,raw:text};
         return 'Entendí un '+label+' de '+money(movementAmount.value)+' y un saldo informado de '+money(balanceAmount.value)+(chosenAccount?' en '+chosenAccount.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(balanceAmount.value)+' es el saldo actual de esa cuenta después del movimiento?';
       }
     }
@@ -69,7 +92,7 @@
       if(role&&role!==movementType)return 'El importe parece corresponder a otro tipo de dato. Aclara cuál fue el importe del movimiento antes de guardarlo.';
       if(!state.accounts.length)return 'Primero crea una cuenta en Finanzas.';
       const chosen=chosenAccount,fallback=movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
-      pendingChat={kind:'movement',type:movementType,amount:amounts[0].value,description:describeMoneyAction(text,amounts[0],chosen,fallback),accountId:chosen?.id||null};
+      pendingChat={kind:'movement',type:movementType,amount:amounts[0].value,date:parsedDate.date,description:describeMoneyAction(text,amounts[0],chosen,fallback),accountId:chosen?.id||null};
       return 'Preparé un movimiento para revisar antes de guardarlo.';
     }
     return originalReply(text);
@@ -112,7 +135,7 @@
         const linkedAccount=state.accounts.find(a=>a.id===previous.accountId)||null;
         const description=movementMention?describeMoneyAction(raw,movementMention,linkedAccount,fallback):fallback;
         const type=previous.movementType||'expense',label=type==='income'?'ingreso':'gasto';
-        pendingChat={kind:'movement',type,amount:previous.expenseAmount,description,accountId:previous.accountId||null};
+        pendingChat={kind:'movement',type,amount:previous.expenseAmount,date:previous.date||today(),description,accountId:previous.accountId||null};
         const response=previous.accountId
           ?'Perfecto. Preparé un '+label+' de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado. ¿Confirmas el '+label+'?'
           :'Perfecto. Preparé el '+label+' de '+money(previous.expenseAmount)+' por "'+description+'". ¿En qué cuenta '+(type==='income'?'recibiste el dinero':'salió')+'?';
