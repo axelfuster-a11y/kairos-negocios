@@ -106,7 +106,7 @@
         chatSay('assistant','Todavía necesito que indiques qué importe corresponde al movimiento y qué representa el otro. No preparé nada.');
         await save();renderAssistant();return;
       }
-      if(/^(sí|si|correcto|exacto|así es|después del gasto|después del ingreso|después del movimiento)[.! ]*$/.test(answer)){
+      if(/^(sí|si|correcto|exacto|así es|después del gasto|después del ingreso|después del movimiento)(?:[,.! ]|$)/.test(answer)){
         const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),movementMention=mentions[previous.movementIndex??0];
         const fallback=previous.movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
         const linkedAccount=state.accounts.find(a=>a.id===previous.accountId)||null;
