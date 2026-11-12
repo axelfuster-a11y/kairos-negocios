@@ -11,27 +11,42 @@
     const s=text.toLowerCase();
     return state.accounts.find(a=>s.includes(a.name.toLowerCase()))||state.accounts.find(a=>a.kind?.toLowerCase().includes('billetera')&&/mercado\s*pago|mp\b/.test(s))||null;
   }
-  assistantReply=function(text){
-    const s=text.toLowerCase(), amounts=parseMoneyMentions(text);
+  function describeMoneyAction(text,mention,account,fallback){
+    let value=String(text).slice(0,mention.index)+' '+String(text).slice(mention.index+mention.raw.length);
+    value=value.replace(/\\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron)\\b/gi,' ')
+      .replace(/\\b\\d{4}-\\d{2}-\\d{2}\\b/g,' ')
+      .replace(/\\b\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,' ')
+      .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,' ')
+      .replace(/(?:\\$\\s*)?\\b\\d[\\d.,]*\\b/g,' ')
+      .replace(/\\b(?:en|desde|por|de|el|la|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\\b/gi,' ')
+      .replace(/\\bmp\\b/gi,' ');
+    if(account?.name){const escaped=account.name.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\  assistantReply=function(text){
+    const s=String(text).toLowerCase(),amounts=parseMoneyMentions(text);
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
+    const income=/cobr[eé]|me pagaron|recib[ií]|ingres[oó]|me depositaron|acreditaron/i.test(s);
     const balance=/tengo|qued[aó]|saldo|disponible|me queda|hay en/i.test(s);
     const account=inferAccount(text);
-    if(expense&&unparsedMoneyMentions(text).some(raw=>KairosDomain.parseMoney(raw)===null)){
-      return 'Encontré un importe con separadores ambiguos. No voy a registrar nada todavía. Escribilo sin separadores de miles o con coma decimal de hasta dos cifras.';
+    if((expense||income)&&unparsedMoneyMentions(text).some(raw=>KairosDomain.parseMoney(raw)===null)){
+      return 'Encontré un importe que no puedo interpretar con seguridad. No voy a registrar nada. Escribe el importe sin separadores de miles o con coma decimal de hasta dos cifras.';
     }
-    if(expense&&amounts.length>=2&&balance){
-      const first=amounts[0], second=amounts[1];
-      pendingChat={kind:'compoundClarification',expenseAmount:first.value,balanceAmount:second.value,accountId:account?.id||null,raw:text};
-      return 'Entendí dos datos distintos: un gasto de '+money(first.value)+' y un saldo informado de '+money(second.value)+(account?' en '+account.name:'')+'. No voy a registrar el segundo importe como otro movimiento. Antes de guardar el gasto, necesito confirmar: ¿'+money(second.value)+' es el saldo actual de esa cuenta después del gasto?';
+    if(expense&&income){
+      return 'Detecté un ingreso y un gasto en el mismo mensaje. Para no asignar mal los importes, envía cada movimiento por separado. No registré nada.';
     }
-    if(expense&&amounts.length>1){
-      pendingChat={kind:'compoundClarification',amounts:amounts.map(x=>x.value),accountId:account?.id||null,raw:text};
-      return 'Detecté '+amounts.length+' importes ('+amounts.map(x=>money(x.value)).join(' y ')+'). No voy a elegir uno ni registrar algo por suposición. ¿Cuál corresponde al gasto y qué representa el otro importe?';
+    const movementType=expense?'expense':income?'income':null;
+    if(movementType&&amounts.length===2&&balance){
+      const first=amounts[0],second=amounts[1],label=movementType==='income'?'ingreso':'gasto';
+      pendingChat={kind:'compoundClarification',movementType,expenseAmount:first.value,balanceAmount:second.value,accountId:account?.id||null,raw:text};
+      return 'Entendí un '+label+' de '+money(first.value)+' y un saldo informado de '+money(second.value)+(account?' en '+account.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(second.value)+' es el saldo actual de esa cuenta después del movimiento?';
     }
-    if(expense&&amounts.length===1&&account){
-      const reply=originalReply(text);
-      if(pendingChat?.kind==='movement')pendingChat.accountId=account.id;
-      return reply;
+    if(movementType&&amounts.length>1){
+      pendingChat={kind:'compoundClarification',movementType,amounts:amounts.map(x=>x.value),accountId:account?.id||null,raw:text};
+      return 'Detecté '+amounts.length+' importes ('+amounts.map(x=>money(x.value)).join(' y ')+'). No voy a elegir uno por suposición. ¿Cuál corresponde al movimiento y qué representa el otro importe?';
+    }
+    if(movementType&&amounts.length===1){
+      if(!state.accounts.length)return 'Primero crea una cuenta en Finanzas.';
+      const chosen=account||(state.accounts.length===1?state.accounts[0]:null),fallback=movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
+      pendingChat={kind:'movement',type:movementType,amount:amounts[0].value,description:describeMoneyAction(text,amounts[0],chosen,fallback),accountId:chosen?.id||null};
+      return 'Preparé un movimiento para revisar antes de guardarlo.';
     }
     return originalReply(text);
   };
@@ -62,20 +77,26 @@
     const previous=pendingChat, answer=String(text||'').trim().toLowerCase();
     if(previous?.kind==='compoundClarification'){
       chatSay('user',String(text||''));
-      if(/^(sí|si|correcto|exacto|así es|después del gasto)[.! ]*$/.test(answer)){
+      if(previous.expenseAmount===undefined||previous.balanceAmount===undefined){
+        pendingChat=null;
+        chatSay('assistant','Todavía necesito que indiques qué importe corresponde al movimiento y qué representa el otro. No preparé nada.');
+        await save();renderAssistant();return;
+      }
+      if(/^(sí|si|correcto|exacto|así es|después del gasto|después del movimiento)[.! ]*$/.test(answer)){
         const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),first=mentions[0],second=mentions[1];
         const description=(first&&second?raw.slice(first.index+first.raw.length,second.index):'')
-          .replace(/\b(?:el\s+)?\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
-          .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
-          .replace(/^\s*el\s+/i,'')
-          .replace(/^\s*(?:en|por)\s+/i,'')
-          .replace(/[,;\.\s]+(?:y\s+)?(?:ahora\s+)?(?:tengo|me queda|me quedan|quedan|saldo|disponible)\b[\s\S]*$/i,'')
-          .trim().replace(/[.,;]+$/,'')||'Gasto informado en el chat';
-        pendingChat={kind:'movement',type:'expense',amount:previous.expenseAmount,description,accountId:previous.accountId||null};
+          .replace(/\\b(?:el\\s+)?\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,' ')
+          .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,' ')
+          .replace(/^\\s*el\\s+/i,'')
+          .replace(/^\\s*(?:en|por)\\s+/i,'')
+          .replace(/[,;\\.\\s]+(?:y\\s+)?(?:ahora\\s+)?(?:tengo|me queda|me quedan|quedan|saldo|disponible)\\b[\\s\\S]*$/i,'')
+          .trim().replace(/[.,;]+$/,'')||(previous.movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat');
+        const type=previous.movementType||'expense',label=type==='income'?'ingreso':'gasto';
+        pendingChat={kind:'movement',type,amount:previous.expenseAmount,description,accountId:previous.accountId||null};
         const response=previous.accountId
-          ?'Perfecto. Preparé un gasto de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado, no lo usaré para inventar otro movimiento. ¿Confirmas el gasto?'
-          :'Perfecto. Preparé el gasto de '+money(previous.expenseAmount)+' por "'+description+'". ¿De qué cuenta salió? '+state.accounts.map(a=>a.name).join(', ');
-        const actions=previous.accountId?'<button data-chat-confirm>Confirmar gasto</button> <button data-chat-cancel>Cancelar</button>':state.accounts.map(a=>'<button data-chat-account="'+a.id+'">'+esc(a.name)+'</button>').join('');
+          ?'Perfecto. Preparé un '+label+' de '+money(previous.expenseAmount)+' por "'+description+'" en '+accountName(previous.accountId)+'. El saldo de '+money(previous.balanceAmount)+' queda como dato informado. ¿Confirmas el '+label+'?'
+          :'Perfecto. Preparé el '+label+' de '+money(previous.expenseAmount)+' por "'+description+'". ¿En qué cuenta '+(type==='income'?'recibiste el dinero':'salió')+'?';
+        const actions=previous.accountId?'<button data-chat-confirm>Confirmar '+label+'</button> <button data-chat-cancel>Cancelar</button>':state.accounts.map(a=>'<button data-chat-account="'+a.id+'">'+esc(a.name)+'</button>').join('');
         chatSay('assistant',response,actions);
       }else{
         pendingChat=null;
