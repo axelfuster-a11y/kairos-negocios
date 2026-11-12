@@ -73,8 +73,17 @@ function prepareDebtPayment(debt,amount,accountId,date,movementId,createdAt,note
   }
  }
  if(updatedDebt.remaining<=0.005){updatedDebt.remaining=0;updatedDebt.status='paid'}
- const movement={id:movementId,type:'expense',description:'Pago de deuda: '+debt.name,amount:value,accountId,date,category:'Pago de deuda',notes:notes||'',debtId:debt.id,status:'posted',createdAt};
+ const debtBefore={remaining:debt.remaining??debt.amount,status:debt.status,installments:debt.installments,due:debt.due,installmentDay:debt.installmentDay,installmentEndOfMonth:debt.installmentEndOfMonth};
+ const movement={id:movementId,type:'expense',description:'Pago de deuda: '+debt.name,amount:value,accountId,date,category:'Pago de deuda',notes:notes||'',debtId:debt.id,debtBefore,status:'posted',createdAt};
  return {debt:updatedDebt,movement};
+}
+function revertDebtPayment(debt,movement){
+ if(!debt||!movement||movement.debtId!==debt.id||!movement.debtBefore)throw new Error('No hay datos suficientes para revertir este pago.');
+ const updated={...debt},before=movement.debtBefore;
+ for(const key of ['remaining','status','installments','due','installmentDay','installmentEndOfMonth']){
+  if(Object.prototype.hasOwnProperty.call(before,key))updated[key]=before[key];else delete updated[key];
+ }
+ return updated;
 }
 function validateBackup(backup){
  if(!backup||!['kairos-backup-v1','kairos-backup-v2'].includes(backup.format))return 'El archivo no es una copia compatible de Kairós.';
@@ -96,5 +105,5 @@ function taskStats(tasks,referenceDate=localISODate()){const active=(tasks||[]).
 function projectProgress(project,tasks){const related=(tasks||[]).filter(t=>t.projectId===project.id&&!t.archived);return related.length?Math.round(related.filter(t=>t.done).length/related.length*100):Number(project.progress||0)}
 function buildCalendarItems(state,month){const out=[];for(const t of state.tasks||[])if(!t.archived&&t.due&&t.due.startsWith(month))out.push({id:'task:'+t.id,date:t.due,title:t.title,type:t.subjectId?'study':t.projectId?'project':'task'});for(const e of state.events||[])if(e.date&&e.date.startsWith(month))out.push({id:'event:'+e.id,date:e.date,title:e.title,type:e.type||'event',time:e.time||''});for(const d of state.debts||[])if(d.status!=='paid'&&d.due&&d.due.startsWith(month))out.push({id:'debt:'+d.id,date:d.due,title:'Vence: '+d.name,type:'debt'});for(const w of state.workEntries||[])if(w.date&&w.date.startsWith(month))out.push({id:'work:'+w.id,date:w.date,title:w.title||w.client||'Trabajo',type:'work'});return out.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))}
 function monthlyTotals(state,month){const xs=(state.workEntries||[]).filter(x=>(x.date||'').startsWith(month));return {income:round(xs.reduce((s,x)=>s+Number(x.income||0),0)),expenses:round(xs.reduce((s,x)=>s+Number(x.expenses||0),0)),hours:round(xs.reduce((s,x)=>s+Number(x.minutes||0),0)/60)}}
-return Object.freeze({round,parseMoney,extractMoneyMentions,localISODate,accountBalance,summarize,validateMovement,validateDebt,prepareDebtPayment,validateBackup,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
+return Object.freeze({round,parseMoney,extractMoneyMentions,localISODate,accountBalance,summarize,validateMovement,validateDebt,prepareDebtPayment,revertDebtPayment,validateBackup,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
 });
