@@ -11,9 +11,35 @@ function openDB(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,1);r.on
 function save(){return new Promise((ok,no)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id:'main',data:state,undo:undoStack.slice(-30),redo:redoStack.slice(-30)});t.oncomplete=ok;t.onerror=()=>no(t.error)})}
 function load(){return new Promise((ok,no)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>ok(r.result||null);r.onerror=()=>no(r.error)})}
 function toast(s){const e=$('toast');e.textContent=s;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2400)}
-async function tx(label,fn){const before=clone(state);try{await fn();undoStack.push({label,state:before});if(undoStack.length>30)undoStack.shift();redoStack=[];await save();render();historyButtons();toast(label)}catch(e){state=before;toast(e.message||'No se pudo guardar')}}
-async function undo(){if(!undoStack.length)return;const x=undoStack.pop();redoStack.push({label:x.label,state:clone(state)});state=x.state;await save();render();historyButtons();toast('Deshecho: '+x.label)}
-async function redo(){if(!redoStack.length)return;const x=redoStack.pop();undoStack.push({label:x.label,state:clone(state)});state=x.state;await save();render();historyButtons();toast('Rehecho: '+x.label)}
+async function tx(label,fn){
+ const before=clone(state),undoBefore=undoStack.slice(),redoBefore=redoStack.slice();
+ try{
+  await fn();
+  undoStack.push({label,state:before});
+  if(undoStack.length>30)undoStack.shift();
+  redoStack=[];
+  await save();
+ }catch(e){
+  state=before;undoStack=undoBefore;redoStack=redoBefore;
+  toast(e.message||'No se pudo guardar');
+  return;
+ }
+ try{render();historyButtons();toast(label)}catch(e){console.error(e);toast('Los datos se guardaron, pero no se pudo actualizar la vista. Recarga la aplicación.')}
+}
+async function undo(){
+ if(!undoStack.length)return;
+ const beforeState=clone(state),undoBefore=undoStack.slice(),redoBefore=redoStack.slice(),x=undoStack.pop();
+ redoStack.push({label:x.label,state:clone(state)});state=x.state;
+ try{await save()}catch(e){state=beforeState;undoStack=undoBefore;redoStack=redoBefore;toast('No se pudo guardar el cambio.');return}
+ try{render();historyButtons();toast('Deshecho: '+x.label)}catch(e){console.error(e);toast('El cambio se guardó, pero no se pudo actualizar la vista.')}
+}
+async function redo(){
+ if(!redoStack.length)return;
+ const beforeState=clone(state),undoBefore=undoStack.slice(),redoBefore=redoStack.slice(),x=redoStack.pop();
+ undoStack.push({label:x.label,state:clone(state)});state=x.state;
+ try{await save()}catch(e){state=beforeState;undoStack=undoBefore;redoStack=redoBefore;toast('No se pudo guardar el cambio.');return}
+ try{render();historyButtons();toast('Rehecho: '+x.label)}catch(e){console.error(e);toast('El cambio se guardó, pero no se pudo actualizar la vista.')}
+}
 function historyButtons(){$('undoBtn').disabled=!undoStack.length;$('redoBtn').disabled=!redoStack.length}
 const accountName=id=>state.accounts.find(x=>x.id===id)?.name||'Cuenta eliminada',projectName=id=>state.projects.find(x=>x.id===id)?.name||'',subjectName=id=>state.subjects.find(x=>x.id===id)?.name||'';
 const activeTasks=()=>state.tasks.filter(x=>!x.archived),tasksFor=id=>state.tasks.filter(x=>x.projectId===id&&!x.archived);
