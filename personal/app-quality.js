@@ -89,7 +89,7 @@
 
   const baseMetric=metric;
   metric=function(label,value,note,cls=''){
-    const target=/deuda/i.test(label)?'finance':/disponible|ingresos|gastos/i.test(label)?'finance':/pendientes|completadas|atrasadas/i.test(label)?'organize':null;
+    const target=view==='work'?'work':view==='finance'?'finance':view==='organize'?'organize':/deuda/i.test(label)?'finance':/disponible|ingresos|gastos/i.test(label)?'finance':/pendientes|completadas|atrasadas/i.test(label)?'organize':null;
     return baseMetric(label,value,note,cls).replace('<article class="card metric-card','<article '+(target?'data-metric-view="'+target+'" tabindex="0" role="link" aria-label="Ver detalle de '+label+'" ':'')+'class="card metric-card');
   };
   document.addEventListener('click',e=>{const metricCard=e.target.closest('[data-metric-view]');if(metricCard)nav(metricCard.dataset.metricView)});
