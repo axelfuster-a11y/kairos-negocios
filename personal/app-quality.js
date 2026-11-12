@@ -115,8 +115,17 @@
     box.innerHTML='<div><b>Apariencia y lectura</b><small>Elige el tema y un tamaño de letra cómodo.</small><div class="display-controls"><label for="prefTheme">Tema</label><select class="control" id="prefTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Según el dispositivo</option></select><label for="prefFont">Tamaño de letra</label><select class="control" id="prefFont"><option value="normal">Normal</option><option value="large">Grande</option><option value="larger">Muy grande</option></select></div></div>';
     card.insertBefore(box,card.querySelector('#savePrefs'));
     $('prefTheme').value=state.prefs.theme||'light';$('prefFont').value=state.prefs.fontScale||'normal';
-    const saveButton=$('savePrefs'),old=saveButton.onclick;
-    saveButton.onclick=async()=>{const theme=$('prefTheme').value,fontScale=$('prefFont').value;await old?.();state.prefs.theme=theme;state.prefs.fontScale=fontScale;await save();applyDisplayPrefs();renderSettings();toast('Preferencias visuales guardadas')};
+    const saveButton=$('savePrefs');
+    saveButton.onclick=async()=>{
+      const theme=$('prefTheme').value,fontScale=$('prefFont').value;
+      const ok=await tx('Preferencias guardadas',()=>{
+        state.prefs.currency=$('prefCurrency').value;
+        state.prefs.dailyReviewTime=$('prefReview').value;
+        for(const n of ['pomodoro','shortBreak','longBreak'])state.prefs[n]=Math.max(1,Math.min(120,Number($('pref-'+n).value)||25));
+        state.prefs.theme=theme;state.prefs.fontScale=fontScale;
+      });
+      if(ok)applyDisplayPrefs();
+    };
   };
 
   const basicSend=sendChat;
