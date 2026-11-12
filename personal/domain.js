@@ -49,8 +49,8 @@ function validISODate(value){
 }
 function accountBalance(account,movements){return round(Number(account.opening||0)+(movements||[]).reduce((sum,m)=>{if(m.status==='void')return sum;if(m.type==='transfer'){if(m.fromAccountId===account.id)return sum-Number(m.amount);if(m.toAccountId===account.id)return sum+Number(m.amount);return sum}if(m.accountId!==account.id)return sum;return sum+(m.type==='income'?1:-1)*Number(m.amount)},0))}
 function summarize(state,month){const movements=state.movements||[],monthItems=movements.filter(m=>m.status!=='void'&&String(m.date||'').startsWith(month));return {balance:round((state.accounts||[]).reduce((sum,a)=>sum+accountBalance(a,movements),0)),income:round(monthItems.filter(m=>m.type==='income').reduce((s,m)=>s+Number(m.amount),0)),expense:round(monthItems.filter(m=>m.type==='expense').reduce((s,m)=>s+Number(m.amount),0)),debt:round((state.debts||[]).filter(d=>d.status!=='paid'&&d.status!=='void').reduce((s,d)=>s+Number(d.remaining??d.amount),0)),movementCount:monthItems.length}}
-function validateMovement(m,accountIds){if(!['income','expense','transfer'].includes(m.type))return 'Tipo de movimiento inválido.';if(!String(m.description||'').trim())return 'Escribe una descripción.';if(!Number.isFinite(Number(m.amount))||Number(m.amount)<=0)return 'El monto debe ser mayor a cero.';if(m.type==='transfer'){if(!accountIds.includes(m.fromAccountId)||!accountIds.includes(m.toAccountId))return 'Elige las dos cuentas.';if(m.fromAccountId===m.toAccountId)return 'El origen y destino deben ser distintos.'}else if(!accountIds.includes(m.accountId))return 'Elige una cuenta válida.';if(!validISODate(m.date))return 'Elige una fecha válida.';return null}
-function validateDebt(d){if(!String(d.name||'').trim())return 'Escribe el concepto de la deuda.';if(!Number.isFinite(Number(d.amount))||Number(d.amount)<=0)return 'El monto debe ser mayor a cero.';if(d.remaining!==undefined&&!Number.isFinite(Number(d.remaining)))return 'El saldo pendiente debe ser un importe válido.';if(d.remaining!==undefined&&Number(d.remaining)<0)return 'El saldo pendiente no puede ser negativo.';if(d.remaining!==undefined&&Number(d.remaining)>Number(d.amount))return 'El saldo pendiente no puede superar el importe original.';return null}
+function validateMovement(m,accountIds){if(!['income','expense','transfer'].includes(m.type))return 'Tipo de movimiento inválido.';if(m.status!==undefined&&!['posted','void'].includes(m.status))return 'Estado de movimiento inválido.';if(!String(m.description||'').trim())return 'Escribe una descripción.';if(!Number.isFinite(Number(m.amount))||Number(m.amount)<=0)return 'El monto debe ser mayor a cero.';if(m.type==='transfer'){if(!accountIds.includes(m.fromAccountId)||!accountIds.includes(m.toAccountId))return 'Elige las dos cuentas.';if(m.fromAccountId===m.toAccountId)return 'El origen y destino deben ser distintos.'}else if(!accountIds.includes(m.accountId))return 'Elige una cuenta válida.';if(!validISODate(m.date))return 'Elige una fecha válida.';return null}
+function validateDebt(d){if(d.status!==undefined&&!['open','paid','void'].includes(d.status))return 'Estado de deuda inválido.';if(!String(d.name||'').trim())return 'Escribe el concepto de la deuda.';if(!Number.isFinite(Number(d.amount))||Number(d.amount)<=0)return 'El monto debe ser mayor a cero.';if(d.remaining!==undefined&&!Number.isFinite(Number(d.remaining)))return 'El saldo pendiente debe ser un importe válido.';if(d.remaining!==undefined&&Number(d.remaining)<0)return 'El saldo pendiente no puede ser negativo.';if(d.remaining!==undefined&&Number(d.remaining)>Number(d.amount))return 'El saldo pendiente no puede superar el importe original.';return null}
 function prepareDebtPayment(debt,amount,accountId,date,movementId,createdAt,notes=''){
  if(!debt)throw new Error('No se encontró la deuda.');
  const remaining=Number(debt.remaining??debt.amount);
@@ -105,6 +105,22 @@ function validateBackup(backup){
  const ids=data.accounts.map(a=>a.id);
  for(const movement of data.movements){const error=validateMovement(movement,ids);if(error)return 'La copia contiene un movimiento inválido: '+error}
  for(const debt of data.debts){const error=validateDebt(debt);if(error)return 'La copia contiene una deuda inválida: '+error}
+ const debtById=new Map(data.debts.map(debt=>[debt.id,debt]));
+ for(const movement of data.movements){
+  if(movement.debtId===undefined||movement.debtId===null)continue;
+  const debt=debtById.get(movement.debtId);
+  if(!debt||movement.type!=='expense')return 'La copia contiene un pago vinculado a una deuda inexistente o inválido.';
+  if(movement.debtBefore!==undefined){
+   const before=movement.debtBefore;
+   if(!before||typeof before!=='object'||Array.isArray(before))return 'La copia contiene un historial de pago inválido.';
+   if(before.remaining!==undefined&&(!Number.isFinite(before.remaining)||before.remaining<0||before.remaining>Number(debt.amount)))return 'La copia contiene un saldo previo de deuda inválido.';
+   if(before.status!==undefined&&!['open','paid','void'].includes(before.status))return 'La copia contiene un estado previo de deuda inválido.';
+   if(before.installments!==undefined&&(!Number.isInteger(before.installments)||before.installments<0))return 'La copia contiene cuotas previas inválidas.';
+   if(before.due!==undefined&&!validISODate(before.due))return 'La copia contiene un vencimiento previo inválido.';
+   if(before.installmentDay!==undefined&&(!Number.isInteger(before.installmentDay)||before.installmentDay<1||before.installmentDay>31))return 'La copia contiene un día de cuota inválido.';
+   if(before.installmentEndOfMonth!==undefined&&typeof before.installmentEndOfMonth!=='boolean')return 'La copia contiene una regla de vencimiento inválida.';
+  }
+ }
  if(data.tasks.some(t=>!String(t.title||'').trim()))return 'La copia contiene una tarea inválida.';
  for(const subject of data.subjects||[]){
   if(subject.attachments!==undefined&&!Array.isArray(subject.attachments))return 'La copia contiene adjuntos con formato inválido.';
