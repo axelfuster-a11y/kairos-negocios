@@ -22,9 +22,10 @@ async function tx(label,fn){
  }catch(e){
   state=before;undoStack=undoBefore;redoStack=redoBefore;
   toast(e.message||'No se pudo guardar');
-  return;
+  return false;
  }
  try{render();historyButtons();toast(label)}catch(e){console.error(e);toast('Los datos se guardaron, pero no se pudo actualizar la vista. Recarga la aplicación.')}
+ return true;
 }
 async function undo(){
  if(!undoStack.length)return;
