@@ -24,6 +24,17 @@
     value=value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ0-9\s'-]/g,' ').replace(/\s+/g,' ').trim();
     return value||fallback;
   }
+  function moneyMentionRole(text,mention){
+    const before=String(text).slice(Math.max(0,mention.index-100),mention.index).toLowerCase();
+    const cues=[
+      {role:'balance',pattern:/\b(?:tengo|me queda|me quedan|quedan|saldo|disponible|hay en)\b/g},
+      {role:'expense',pattern:/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií])\b/g},
+      {role:'income',pattern:/\b(?:cobr[eé]|me pagaron|recib[ií]|me depositaron|me ingresaron|acreditaron|ingres[eé])\b/g}
+    ];
+    let latest={index:-1,role:null};
+    for(const cue of cues){cue.pattern.lastIndex=0;let match;while((match=cue.pattern.exec(before))!==null)if(match.index>latest.index)latest={index:match.index,role:cue.role}}
+    return latest.role;
+  }
   assistantReply=function(text){
     const s=String(text).toLowerCase(),amounts=parseMoneyMentions(text);
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
@@ -41,9 +52,12 @@
     if(questionIntent)return originalReply(text);
     if(movementType&&amounts.length===0)return 'No encontré un importe para ese movimiento. Indica cuánto fue y lo prepararé para que lo revises.';
     if(movementType&&amounts.length===2&&balance){
-      const first=amounts[0],second=amounts[1],label=movementType==='income'?'ingreso':'gasto';
-      pendingChat={kind:'compoundClarification',movementType,expenseAmount:first.value,balanceAmount:second.value,accountId:chosenAccount?.id||null,raw:text};
-      return 'Entendí un '+label+' de '+money(first.value)+' y un saldo informado de '+money(second.value)+(chosenAccount?' en '+chosenAccount.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(second.value)+' es el saldo actual de esa cuenta después del movimiento?';
+      const roles=amounts.map(item=>moneyMentionRole(text,item)),movementIndex=roles.indexOf(movementType),balanceIndex=roles.indexOf('balance');
+      if(movementIndex>=0&&balanceIndex>=0&&movementIndex!==balanceIndex){
+        const movementAmount=amounts[movementIndex],balanceAmount=amounts[balanceIndex],label=movementType==='income'?'ingreso':'gasto';
+        pendingChat={kind:'compoundClarification',movementType,expenseAmount:movementAmount.value,balanceAmount:balanceAmount.value,movementIndex,balanceIndex,accountId:chosenAccount?.id||null,raw:text};
+        return 'Entendí un '+label+' de '+money(movementAmount.value)+' y un saldo informado de '+money(balanceAmount.value)+(chosenAccount?' en '+chosenAccount.name:'')+'. No registraré el saldo como otro movimiento. ¿'+money(balanceAmount.value)+' es el saldo actual de esa cuenta después del movimiento?';
+      }
     }
     if(movementType&&amounts.length>1){
       pendingChat={kind:'compoundClarification',movementType,amounts:amounts.map(x=>x.value),accountId:chosenAccount?.id||null,raw:text};
@@ -90,9 +104,10 @@
         await save();renderAssistant();return;
       }
       if(/^(sí|si|correcto|exacto|así es|después del gasto|después del ingreso|después del movimiento)[.! ]*$/.test(answer)){
-        const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),first=mentions[0],second=mentions[1];
+        const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),movementMention=mentions[previous.movementIndex??0];
         const fallback=previous.movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
-        const description=first&&second?describeMoneyAction(raw.slice(first.index+first.raw.length,second.index),{index:0,raw:''},null,fallback):fallback;
+        const linkedAccount=state.accounts.find(a=>a.id===previous.accountId)||null;
+        const description=movementMention?describeMoneyAction(raw,movementMention,linkedAccount,fallback):fallback;
         const type=previous.movementType||'expense',label=type==='income'?'ingreso':'gasto';
         pendingChat={kind:'movement',type,amount:previous.expenseAmount,description,accountId:previous.accountId||null};
         const response=previous.accountId
