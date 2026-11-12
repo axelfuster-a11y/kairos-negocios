@@ -13,14 +13,18 @@
   }
   function describeMoneyAction(text,mention,account,fallback){
     let value=String(text).slice(0,mention.index)+' '+String(text).slice(mention.index+mention.raw.length);
-    value=value.replace(/\\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron)\\b/gi,' ')
-      .replace(/\\b\\d{4}-\\d{2}-\\d{2}\\b/g,' ')
-      .replace(/\\b\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,' ')
-      .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,' ')
-      .replace(/(?:\\$\\s*)?\\b\\d[\\d.,]*\\b/g,' ')
-      .replace(/\\b(?:en|desde|por|de|el|la|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\\b/gi,' ')
-      .replace(/\\bmp\\b/gi,' ');
-    if(account?.name){const escaped=account.name.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\  assistantReply=function(text){
+    value=value.replace(/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron)\b/gi,' ')
+      .replace(/\b\d{4}-\d{2}-\d{2}\b/g,' ')
+      .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
+      .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
+      .replace(/(?:\$\s*)?\b\d[\d.,]*\b/g,' ')
+      .replace(/\b(?:en|desde|por|de|el|la|hoy|ayer|mañana|ahora|tengo|me queda|me quedan|quedan|saldo|disponible|cuenta|y)\\b/gi,' ')
+      .replace(/\bmp\b/gi,' ');
+    if(account?.name){const lower=value.toLowerCase(),name=account.name.toLowerCase(),index=lower.indexOf(name);if(index>=0)value=value.slice(0,index)+' '+value.slice(index+name.length)}
+    value=value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ0-9\s'-]/g,' ').replace(/\s+/g,' ').trim();
+    return value||fallback;
+  }
+  assistantReply=function(text){
     const s=String(text).toLowerCase(),amounts=parseMoneyMentions(text);
     const expense=/gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]/i.test(s);
     const income=/cobr[eé]|me pagaron|recib[ií]|ingres[oó]|me depositaron|acreditaron/i.test(s);
