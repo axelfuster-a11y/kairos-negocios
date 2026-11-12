@@ -86,15 +86,10 @@
         chatSay('assistant','Todavía necesito que indiques qué importe corresponde al movimiento y qué representa el otro. No preparé nada.');
         await save();renderAssistant();return;
       }
-      if(/^(sí|si|correcto|exacto|así es|después del gasto|después del movimiento)[.! ]*$/.test(answer)){
+      if(/^(sí|si|correcto|exacto|así es|después del gasto|después del ingreso|después del movimiento)[.! ]*$/.test(answer)){
         const raw=previous.raw||'',mentions=KairosDomain.extractMoneyMentions(raw),first=mentions[0],second=mentions[1];
-        const description=(first&&second?raw.slice(first.index+first.raw.length,second.index):'')
-          .replace(/\\b(?:el\\s+)?\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,' ')
-          .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,' ')
-          .replace(/^\\s*el\\s+/i,'')
-          .replace(/^\\s*(?:en|por)\\s+/i,'')
-          .replace(/[,;\\.\\s]+(?:y\\s+)?(?:ahora\\s+)?(?:tengo|me queda|me quedan|quedan|saldo|disponible)\\b[\\s\\S]*$/i,'')
-          .trim().replace(/[.,;]+$/,'')||(previous.movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat');
+        const fallback=previous.movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
+        const description=first&&second?describeMoneyAction(raw.slice(first.index+first.raw.length,second.index),{index:0,raw:''},null,fallback):fallback;
         const type=previous.movementType||'expense',label=type==='income'?'ingreso':'gasto';
         pendingChat={kind:'movement',type,amount:previous.expenseAmount,description,accountId:previous.accountId||null};
         const response=previous.accountId
