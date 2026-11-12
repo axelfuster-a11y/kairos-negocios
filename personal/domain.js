@@ -31,6 +31,16 @@ function parseMoney(input){
  const value=Number(x);
  return Number.isFinite(value)&&value>0?value:null;
 }
+function extractMoneyMentions(text){
+ const source=String(text??'');
+ const masked=source
+  .replace(/\\b\\d{4}-\\d{2}-\\d{2}\\b/g,m=>' '.repeat(m.length))
+  .replace(/\\b\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?\\b/g,m=>' '.repeat(m.length))
+  .replace(/\\b\\d{1,2}:\\d{2}(?::\\d{2})?\\b/g,m=>' '.repeat(m.length));
+ const re=/(?:\\$\\s*)?\\b\\d[\\d.,]*\\b\\s*(?:pesos|ars)?/gi,out=[];let match;
+ while((match=re.exec(masked))!==null){const value=parseMoney(match[0]);if(value!==null)out.push({value,index:match.index,raw:source.slice(match.index,match.index+match[0].length)})}
+ return out;
+}
 function localISODate(date=new Date()){return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')}
 function validISODate(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(value||''))return false;
@@ -61,10 +71,10 @@ function prepareDebtPayment(debt,amount,accountId,date,movementId,createdAt,note
  const movement={id:movementId,type:'expense',description:'Pago de deuda: '+debt.name,amount:value,accountId,date,category:'Pago de deuda',notes:notes||'',debtId:debt.id,status:'posted',createdAt};
  return {debt:updatedDebt,movement};
 }
-function nextDate(date,repeat){const d=new Date(date+'T12:00:00');if(repeat==='daily')d.setDate(d.getDate()+1);else if(repeat==='weekly')d.setDate(d.getDate()+7);else if(repeat==='monthly'){const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last))}else return null;return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function nextDate(date,repeat){if(!validISODate(date))return null;const [year,month,day]=date.split('-').map(Number);let target;if(repeat==='daily')target=new Date(Date.UTC(year,month-1,day+1));else if(repeat==='weekly')target=new Date(Date.UTC(year,month-1,day+7));else if(repeat==='monthly'){const sourceLast=new Date(Date.UTC(year,month,0)).getUTCDate(),nextMonth=new Date(Date.UTC(year,month,1)),targetLast=new Date(Date.UTC(year,month+1,0)).getUTCDate(),targetDay=day===sourceLast?targetLast:Math.min(day,targetLast);target=new Date(Date.UTC(nextMonth.getUTCFullYear(),nextMonth.getUTCMonth(),targetDay))}else return null;return target.toISOString().slice(0,10)}
 function taskStats(tasks,referenceDate=localISODate()){const active=(tasks||[]).filter(t=>!t.done&&!t.archived),done=(tasks||[]).filter(t=>t.done);return {active:active.length,done:done.length,overdue:active.filter(t=>t.due&&t.due<referenceDate).length}}
 function projectProgress(project,tasks){const related=(tasks||[]).filter(t=>t.projectId===project.id&&!t.archived);return related.length?Math.round(related.filter(t=>t.done).length/related.length*100):Number(project.progress||0)}
 function buildCalendarItems(state,month){const out=[];for(const t of state.tasks||[])if(!t.archived&&t.due&&t.due.startsWith(month))out.push({id:'task:'+t.id,date:t.due,title:t.title,type:t.subjectId?'study':t.projectId?'project':'task'});for(const e of state.events||[])if(e.date&&e.date.startsWith(month))out.push({id:'event:'+e.id,date:e.date,title:e.title,type:e.type||'event',time:e.time||''});for(const d of state.debts||[])if(d.status!=='paid'&&d.due&&d.due.startsWith(month))out.push({id:'debt:'+d.id,date:d.due,title:'Vence: '+d.name,type:'debt'});for(const w of state.workEntries||[])if(w.date&&w.date.startsWith(month))out.push({id:'work:'+w.id,date:w.date,title:w.title||w.client||'Trabajo',type:'work'});return out.sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''))}
 function monthlyTotals(state,month){const xs=(state.workEntries||[]).filter(x=>(x.date||'').startsWith(month));return {income:round(xs.reduce((s,x)=>s+Number(x.income||0),0)),expenses:round(xs.reduce((s,x)=>s+Number(x.expenses||0),0)),hours:round(xs.reduce((s,x)=>s+Number(x.minutes||0),0)/60)}}
-return Object.freeze({round,parseMoney,localISODate,accountBalance,summarize,validateMovement,validateDebt,prepareDebtPayment,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
+return Object.freeze({round,parseMoney,extractMoneyMentions,localISODate,accountBalance,summarize,validateMovement,validateDebt,prepareDebtPayment,nextDate,taskStats,projectProgress,buildCalendarItems,monthlyTotals});
 });
