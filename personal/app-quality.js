@@ -64,6 +64,9 @@
       return 'Detecté '+amounts.length+' importes ('+amounts.map(x=>money(x.value)).join(' y ')+'). No voy a elegir uno por suposición. ¿Cuál corresponde al movimiento y qué representa el otro importe?';
     }
     if(movementType&&amounts.length===1){
+      const role=moneyMentionRole(text,amounts[0]);
+      if(role==='balance')return 'Ese importe parece ser un saldo, no el importe del movimiento. Indica cuánto fue el ingreso o el gasto para evitar registrar el dato equivocado.';
+      if(role&&role!==movementType)return 'El importe parece corresponder a otro tipo de dato. Aclara cuál fue el importe del movimiento antes de guardarlo.';
       if(!state.accounts.length)return 'Primero crea una cuenta en Finanzas.';
       const chosen=chosenAccount,fallback=movementType==='income'?'Ingreso informado en el chat':'Gasto informado en el chat';
       pendingChat={kind:'movement',type:movementType,amount:amounts[0].value,description:describeMoneyAction(text,amounts[0],chosen,fallback),accountId:chosen?.id||null};
