@@ -106,6 +106,15 @@ function validateBackup(backup){
  for(const movement of data.movements){const error=validateMovement(movement,ids);if(error)return 'La copia contiene un movimiento inválido: '+error}
  for(const debt of data.debts){const error=validateDebt(debt);if(error)return 'La copia contiene una deuda inválida: '+error}
  if(data.tasks.some(t=>!String(t.title||'').trim()))return 'La copia contiene una tarea inválida.';
+ for(const subject of data.subjects||[]){
+  if(subject.attachments!==undefined&&!Array.isArray(subject.attachments))return 'La copia contiene adjuntos con formato inválido.';
+  const attachmentIds=new Set();
+  for(const file of subject.attachments||[]){
+   if(!file||typeof file!=='object'||Array.isArray(file)||typeof file.id!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(file.id)||attachmentIds.has(file.id))return 'La copia contiene un identificador de adjunto inválido o repetido.';
+   attachmentIds.add(file.id);
+   if(!String(file.name||'').trim()||!['application/pdf','image/png','image/jpeg','image/webp'].includes(file.type)||!Number.isFinite(Number(file.size))||Number(file.size)<0||Number(file.size)>5*1024*1024||typeof file.data!=='string'||!file.data.startsWith('data:'+file.type+';base64,'))return 'La copia contiene un adjunto inválido o superior a 5 MB.';
+  }
+ }
  if(data.prefs!==undefined&&(!data.prefs||typeof data.prefs!=='object'||Array.isArray(data.prefs)))return 'Las preferencias de la copia no son válidas.';
  const prefs=data.prefs||{};
  if(prefs.currency!==undefined&&!['ARS','USD','EUR'].includes(prefs.currency))return 'La moneda de la copia no está admitida.';
