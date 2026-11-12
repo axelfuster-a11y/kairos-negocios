@@ -10,6 +10,8 @@ const checks = [
   'tools/check-mobile-help-channels.mjs',
   'personal/domain.test.mjs',
   'personal/app-quality.test.mjs',
+  'personal/app-core.test.mjs',
+  'personal/app-security.test.mjs',
 ]
 
 for (const check of checks) {
