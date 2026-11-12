@@ -52,3 +52,36 @@ test('el chat no prepara movimientos con separadores numéricos ambiguos',async(
  assert.match(answer,/separadores ambiguos/);
  assert.equal(c.pendingChat,null);
 });
+
+test('el chat reconoce ingresos y conserva el importe sin confundirlo con el saldo',async()=>{
+ const c=makeContext();
+ await c.sendChat('Me pagaron el 12/11/2026 $50.000 por una comisión y ahora tengo $120.000 en Mercado Pago a las 14:30');
+ assert.equal(c.pendingChat.kind,'compoundClarification');
+ assert.equal(c.pendingChat.movementType,'income');
+ assert.equal(c.pendingChat.expenseAmount,50000);
+ assert.equal(c.pendingChat.balanceAmount,120000);
+ await c.sendChat('sí');
+ assert.equal(c.pendingChat.type,'income');
+ assert.equal(c.pendingChat.amount,50000);
+ assert.equal(c.pendingChat.description,'una comisión');
+ assert.equal(c.pendingChat.accountId,'mp');
+});
+
+test('el chat ignora la fecha cuando aparece antes del importe',async()=>{
+ const c=makeContext();
+ await c.sendChat('Gasté el 12/11/2026 $3.000 en transporte desde Mercado Pago');
+ assert.equal(c.pendingChat.type,'expense');
+ assert.equal(c.pendingChat.amount,3000);
+ assert.equal(c.pendingChat.description,'transporte');
+ assert.equal(c.pendingChat.accountId,'mp');
+});
+
+test('una respuesta afirmativa no confirma una aclaración con varios importes sin saldo',async()=>{
+ const c=makeContext();
+ await c.sendChat('Gasté 3.000 y 5.000 en comida');
+ assert.equal(c.pendingChat.kind,'compoundClarification');
+ assert.equal(c.pendingChat.expenseAmount,undefined);
+ await c.sendChat('sí');
+ assert.equal(c.pendingChat,null);
+ assert.match(c.messages.at(-1).text,/No preparé nada/);
+});
