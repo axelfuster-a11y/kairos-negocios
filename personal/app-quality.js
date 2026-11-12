@@ -13,7 +13,7 @@
   }
   function describeMoneyAction(text,mention,account,fallback){
     let value=String(text).slice(0,mention.index)+' '+String(text).slice(mention.index+mention.raw.length);
-    value=value.replace(/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií]|cobr[eé]|cobraron|ingres[oó]|me pagaron|recib[ií]|me depositaron|ingres[eé]|me ingresaron)\b/gi,' ')
+    value=value.replace(/(^|[^a-záéíóúüñ])(?:gast(?:e|é)|compr(?:e|é)|pagu(?:e|é)|me cobraron|consum(?:i|í)|cobr(?:e|é)|cobraron|ingres(?:o|ó|e|é)|me pagaron|recib(?:i|í)|me depositaron|me ingresaron)(?=$|[^a-záéíóúüñ])/gi,' ')
       .replace(/\b\d{4}-\d{2}-\d{2}\b/g,' ')
       .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,' ')
       .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g,' ')
@@ -28,8 +28,8 @@
     const before=String(text).slice(Math.max(0,mention.index-100),mention.index).toLowerCase();
     const cues=[
       {role:'balance',pattern:/\b(?:tengo|me queda|me quedan|quedan|saldo|disponible|hay en)\b/g},
-      {role:'expense',pattern:/\b(?:gast[eé]|compr[eé]|pagu[eé]|me cobraron|consum[ií])\b/g},
-      {role:'income',pattern:/\b(?:cobr[eé]|me pagaron|recib[ií]|me depositaron|me ingresaron|acreditaron|ingres[eé])\b/g}
+      {role:'expense',pattern:/(?:^|[^a-záéíóúüñ])(?:gast(?:e|é)|compr(?:e|é)|pagu(?:e|é)|me cobraron|consum(?:i|í))(?=$|[^a-záéíóúüñ])/g},
+      {role:'income',pattern:/(?:^|[^a-záéíóúüñ])(?:cobr(?:e|é)|me pagaron|recib(?:i|í)|me depositaron|me ingresaron|acreditaron|ingres(?:e|é))(?=$|[^a-záéíóúüñ])/g}
     ];
     let latest={index:-1,role:null};
     for(const cue of cues){cue.pattern.lastIndex=0;let match;while((match=cue.pattern.exec(before))!==null)if(match.index>latest.index)latest={index:match.index,role:cue.role}}
@@ -63,7 +63,7 @@
     const balance=/tengo|qued[aó]|saldo|disponible|me queda|hay en/i.test(s);
     const account=inferAccount(text),accountHint=/\b(?:mercado\s*pago|mp|cuenta|banco|tarjeta|efectivo)\b/i.test(s),chosenAccount=account||(!accountHint&&state.accounts.length===1?state.accounts[0]:null);
     if((expense||income)&&unparsedMoneyMentions(text).some(raw=>KairosDomain.parseMoney(raw)===null)){
-      return 'Encontré un importe que no puedo interpretar con seguridad. No voy a registrar nada. Escribe el importe sin separadores de miles o con coma decimal de hasta dos cifras.';
+      return 'Encontré un importe con separadores ambiguos que no puedo interpretar con seguridad. No voy a registrar nada. Escribe el importe sin separadores de miles o con coma decimal de hasta dos cifras.';
     }
     if(expense&&income){
       return 'Detecté un ingreso y un gasto en el mismo mensaje. Para no asignar mal los importes, envía cada movimiento por separado. No registré nada.';
