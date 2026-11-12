@@ -18,3 +18,61 @@ test('deudas con saldo cero no agregan pasivo',()=>{const s={accounts:[],movemen
 
 test('validación de deuda impide que el saldo pendiente supere el importe original',()=>{const base={name:'Tarjeta',amount:100,remaining:80};assert.equal(D.validateDebt(base),null);assert.match(D.validateDebt({...base,remaining:120}),/no puede superar/)});
 test('deuda sin saldo pendiente no se confunde con saldo negativo',()=>{assert.equal(D.validateDebt({name:'Cuota',amount:100,remaining:0}),null);assert.match(D.validateDebt({name:'Cuota',amount:100,remaining:-1}),/no puede ser negativo/)});
+
+test('parseo de importes argentinos distingue miles, decimales y formatos ambiguos',()=>{
+ assert.equal(D.parseMoney('3.000'),3000);
+ assert.equal(D.parseMoney('1.234.567'),1234567);
+ assert.equal(D.parseMoney('1.234,56'),1234.56);
+ assert.equal(D.parseMoney('1234,56'),1234.56);
+ assert.equal(D.parseMoney('12.34'),12.34);
+ assert.equal(D.parseMoney('1,234'),null);
+ assert.equal(D.parseMoney('1.234.56'),null);
+});
+test('fechas imposibles no se aceptan como movimientos',()=>{
+ const base={type:'expense',description:'Comida',amount:10,accountId:'a',date:'2026-02-28'};
+ assert.equal(D.validateMovement(base,['a']),null);
+ assert.match(D.validateMovement({...base,date:'2026-02-30'},['a']),/fecha/);
+ assert.match(D.validateMovement({...base,date:'2026-13-01'},['a']),/fecha/);
+});
+test('tareas atrasadas se calculan con la fecha local de referencia',()=>{
+ const tasks=[{due:'2026-11-11',done:false},{due:'2026-11-12',done:false},{due:'2026-11-10',done:true},{due:'2026-11-01',done:false,archived:true}];
+ assert.deepEqual(D.taskStats(tasks,'2026-11-12'),{active:2,done:1,overdue:1});
+});
+test('pago parcial reduce deuda y crea un único gasto vinculado',()=>{
+ const debt={id:'d1',name:'Universidad',amount:100000,remaining:100000,status:'open'};
+ const result=D.prepareDebtPayment(debt,30000,'mp','2026-11-12','m1','2026-11-12T12:00:00Z','Pago parcial');
+ assert.equal(result.debt.remaining,70000);
+ assert.equal(result.debt.status,'open');
+ assert.equal(result.movement.type,'expense');
+ assert.equal(result.movement.amount,30000);
+ assert.equal(result.movement.accountId,'mp');
+ assert.equal(result.movement.debtId,'d1');
+ assert.equal(result.movement.notes,'Pago parcial');
+ assert.equal(debt.remaining,100000);
+});
+test('pago total cierra deuda y registra el gasto por el mismo importe',()=>{
+ const debt={id:'d2',name:'Tarjeta',amount:50000,remaining:20000,status:'open'};
+ const result=D.prepareDebtPayment(debt,20000,'bank','2026-11-12','m2','2026-11-12T12:00:00Z');
+ assert.equal(result.debt.remaining,0);
+ assert.equal(result.debt.status,'paid');
+ assert.equal(result.movement.amount,20000);
+ assert.equal(D.accountBalance({id:'bank',opening:50000},[result.movement]),30000);
+});
+test('pago de deuda rechaza importes superiores al saldo pendiente y fechas inválidas',()=>{
+ const debt={id:'d3',name:'Cuota',amount:100,remaining:40,status:'open'};
+ assert.throws(()=>D.prepareDebtPayment(debt,41,'mp','2026-11-12','m3','now'),/no superar/);
+ assert.throws(()=>D.prepareDebtPayment(debt,10,'mp','2026-02-30','m3','now'),/fecha/);
+ assert.throws(()=>D.prepareDebtPayment(debt,10,'','2026-11-12','m3','now'),/cuenta/);
+});
+test('pago de cuotas adelanta vencimiento solo por cuotas completas abonadas',()=>{
+ const debt={id:'d4',name:'Cuota',amount:180,remaining:180,status:'open',installments:3,installmentAmount:60,frequency:'monthly',due:'2026-01-31'};
+ const partial=D.prepareDebtPayment(debt,30,'mp','2026-01-01','m4','now');
+ assert.equal(partial.debt.due,'2026-01-31');
+ assert.equal(partial.debt.installments,3);
+ const full=D.prepareDebtPayment(debt,120,'mp','2026-01-01','m5','now');
+ assert.equal(full.debt.due,'2026-03-31');
+ assert.equal(full.debt.installments,1);
+});
+test('saldo pendiente no admite NaN',()=>{
+ assert.match(D.validateDebt({name:'Tarjeta',amount:100,remaining:NaN}),/importe válido/);
+});
