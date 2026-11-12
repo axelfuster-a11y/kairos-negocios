@@ -15,11 +15,11 @@ function makeContext(save){
   messages:[],
   clone:value=>JSON.parse(JSON.stringify(value)),
   save,
-  render(){this.rendered=true},
   historyButtons(){},
-  toast(message){this.messages.push(message)},
   console:{error(){}}
  };
+ context.render=()=>{context.rendered=true};
+ context.toast=message=>context.messages.push(message);
  vm.createContext(context);
  vm.runInContext(match[0],context);
  return context;
